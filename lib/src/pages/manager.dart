@@ -29,6 +29,7 @@ class Manager extends StatefulWidget {
 class _ManagerState extends State<Manager> with PreferencesMixin {
   List<String> _currentVms = [];
   Map<String, VmInfo> _activeVms = {};
+  final Set<String> _startingVms = {};
   bool _spicy = false;
   final List<String> _sshVms = [];
   String? _terminalEmulator;
@@ -59,18 +60,10 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
     super.initState();
     _getTerminalEmulator();
     _detectSpice();
-    getPreference<String>(prefWorkingDirectory).then((pref) {
-      setState(() {
-        if (pref == null) {
-          return;
-        }
-        Directory.current = pref;
-      });
-      Future.delayed(Duration.zero,
-          () => _getVms(context)); // Reload VM list when we enter the page.
-    });
+    Future.delayed(
+        Duration.zero, _getVms); // Reload VM list when we enter the page.
     refreshTimer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
-      _getVms(context);
+      _getVms();
     }); // Reload VM list every 5 seconds.
   }
 
@@ -107,6 +100,12 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
   }
 
   void _detectSpice() async {
+    if (Platform.isMacOS) {
+      setState(() {
+        _spicy = false;
+      });
+      return;
+    }
     var result = whichSync('spicy') ?? '';
     setState(() {
       _spicy = result.isNotEmpty;
@@ -144,7 +143,7 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
     return false;
   }
 
-  void _getVms(context) async {
+  Future<void> _getVms() async {
     List<String> currentVms = [];
     Map<String, VmInfo> activeVms = {};
 
@@ -170,6 +169,9 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
       }
     }
     currentVms.sort();
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _currentVms = currentVms;
       _activeVms = activeVms;
@@ -186,6 +188,81 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
     } catch (exception) {
       return false;
     }
+  }
+
+  Future<void> _startVm(String vmName) async {
+    setState(() {
+      _startingVms.add(vmName);
+    });
+
+    try {
+      final arguments = ['--vm', '$vmName.conf'];
+      if (Platform.isMacOS) {
+        arguments.addAll([
+          '--display',
+          'cocoa',
+          '--sound-duplex',
+          'hda-output',
+        ]);
+      } else if (_spicy) {
+        arguments.addAll(['--display', 'spice']);
+      }
+
+      final result = await Process.run(
+        gQuickemuExecutable!,
+        arguments,
+        environment: gProcessEnvironment,
+        workingDirectory: Directory.current.path,
+      );
+      if (result.exitCode != 0) {
+        _showQuickemuError(
+          '${result.stderr}\n${result.stdout}'.trim(),
+        );
+        return;
+      }
+
+      // Quickemu starts QEMU in the background, so allow time for its pid file
+      // to be created or for an early QEMU failure to be written to the log.
+      await Future<void>.delayed(const Duration(milliseconds: 750));
+      await _getVms();
+      if (!_activeVms.containsKey(vmName)) {
+        final logFile = File('$vmName/$vmName.log');
+        final log =
+            logFile.existsSync() ? logFile.readAsStringSync().trim() : '';
+        _showQuickemuError(
+          log.isEmpty ? 'The virtual machine exited before starting.' : log,
+        );
+      }
+    } on ProcessException catch (error) {
+      _showQuickemuError(error.message);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _startingVms.remove(vmName);
+        });
+      }
+    }
+  }
+
+  void _showQuickemuError(String message) {
+    if (!mounted) {
+      return;
+    }
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.t('Error')),
+        content: SingleChildScrollView(
+          child: SelectableText(message),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.t('OK')),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildVmList() {
@@ -213,14 +290,17 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                   backgroundColor: Theme.of(context).colorScheme.surface,
                 ),
                 onPressed: () async {
-                  var folder = await FilePicker.platform
-                      .getDirectoryPath(dialogTitle: "Pick a folder");
-                  if (folder != null) {
+                  var folder = await FilePicker.getDirectoryPath(
+                    dialogTitle: "Pick a folder",
+                    initialDirectory: Directory.current.path,
+                  );
+                  if (folder != null && mounted) {
                     setState(() {
                       Directory.current = folder;
                     });
-                    savePreference(
+                    await savePreference(
                         prefWorkingDirectory, Directory.current.path);
+                    await _getVms();
                   }
                 },
                 child: Text(Directory.current.path),
@@ -248,6 +328,7 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
 
   List<Widget> _buildRow(String currentVm, Color buttonColor) {
     final bool active = _activeVms.containsKey(currentVm);
+    final bool starting = _startingVms.contains(currentVm);
     final bool sshy = _sshVms.contains(currentVm);
     VmInfo vmInfo = VmInfo();
     String connectInfo = '';
@@ -292,31 +373,19 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               IconButton(
-                  icon: Icon(
-                    active ? Icons.play_arrow : Icons.play_arrow_outlined,
-                    color: active ? Colors.green : buttonColor,
-                    semanticLabel: active ? 'Running' : 'Run',
-                  ),
-                  onPressed: active
-                      ? null
-                      : () async {
-                          Map<String, VmInfo> activeVms = _activeVms;
-                          List<String> command = [
-                            'quickemu',
-                            '--vm',
-                            '$currentVm.conf'
-                          ];
-                          if (_spicy) {
-                            command.addAll(['--display', 'spice']);
-                          }
-                          var shell = Shell();
-                          await shell.run(command.join(' '));
-                          VmInfo info = _parseVmInfo(currentVm);
-                          activeVms[currentVm] = info;
-                          setState(() {
-                            _activeVms = activeVms;
-                          });
-                        }),
+                  icon: starting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          active ? Icons.play_arrow : Icons.play_arrow_outlined,
+                          color: active ? Colors.green : buttonColor,
+                          semanticLabel: active ? 'Running' : 'Run',
+                        ),
+                  onPressed:
+                      active || starting ? null : () => _startVm(currentVm)),
               IconButton(
                 icon: Icon(
                   active ? Icons.stop : Icons.stop_outlined,
@@ -347,14 +416,14 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                         ).then((result) async {
                           result = result ?? false;
                           if (result) {
-                            var shell = Shell();
+                            var shell = Shell(environment: gProcessEnvironment);
                             // If Quickemu is newer than 4.9.6, use the new --kill option
                             // which is macOS compatible.
                             var quickemuVersion =
                                 Version.parse(await fetchQuickemuVersion());
                             if (quickemuVersion >= Version(4, 9, 6)) {
                               shell.run([
-                                'quickemu',
+                                gQuickemuExecutable!,
                                 '--vm',
                                 '$currentVm.conf',
                                 '--kill'
@@ -406,12 +475,12 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                           result = result ?? 'cancel';
                           if (result != 'cancel') {
                             List<String> command = [
-                              'quickemu',
+                              gQuickemuExecutable!,
                               '--vm',
                               '$currentVm.conf',
                               '--delete-$result'
                             ];
-                            var shell = Shell();
+                            var shell = Shell(environment: gProcessEnvironment);
                             await shell.run(command.join(' '));
                           }
                         });
@@ -435,7 +504,7 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                 onPressed: !_spicy
                     ? null
                     : () {
-                        var shell = Shell();
+                        var shell = Shell(environment: gProcessEnvironment);
                         shell.run(['spicy', '-p', vmInfo.spicePort!].join(' '));
                       },
               ),
@@ -526,7 +595,7 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                                 break;
                             }
                             sshArgs.insert(0, _terminalEmulator!);
-                            var shell = Shell();
+                            var shell = Shell(environment: gProcessEnvironment);
                             shell.run(sshArgs.join(' '));
                           }
                         });

@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
-import 'package:quickgui/src/globals.dart';
-import 'package:quickgui/src/mixins/preferences_mixin.dart';
 import 'package:tuple/tuple.dart';
 
 import '../../model/operating_system.dart';
@@ -21,8 +19,7 @@ class HomePageButtonGroup extends StatefulWidget {
   State<HomePageButtonGroup> createState() => _HomePageButtonGroupState();
 }
 
-class _HomePageButtonGroupState extends State<HomePageButtonGroup>
-    with PreferencesMixin {
+class _HomePageButtonGroupState extends State<HomePageButtonGroup> {
   OperatingSystem? _selectedOperatingSystem;
   Version? _selectedVersion;
   Option? _selectedOption;
@@ -89,9 +86,9 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
           onPressed: (_selectedVersion == null)
               ? null
               : () async {
-                  final workingDirectory =
-                      await getPreference<String>(prefWorkingDirectory);
-                  final tmpFile = File("$workingDirectory/modecheck.tmp");
+                  final tmpFile = File(
+                    '${Directory.current.path}${Platform.pathSeparator}modecheck.tmp',
+                  );
                   if (tmpFile.existsSync()) {
                     tmpFile.deleteSync();
                   }

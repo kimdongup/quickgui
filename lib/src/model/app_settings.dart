@@ -22,7 +22,7 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
-  setActiveLocaleSilently(String locale) {
+  void setActiveLocaleSilently(String locale) {
     _activeLocale = locale;
     if (_activeLocale!.contains(".")) {
       _activeLocale = _activeLocale!.split(".")[0];

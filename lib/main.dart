@@ -9,6 +9,7 @@ import 'package:tuple/tuple.dart';
 import 'package:window_size/window_size.dart';
 
 import 'src/app.dart';
+import 'src/globals.dart';
 import 'src/mixins/app_version.dart';
 import 'src/model/app_settings.dart';
 import 'src/model/operating_system.dart';
@@ -17,7 +18,16 @@ import 'src/model/osicons.dart';
 import 'src/model/version.dart';
 
 Future<List<OperatingSystem>> loadOperatingSystems(bool showUbuntus) async {
-  var process = await Process.run('quickget', ['--list-csv']);
+  final executable = gQuickgetExecutable;
+  if (executable == null) {
+    return [];
+  }
+
+  var process = await Process.run(
+    executable,
+    ['--list-csv'],
+    environment: gProcessEnvironment,
+  );
   var stdout = process.stdout as String;
   var output = <OperatingSystem>[];
 
@@ -73,6 +83,8 @@ Future<void> getIcons() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  configureProcessEnvironment();
+  await configureWorkingDirectory();
   // Don't forget to also change the size in linux/my_application.cc:50
   if (Platform.isMacOS) {
     setWindowMinSize(const Size(692 + 2, 580 + 30));
@@ -81,8 +93,7 @@ void main() async {
     setWindowMinSize(const Size(692, 580));
     setWindowMaxSize(const Size(800, 720));
   }
-  final foundQuickGet = await Process.run('which', ['quickget']);
-  if (foundQuickGet.exitCode == 0) {
+  if (gQuickgetExecutable != null && gQuickemuExecutable != null) {
     gOperatingSystems = loadOperatingSystems(false);
     getIcons();
     AppVersion.packageInfo = await PackageInfo.fromPlatform();

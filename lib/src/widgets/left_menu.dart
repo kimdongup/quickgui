@@ -104,7 +104,7 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                     Switch(
                       value: Theme.of(context).colorScheme.brightness ==
                           Brightness.dark,
-                      activeColor: Colors.black26,
+                      activeThumbColor: Colors.black26,
                       activeTrackColor: Theme.of(context).colorScheme.primary,
                       inactiveThumbColor: Colors.grey[500],
                       inactiveTrackColor: Colors.grey[300],

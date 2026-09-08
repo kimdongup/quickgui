@@ -17,16 +17,6 @@ class DownloaderMenu extends StatefulWidget {
 
 class _DownloaderMenuState extends State<DownloaderMenu> with PreferencesMixin {
   @override
-  void initState() {
-    super.initState();
-    getPreference<String>(prefWorkingDirectory).then((pref) {
-      setState(() {
-        Directory.current = pref;
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
@@ -53,13 +43,15 @@ class _DownloaderMenuState extends State<DownloaderMenu> with PreferencesMixin {
                       backgroundColor: Theme.of(context).colorScheme.surface,
                     ),
                     onPressed: () async {
-                      var folder = await FilePicker.platform
-                          .getDirectoryPath(dialogTitle: "Pick a folder");
-                      if (folder != null) {
+                      var folder = await FilePicker.getDirectoryPath(
+                        dialogTitle: "Pick a folder",
+                        initialDirectory: Directory.current.path,
+                      );
+                      if (folder != null && mounted) {
                         setState(() {
                           Directory.current = folder;
                         });
-                        savePreference(
+                        await savePreference(
                             prefWorkingDirectory, Directory.current.path);
                       }
                     },
