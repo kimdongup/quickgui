@@ -28,7 +28,7 @@
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
 | 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Sequoia 다운로드/chunklist/복구 GUI/APFS 디스크 준비 통과. CPU 감지 수정 사본 + 8 GB. QuickguiMac 대상 설치 시작, 완료는 미확인 |
 | 2 | Intel macOS → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 UEFI/설치 ISO/드라이버를 분리하고 TCG 부팅·설치·재부팅·SSH 검증. 성능 한계 기록 | 대기. 다운로드·VM 실행 미착수 |
-| 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 실제 Apple Silicon 장비 확보. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. ARM Mac과 별도 backend 필요 |
+| 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
 
 설치 완료와 연결 기능은 각각 기록한다. Homebrew QEMU 11.1.1은 `-spice`를 지원하지 않아 별도의 QEMU/SPICE 서버를 준비했다. [SPICE backend 기록](MACOS_SPICE_BACKEND.ko.md)에서 폐기 가능한 검사 VM의 화면·키 입력·재접속 및 실제 spicy 채널 연결을 확인했다. 설치 중인 macOS는 계속 기존 Cocoa backend를 사용한다. 이 결과는 설치된 macOS의 SPICE·SSH 검증이나 Linux 호스트 검증을 대신하지 않는다.
 
