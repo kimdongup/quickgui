@@ -144,15 +144,19 @@ class _ManagerState extends State<Manager> {
         action,
         executable: executable,
         environment: Map.of(gProcessEnvironment),
-        startArguments:
-            Platform.isLinux &&
-                _spicy != null &&
-                !RegExp(
-                  r'^\s*display\s*=',
-                  multiLine: true,
-                ).hasMatch(vm.content)
-            ? ['--display', 'spice']
-            : [],
+        startArguments: [
+          ...gBackendSettings.startArguments,
+          if (gBackendSettings.display.isEmpty &&
+              Platform.isLinux &&
+              _spicy != null &&
+              !RegExp(
+                r'^\s*display\s*=',
+                multiLine: true,
+              ).hasMatch(vm.content)) ...[
+            '--display',
+            'spice',
+          ],
+        ],
       );
     } catch (e) {
       await _showError(e);

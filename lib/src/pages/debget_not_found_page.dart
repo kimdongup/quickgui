@@ -4,6 +4,7 @@ import 'package:gettext_i18n/gettext_i18n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../globals.dart';
+import 'backend_settings_page.dart';
 
 class DebgetNotFoundPage extends StatefulWidget {
   const DebgetNotFoundPage({
@@ -41,6 +42,17 @@ class _DebgetNotFoundPageState extends State<DebgetNotFoundPage> {
                 SelectableText(error),
               if (_error != null) SelectableText(_error!),
               const SizedBox(height: 16),
+              TextButton(
+                onPressed: () async {
+                  final changed = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => const BackendSettingsPage(),
+                    ),
+                  );
+                  if (changed == true && mounted) await widget.onRetry();
+                },
+                child: Text(context.t('Advanced settings')),
+              ),
               ElevatedButton(
                 onPressed: widget.onRetry,
                 child: Text(context.t('Retry')),

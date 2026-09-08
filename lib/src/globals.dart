@@ -6,11 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'services/command_runner.dart';
 import 'services/toolchain.dart';
 import 'services/workspace.dart';
+import 'services/backend_settings.dart';
 
 final gIsSnap = Platform.environment['SNAP']?.isNotEmpty ?? false;
 Toolchain gToolchain = Toolchain();
 CommandRunner gRunner = const CommandRunner();
 Workspace? gWorkspace;
+BackendSettings gBackendSettings = const BackendSettings();
 String? gStartupError;
 String? gQuickgetExecutable;
 String? gQuickemuExecutable;
@@ -23,8 +25,12 @@ String? findExecutable(String name) => gToolchain.find(name);
 
 void configureProcessEnvironment() {
   gToolchain = Toolchain();
-  gQuickgetExecutable = findExecutable('quickget');
-  gQuickemuExecutable = findExecutable('quickemu');
+  gQuickgetExecutable = findExecutable(
+    gBackendSettings.quickget.isEmpty ? 'quickget' : gBackendSettings.quickget,
+  );
+  gQuickemuExecutable = findExecutable(
+    gBackendSettings.quickemu.isEmpty ? 'quickemu' : gBackendSettings.quickemu,
+  );
 }
 
 Future<void> configureWorkingDirectory() async {

@@ -51,6 +51,7 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
         DownloadSession(
           executable: gQuickgetExecutable ?? 'quickget',
           arguments: [
+            ...gBackendSettings.downloadArguments,
             widget.operatingSystem.code,
             widget.version.version,
             if (widget.option?.option.isNotEmpty ?? false)

@@ -7,6 +7,7 @@ import '../globals.dart';
 import '../mixins/app_version.dart';
 import '../mixins/preferences_mixin.dart';
 import '../model/app_settings.dart';
+import '../pages/backend_settings_page.dart';
 
 class LeftMenu extends StatefulWidget {
   const LeftMenu({super.key});
@@ -150,6 +151,15 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                 ),
               ),
               Container(height: 32.0),
+              ListTile(
+                leading: const Icon(Icons.tune),
+                title: Text(context.t('Advanced settings')),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BackendSettingsPage(),
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(

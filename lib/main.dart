@@ -13,6 +13,7 @@ import 'src/model/app_settings.dart';
 import 'src/model/operating_system.dart';
 import 'src/model/osicons.dart';
 import 'src/services/catalog.dart';
+import 'src/services/backend_settings.dart';
 
 Future<List<OperatingSystem>> loadOperatingSystems([
   bool showUbuntus = false,
@@ -23,7 +24,7 @@ Future<List<OperatingSystem>> loadOperatingSystems([
   }
   final result = await gRunner.run(
     executable,
-    ['--list-csv'],
+    [...gBackendSettings.downloadArguments, '--list-csv'],
     environment: gProcessEnvironment,
     directory: workingDirectory,
     timeout: const Duration(minutes: 2),
@@ -46,8 +47,9 @@ Future<void> getIcons() async {
 
 Future<void> initializeRuntime() async {
   gStartupError = null;
-  configureProcessEnvironment();
   try {
+    gBackendSettings = await BackendSettings.load();
+    configureProcessEnvironment();
     await configureWorkingDirectory();
   } catch (error) {
     gStartupError = 'Unable to load workspace settings: $error';

@@ -225,3 +225,51 @@ msgstr ""
 
 msgid "No results"
 msgstr ""
+
+msgid "Open in Manager"
+msgstr ""
+
+msgid "New"
+msgstr ""
+
+msgid "Edit configuration"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Discard changes?"
+msgstr ""
+
+msgid "Discard"
+msgstr ""
+
+msgid "Advanced settings"
+msgstr ""
+
+msgid "Leave paths empty to discover tools automatically."
+msgstr ""
+
+msgid "Executable path"
+msgstr ""
+
+msgid "Check backends"
+msgstr ""
+
+msgid "Display"
+msgstr ""
+
+msgid "Sound"
+msgstr ""
+
+msgid "Download architecture"
+msgstr ""
+
+msgid "Existing machines keep the architecture in their configuration."
+msgstr ""
+
+msgid "Use defaults"
+msgstr ""
+
+msgid "Default"
+msgstr ""

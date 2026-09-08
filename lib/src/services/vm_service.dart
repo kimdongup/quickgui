@@ -281,7 +281,11 @@ class VmOperations extends ChangeNotifier {
         help.requireSuccess();
         startArguments = [
           ...startArguments,
-          ...macStartArguments(current.content, help.stdout),
+          ...macStartArguments(
+            current.content,
+            help.stdout,
+            explicitArguments: startArguments,
+          ),
         ];
       }
       if (action == VmAction.stop) {
@@ -387,13 +391,19 @@ class VmOperations extends ChangeNotifier {
   }
 }
 
-List<String> macStartArguments(String content, String help) => [
-  if (!RegExp(r'^\s*display\s*=', multiLine: true).hasMatch(content) &&
-      help.contains('cocoa')) ...[
-    '--display',
-    'cocoa',
-  ],
-  if (!RegExp(r'^\s*sound_duplex\s*=', multiLine: true).hasMatch(content) &&
+List<String> macStartArguments(
+  String content,
+  String help, {
+  List<String> explicitArguments = const [],
+}) => [
+  if (!explicitArguments.contains('--display'))
+    if (!RegExp(r'^\s*display\s*=', multiLine: true).hasMatch(content) &&
+        help.contains('cocoa')) ...[
+      '--display',
+      'cocoa',
+    ],
+  if (!explicitArguments.contains('--sound-duplex') &&
+      !RegExp(r'^\s*sound_duplex\s*=', multiLine: true).hasMatch(content) &&
       help.contains('hda-output')) ...[
     '--sound-duplex',
     'hda-output',
