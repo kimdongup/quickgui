@@ -25,6 +25,6 @@ On an Intel Mac, `configure_cpu` requests `get_cpu_info 'Vendor'`, but the Darwi
 
 Accept both vendor query keys and check exact feature tokens from both sysctl properties. Unsupported or unavailable features still fail the check. The Linux code path is unchanged.
 
-Validation: Bash syntax and ShellCheck 0.11.0 pass; three regression tests cover vendor aliases, features from both properties, and missing/substring rejection. On macOS 15.7.9 with Quickemu 4.9.9 and QEMU 11.1.1, the same guest now passes CPU checks and reaches OpenCore and the recovery kernel. Guest installation, recovery GUI completion and SSH remain separate acceptance checks.
+Validation: Bash syntax and ShellCheck 0.11.0 pass; three regression tests cover vendor aliases, features from both properties, and missing/substring rejection. On macOS 15.7.9 with Quickemu 4.9.9 and QEMU 11.1.1, the guest now passes CPU checks and reaches the Sequoia recovery GUI with 8 GB RAM. Recovery Terminal opens and successfully prepares the new guest disk as GPT/APFS. Guest installation and SSH remain separate acceptance checks.
 
 This draft has not been submitted. The reproduction patch targets the pinned 4.9.9 script; rebase and rerun these checks against the then-current Quickemu branch before submission.

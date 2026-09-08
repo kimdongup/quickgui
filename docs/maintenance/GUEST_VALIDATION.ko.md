@@ -26,7 +26,7 @@
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Sequoia 다운로드와 chunklist 검사 통과. CPU 감지 오류 수정 사본으로 OpenCore와 macOS 커널 부팅 확인. 설치 완료는 미확인 |
+| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Sequoia 다운로드/chunklist/복구 GUI/APFS 디스크 준비 통과. CPU 감지 수정 사본 + 8 GB. QuickguiMac 대상 설치 시작, 완료는 미확인 |
 | 2 | Intel macOS → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 UEFI/설치 ISO/드라이버를 분리하고 TCG 부팅·설치·재부팅·SSH 검증. 성능 한계 기록 | 대기. 다운로드·VM 실행 미착수 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 실제 Apple Silicon 장비 확보. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. ARM Mac과 별도 backend 필요 |
 
@@ -48,13 +48,24 @@
 - `flutter build macos --release`: PASS, 46.8 MB. 실행 파일과 App.framework에 x86_64/arm64 slice가 포함됨을 확인. 현재 Intel 호스트에서 빌드한 결과이며 ARM 호스트의 게스트 실행 검증을 뜻하지 않음.
 - 릴리스 도구와 적용된 CPU 패치의 Python 테스트: 총 6 PASS. CPU 패치 테스트는 `QUICKGUI_PATCHED_QUICKEMU`와 Bash 4 이상 경로를 지정하여 실행.
 - 실제 Windows config를 새 `VmRepository`로 읽는 별도 검사: PASS. 중지 상태, Windows x64, 설치 중 표시 인식 및 조건문 config의 자동 프로필 변환 거부 확인. 검사 전후 config bytes 동일. 이 검사는 Windows를 부팅하지 않음.
-- macOS 복구 부팅은 서비스 초기화까지 진행했으나 여러 `vm_shared_region_start_address() failed` 메시지와 긴 지연을 관찰. 명시적 `+invtsc` 비교도 진행하며, 이것만으로 해결됐다고 주장하지 않음. 이 추가 인자는 검증 VM의 config에만 적용하고 범용 CPU 감지 패치에는 포함하지 않음.
-- 8 GB RAM 비교에서는 `+invtsc` 실험을 되돌리고 메모리만 변경. 복구 서비스와 WindowServer 시작/대기 커서 표시까지 관찰. 해당 로그 문자열만으로 원인이나 kernel panic을 단정하지 않음. 설치 GUI 진입은 별도 확인 대상.
+- macOS 복구 부팅은 서비스 초기화까지 진행했으나 여러 `vm_shared_region_start_address() failed` 메시지와 긴 지연을 관찰. 명시적 `+invtsc` 비교도 수행했으나 해결 효과를 확인하지 못해 되돌림. 이 추가 인자는 범용 CPU 감지 패치에 포함하지 않음.
+- 8 GB RAM 비교에서는 `+invtsc` 실험을 되돌리고 메모리만 변경. 약 11분 뒤 **Reinstall macOS Sequoia / Disk Utility / Safari**가 표시된 복구 GUI 진입 확인. Utilities → Terminal 및 키보드 입력도 확인. 해당 로그 문자열만으로 실패나 kernel panic을 단정할 수 없었음. 앞서 4 GB 부팅은 관찰 중 종료한 비교이므로 4 GB로 절대 부팅할 수 없다는 결론도 내리지 않음.
+- 게스트 `diskutil list internal`에서 이번에 만든 128 GiB(137.4 GB) 빈 disk0, 402.7 MB 부팅 disk1, 3.2 GB 복구 disk2를 구분. 새 disk0를 GPT/APFS `QuickguiMac`으로 준비하고 `Finished erase on disk0`와 명령 프롬프트 복귀를 확인. 이 시점의 Terminal은 멈춤이 아닌 다음 명령 대기 상태. 호스트 디스크에서 diskutil을 실행하지 않음.
+- Terminal 종료 후 **Reinstall macOS Sequoia** 실행 확인. 검증 자동화의 HMP 상대 마우스 입력은 기본 USB tablet에 전달되지 않아, 실행 중인 검증 VM에 임시 `usb-mouse`를 추가하여 조작. 이는 호스트에서 직접 조작한 Cocoa 마우스의 실패를 뜻하지 않음. 설치 정보 조회는 수 분이 걸렸고 로그에 Apple 업데이트 메타데이터 요청의 timeout과 번들 라이선스 문서 fallback을 기록. 설치 앱 시작과 실제 설치 파일 다운로드 성공은 구분.
+- 설치 화면에서 `QuickguiMac` 137.23 GB가 표시되고 선택 가능함을 확인. 설치 시작 후 `OSISDownloadOperation` 시작 로그 및 진행 화면 확인. 새 qcow2가 약 17 MB에서 233 MB로 증가했으나, 이 크기나 초기 남은 시간(약 2시간 52분)으로 다운로드/설치 완료를 추정하지 않음.
 - `3f85b3d`의 GitHub CI: [개인 작업 브랜치 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252565602), [실제 Linux backend](https://github.com/kimdongup/quickgui/actions/runs/34252565587), [개인 통합 후보 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252666094), [통합 후보 backend](https://github.com/kimdongup/quickgui/actions/runs/34252665969) 모두 PASS. Linux/macOS/Nix 및 36개 앱 테스트 포함. 이후 문서/화면 증거만 추가한 커밋과 구분.
 
 OpenCore 실제 게스트 화면(복구 OS 설치 완료 화면은 아님):
 
 ![Intel Mac에서 부팅한 macOS Base System 선택 화면](screenshots/macos-intel-opencore.png)
+
+8 GB에서 확인한 실제 Sequoia 복구 GUI:
+
+![Sequoia 재설치와 디스크 유틸리티 메뉴](screenshots/macos-intel-recovery.png)
+
+QuickguiMac을 선택한 실제 설치 시작 화면(완료 전):
+
+![QuickguiMac 대상 Sequoia 설치 진행 화면](screenshots/macos-intel-installation.png)
 
 추가 부팅/설치 결과는 이 문서에 이어서 기록하며, 위 중간 결과를 전체 macOS 설치 성공으로 승격하지 않는다.
 
