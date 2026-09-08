@@ -6,6 +6,7 @@ import 'package:desktop_notifications/desktop_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 
+import '../globals.dart';
 import '../model/operating_system.dart';
 import '../model/option.dart';
 import '../model/version.dart';
@@ -59,7 +60,12 @@ class _DownloaderState extends State<Downloader> {
     if (widget.option != null) {
       options.add(widget.option!.option);
     }
-    Process.start('quickget', options).then((process) {
+    Process.start(
+      gQuickgetExecutable!,
+      options,
+      environment: gProcessEnvironment,
+      workingDirectory: workingDirectory,
+    ).then((process) {
       if (widget.option!.downloader != 'zsync') {
         process.stderr.transform(utf8.decoder).forEach(parseCurlProgress);
       } else {
@@ -138,7 +144,7 @@ class _DownloaderState extends State<Downloader> {
                       child: Text(
                         context.t(
                           'Target folder : {0}',
-                          args: [Directory.current.path],
+                          args: [workingDirectory],
                         ),
                       ),
                     ),

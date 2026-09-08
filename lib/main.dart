@@ -1,105 +1,83 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:tuple/tuple.dart';
 import 'package:window_size/window_size.dart';
 
+import 'dart:io';
+
 import 'src/app.dart';
+import 'src/globals.dart';
 import 'src/mixins/app_version.dart';
 import 'src/model/app_settings.dart';
 import 'src/model/operating_system.dart';
-import 'src/model/option.dart';
 import 'src/model/osicons.dart';
-import 'src/model/version.dart';
+import 'src/services/catalog.dart';
 
-Future<List<OperatingSystem>> loadOperatingSystems(bool showUbuntus) async {
-  var process = await Process.run('quickget', ['--list-csv']);
-  var stdout = process.stdout as String;
-  var output = <OperatingSystem>[];
-
-  OperatingSystem? currentOperatingSystem;
-  Version? currentVersion;
-
-  stdout
-      .split('\n')
-      .skip(1)
-      .where((element) => element.isNotEmpty)
-      .map((e) => e.trim())
-      .forEach((element) {
-        var chunks = element.split(",");
-        Tuple5 supportedVersion;
-        if (chunks.length == 4) // Legacy version of quickget
-        {
-          supportedVersion = Tuple5.fromList([...chunks, "curl"]);
-        } else {
-          var t5 = [
-            chunks[0],
-            chunks[1],
-            chunks[2],
-            chunks[3],
-            chunks[4],
-          ].toList();
-          supportedVersion = Tuple5.fromList(t5);
-        }
-
-        if (currentOperatingSystem?.code != supportedVersion.item2) {
-          currentOperatingSystem = OperatingSystem(
-            supportedVersion.item1,
-            supportedVersion.item2,
-          );
-          output.add(currentOperatingSystem!);
-          currentVersion = null;
-        }
-        if (currentVersion?.version != supportedVersion.item3) {
-          currentVersion = Version(supportedVersion.item3);
-          currentOperatingSystem!.versions.add(currentVersion!);
-        }
-        currentVersion!.options.add(
-          Option(supportedVersion.item4, supportedVersion.item5),
-        );
-      });
-
-  return output;
+Future<List<OperatingSystem>> loadOperatingSystems([
+  bool showUbuntus = false,
+]) async {
+  final executable = gQuickgetExecutable;
+  if (executable == null) {
+    throw const ProcessException('quickget', [], 'quickget was not found');
+  }
+  final result = await gRunner.run(
+    executable,
+    ['--list-csv'],
+    environment: gProcessEnvironment,
+    directory: workingDirectory,
+    timeout: const Duration(minutes: 2),
+    outputLimit: 8 * 1024 * 1024,
+  );
+  result.requireSuccess();
+  return parseCatalog(result.stdout);
 }
 
 Future<void> getIcons() async {
-  final manifestContent = await rootBundle.loadString('AssetManifest.json');
-  final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-  final imagePaths = manifestMap.keys
-      .where((String key) => key.contains('quickemu-icons/'))
-      .where((String key) => key.contains('.svg'))
-      .toList();
-  for (final imagePath in imagePaths) {
-    String filename = imagePath.split('/').last;
-    String id = filename.substring(0, filename.lastIndexOf('.'));
-    osIcons[id] = imagePath;
+  final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+  osIcons.clear();
+  for (final asset in manifest.listAssets()) {
+    if (asset.startsWith('assets/quickemu-icons/') && asset.endsWith('.svg')) {
+      final file = asset.split('/').last;
+      osIcons[file.substring(0, file.length - 4)] = asset;
+    }
   }
 }
 
-void main() async {
+Future<void> initializeRuntime() async {
+  gStartupError = null;
+  configureProcessEnvironment();
+  try {
+    await configureWorkingDirectory();
+  } catch (error) {
+    gStartupError = 'Unable to load workspace settings: $error';
+  }
+  // App metadata and optional icons do not determine whether Quickemu is installed.
+  try {
+    AppVersion.packageInfo = await PackageInfo.fromPlatform();
+  } catch (_) {
+    AppVersion.packageInfo = null;
+  }
+  try {
+    await getIcons();
+  } catch (_) {
+    osIcons.clear();
+  }
+}
+
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Don't forget to also change the size in linux/my_application.cc:50
   if (Platform.isMacOS) {
-    setWindowMinSize(const Size(692 + 2, 580 + 30));
-    setWindowMaxSize(const Size(692 + 2, 580 + 30));
+    setWindowMinSize(const Size(694, 610));
+    setWindowMaxSize(const Size(694, 610));
   } else {
     setWindowMinSize(const Size(692, 580));
     setWindowMaxSize(const Size(800, 720));
   }
-  final foundQuickGet = await Process.run('which', ['quickget']);
-  if (foundQuickGet.exitCode == 0) {
-    gOperatingSystems = loadOperatingSystems(false);
-    getIcons();
-    AppVersion.packageInfo = await PackageInfo.fromPlatform();
-  }
   runApp(
-    MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AppSettings())],
-      builder: (context, _) => const App(),
+    ChangeNotifierProvider(
+      create: (_) => AppSettings(),
+      child: App(initialize: initializeRuntime),
     ),
   );
 }

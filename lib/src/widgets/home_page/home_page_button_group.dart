@@ -1,8 +1,7 @@
-import 'dart:io';
+import '../../globals.dart';
 
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
-import 'package:quickgui/src/globals.dart';
 import 'package:quickgui/src/mixins/preferences_mixin.dart';
 import 'package:tuple/tuple.dart';
 
@@ -48,7 +47,7 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                   ),
                 )
                 .then((selection) {
-                  if (selection != null) {
+                  if (selection != null && mounted) {
                     setState(() {
                       _selectedOperatingSystem = selection;
                       if (selection.versions.length == 1 &&
@@ -80,7 +79,7 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                         ),
                       )
                       .then((selection) {
-                        if (selection != null) {
+                        if (selection != null && mounted) {
                           setState(() {
                             _selectedVersion = selection.item1;
                             _selectedOption = selection.item2;
@@ -96,21 +95,8 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
           onPressed: (_selectedVersion == null)
               ? null
               : () async {
-                  final workingDirectory = await getPreference<String>(
-                    prefWorkingDirectory,
-                  );
-                  final tmpFile = File("$workingDirectory/modecheck.tmp");
-                  if (tmpFile.existsSync()) {
-                    tmpFile.deleteSync();
-                  }
                   try {
-                    tmpFile.createSync();
-                  } catch (e) {
-                    // Do nothing
-                  }
-                  if (tmpFile.existsSync()) {
-                    tmpFile.deleteSync();
-
+                    await gWorkspace!.verifyWritable();
                     if (!context.mounted) return;
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -121,7 +107,7 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                         ),
                       ),
                     );
-                  } else {
+                  } catch (error) {
                     if (!context.mounted) return;
                     showDialog(
                       context: context,
@@ -177,7 +163,7 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
                   child: Text(
-                    'Target : ${Directory.current.absolute.path}',
+                    'Target : $workingDirectory',
                     style: Theme.of(context).textTheme.bodyLarge
                         ?.copyWith(color: Colors.white),
                   ),

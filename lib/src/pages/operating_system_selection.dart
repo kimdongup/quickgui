@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 
 import '../model/operating_system.dart';
+import '../../main.dart' show loadOperatingSystems;
 import '../model/osicons.dart';
 
 class OperatingSystemSelection extends StatefulWidget {
@@ -15,10 +16,12 @@ class OperatingSystemSelection extends StatefulWidget {
 
 class _OperatingSystemSelectionState extends State<OperatingSystemSelection> {
   var term = "";
+  late Future<List<OperatingSystem>> _catalog;
   final focusNode = FocusNode();
 
   @override
   void initState() {
+    _catalog = loadOperatingSystems();
     focusNode.requestFocus();
     super.initState();
   }
@@ -66,8 +69,21 @@ class _OperatingSystemSelectionState extends State<OperatingSystemSelection> {
         child: Column(
           children: [
             FutureBuilder(
-              future: gOperatingSystems,
+              future: _catalog,
               builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+                if (snapshot.hasError) {
+                  return Column(
+                    children: [
+                      SelectableText('${snapshot.error}'),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _catalog = loadOperatingSystems();
+                        }),
+                        child: Text(context.t('Retry')),
+                      ),
+                    ],
+                  );
+                }
                 if (snapshot.hasData) {
                   List list = snapshot.data!
                       .where(

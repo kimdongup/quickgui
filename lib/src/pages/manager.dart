@@ -59,19 +59,7 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
     super.initState();
     _getTerminalEmulator();
     _detectSpice();
-    getPreference<String>(prefWorkingDirectory).then((pref) {
-      if (!mounted) return;
-      setState(() {
-        if (pref == null) {
-          return;
-        }
-        Directory.current = pref;
-      });
-      Future.delayed(
-        Duration.zero,
-        () => _getVms(),
-      ); // Reload VM list when we enter the page.
-    });
+    Future<void>.delayed(Duration.zero, _getVms);
     refreshTimer = Timer.periodic(const Duration(seconds: 5), (Timer t) {
       _getVms();
     }); // Reload VM list every 5 seconds.
@@ -118,7 +106,7 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
 
   VmInfo _parseVmInfo(String name) {
     VmInfo info = VmInfo();
-    File portsFile = File('$name/$name.ports');
+    File portsFile = File(path.join(workingDirectory, name, '$name.ports'));
     if (portsFile.existsSync()) {
       List<String> lines = portsFile.readAsLinesSync();
       for (var line in lines) {
@@ -151,14 +139,13 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
     List<String> currentVms = [];
     Map<String, VmInfo> activeVms = {};
 
-    await for (var entity in Directory.current.list(
-      recursive: false,
-      followLinks: true,
-    )) {
+    await for (var entity in Directory(
+      workingDirectory,
+    ).list(recursive: false, followLinks: true)) {
       if ((entity.path.endsWith('.conf')) && (_isValidConf(entity.path))) {
         String name = path.basenameWithoutExtension(entity.path);
         currentVms.add(name);
-        File pidFile = File('$name/$name.pid');
+        File pidFile = File(path.join(workingDirectory, name, '$name.pid'));
         if (pidFile.existsSync()) {
           String pid = pidFile.readAsStringSync().trim();
           // Check if the process is still running using kill -0, which is
@@ -217,13 +204,13 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                   dialogTitle: "Pick a folder",
                 );
                 if (folder != null) {
-                  setState(() {
-                    Directory.current = folder;
-                  });
-                  savePreference(prefWorkingDirectory, Directory.current.path);
+                  await gWorkspace!.select(folder);
+                  if (!mounted) return;
+                  setState(() {});
+                  _getVms();
                 }
               },
-              child: Text(Directory.current.path),
+              child: Text(workingDirectory),
             ),
           ],
         ),
@@ -299,7 +286,10 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                       if (_spicy) {
                         command.addAll(['--display', 'spice']);
                       }
-                      var shell = Shell();
+                      var shell = Shell(
+                        workingDirectory: workingDirectory,
+                        environment: gProcessEnvironment,
+                      );
                       await shell.run(command.join(' '));
                       VmInfo info = _parseVmInfo(currentVm);
                       activeVms[currentVm] = info;
@@ -341,7 +331,10 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                       ).then((result) async {
                         result = result ?? false;
                         if (result) {
-                          var shell = Shell();
+                          var shell = Shell(
+                            workingDirectory: workingDirectory,
+                            environment: gProcessEnvironment,
+                          );
                           // If Quickemu is newer than 4.9.6, use the new --kill option
                           // which is macOS compatible.
                           var quickemuVersion = Version.parse(
@@ -411,7 +404,10 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                             '$currentVm.conf',
                             '--delete-$result',
                           ];
-                          var shell = Shell();
+                          var shell = Shell(
+                            workingDirectory: workingDirectory,
+                            environment: gProcessEnvironment,
+                          );
                           await shell.run(command.join(' '));
                         }
                       });
@@ -438,7 +434,10 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                 onPressed: !_spicy
                     ? null
                     : () {
-                        var shell = Shell();
+                        var shell = Shell(
+                          workingDirectory: workingDirectory,
+                          environment: gProcessEnvironment,
+                        );
                         shell.run(['spicy', '-p', vmInfo.spicePort!].join(' '));
                       },
               ),
@@ -535,7 +534,10 @@ class _ManagerState extends State<Manager> with PreferencesMixin {
                                 break;
                             }
                             sshArgs.insert(0, _terminalEmulator!);
-                            var shell = Shell();
+                            var shell = Shell(
+                              workingDirectory: workingDirectory,
+                              environment: gProcessEnvironment,
+                            );
                             shell.run(sshArgs.join(' '));
                           }
                         });

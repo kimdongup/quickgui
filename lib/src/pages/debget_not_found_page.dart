@@ -1,50 +1,72 @@
-import 'package:flutter/gestures.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class DebgetNotFoundPage extends StatelessWidget {
-  const DebgetNotFoundPage({super.key});
+import '../globals.dart';
 
+class DebgetNotFoundPage extends StatefulWidget {
+  const DebgetNotFoundPage({
+    required this.onRetry,
+    required this.onWorkspaceChanged,
+    super.key,
+  });
+  final Future<void> Function() onRetry;
+  final VoidCallback onWorkspaceChanged;
+  @override
+  State<DebgetNotFoundPage> createState() => _DebgetNotFoundPageState();
+}
+
+class _DebgetNotFoundPageState extends State<DebgetNotFoundPage> {
+  String? _error;
   @override
   Widget build(BuildContext context) {
+    final missing = [
+      if (gQuickgetExecutable == null) 'quickget',
+      if (gQuickemuExecutable == null) 'quickemu',
+    ];
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              context.t('quickemu was not found in your PATH'),
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.t('Please install it and try again.'),
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 16),
-            Text.rich(
-              TextSpan(
-                style: const TextStyle(fontSize: 16),
-                text: context.t('See'),
-                children: [
-                  TextSpan(
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        launchUrl(
-                          Uri.parse(
-                            'https://github.com/quickemu-project/quickemu',
-                          ),
-                        );
-                      },
-                    text: ' github.com/quickemu-project/quickemu ',
-                    style: const TextStyle(color: Colors.blue),
-                  ),
-                  TextSpan(text: context.t('for more information')),
-                ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (missing.isNotEmpty)
+                Text(
+                  '${missing.join(', ')}: ${context.t('quickemu was not found in your PATH')}',
+                  textAlign: TextAlign.center,
+                ),
+              if (gStartupError ?? gWorkspace?.error case final String error)
+                SelectableText(error),
+              if (_error != null) SelectableText(_error!),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: widget.onRetry,
+                child: Text(context.t('Retry')),
               ),
-            ),
-          ],
+              if (gWorkspace != null)
+                TextButton(
+                  onPressed: () async {
+                    try {
+                      final path = await FilePicker.getDirectoryPath();
+                      if (path == null) return;
+                      await gWorkspace!.select(path);
+                      if (mounted) widget.onWorkspaceChanged();
+                    } catch (e) {
+                      if (mounted) setState(() => _error = '$e');
+                    }
+                  },
+                  child: Text(context.t('Select folder')),
+                ),
+              TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://github.com/quickemu-project/quickemu'),
+                ),
+                child: const Text('github.com/quickemu-project/quickemu'),
+              ),
+            ],
+          ),
         ),
       ),
     );

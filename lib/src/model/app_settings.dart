@@ -18,7 +18,7 @@ class AppSettings extends ChangeNotifier {
       : null;
 
   set activeLocale(String locale) {
-    _activeLocale = locale;
+    setActiveLocaleSilently(locale);
     notifyListeners();
   }
 
