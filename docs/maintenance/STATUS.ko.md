@@ -8,11 +8,11 @@
 - `upstream`: `https://github.com/quickemu-project/quickgui.git`
 - upstream 기준: `74949e086154f3f2d555f9268778545c78ff2b51`
 - 기존 텍스트 수정 보존: `archive/local-start` / `e6d30ff`. 기존 `.DS_Store`와 한국어 설계 원본은 로컬에 보존했다.
-- 공통 PR 후보: `integration/stabilization` / `ab1ff85`. 공유 저장소 삭제 보호를 추가했고 `pr/functional-regressions`, `pr/shared-vm-storage`도 같은 커밋이다. 개인 기능과 개인 운영 문서는 포함하지 않는다.
+- 공통 PR 후보: `integration/stabilization` / `ae57d7d`. `pr/functional-regressions`, `pr/spice-unix`도 같은 커밋이다. 공유 저장소 삭제 보호 후보 `pr/shared-vm-storage`는 `ab1ff85`로 보존한다. 개인 기능과 개인 운영 문서는 포함하지 않는다.
 - 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
-- 현재 개인 통합 후보: `personal/preview` / `bbd021f` (이후 문서만 추가될 수 있다). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 후속 공통 삭제 보호를 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
+- 현재 개인 통합 후보의 앱 코드: `personal/preview` / `09fce12` (이후 검증 도구·문서 커밋은 별도). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 공통 삭제 보호와 SPICE Unix 소켓 재접속을 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위
@@ -30,11 +30,17 @@
 | OPS-01 | fork 전용 패키지/체크섬/SHA manifest, 정확한 태그 검증, 기본 build-only, upstream 배포·자동 flake PR 작업 분리 |
 | GUEST-01 | 선택형 Intel Mac Windows x64 호환 프로필, 설치 중 표시 인식·Run 차단·사용자 완료 확인 후 표시 보관, 일반 실행 시 설치 전용 환경 변수 제거. 기존 Windows VM은 읽기만 수행 |
 | CORE-05 후속 | 삭제 전 실제 경로를 비교하여 다른 설정이 참조하는 디스크 링크, 디렉터리 별칭과 중첩 VM 디렉터리를 보호. 독립 VM의 삭제는 유지 |
+| CORE-06 후속 | Quickemu의 기본 Unix SPICE 소켓을 기존 연결 버튼에서 지원. 경로 문자 보존, 실행 직전 PID/config/소켓 재확인, 기존 TCP 지원 유지 |
 
 ## 실행한 검증
 
 | 대상 | 명령/증거 | 결과 |
 | --- | --- | --- |
+| 공통 `ae57d7d` | 분석/전체 테스트, [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34262907080), [실제 backend CI](https://github.com/kimdongup/quickgui/actions/runs/34262907061) | PASS: 분석 0, 30 tests / 외부 opt-in 2 skipped, Linux/macOS/Nix 및 실제 Linux backend |
+| 개인 `09fce12` | 분석/전체 테스트, [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34263261231), [실제 backend CI](https://github.com/kimdongup/quickgui/actions/runs/34263261290) | PASS: 분석 0, 43 tests / 외부 opt-in 3 skipped, Linux/macOS/Nix 및 실제 Linux backend |
+| 개인 `09fce12` | macOS release 빌드와 `lipo -archs` | PASS: 46.8 MB, runner/App.framework의 x86_64/arm64 slice |
+| Intel Mac 별도 SPICE backend | [구성·실접속 기록](MACOS_SPICE_BACKEND.ko.md), [재현 도구](../../tool/spice/README.md) | PASS: 서버 25 tests, QEMU 11.1.1/SPICE 0.16.0, 화면 수신·K 입력·재접속·실제 spicy 4개 채널. 기본 GStreamer 환경에서도 확인. 설치된 게스트 검증과 구분 |
+| 실행 중 Unix SPICE VM 읽기 | 실제 `VmRepository.inspect/list`, `spiceArguments` | PASS: 1개 별도 검사. 실행 상태/소켓 경로/재접속 인자 인식, config bytes 보존 |
 | 공통 `ab1ff85` | `flutter analyze --no-pub`, `flutter test --no-pub` | PASS: 분석 0, 26 tests / 외부 실행 opt-in 2 skipped. 새 공유 경로 검사 3개 포함 |
 | 개인 `bbd021f` | `flutter analyze --no-pub`, `flutter test --no-pub` | PASS: 분석 0, 39 tests / 외부 실행 opt-in 3 skipped. Windows 설치 처리와 공통 삭제 보호 통합 |
 | 개인 `bbd021f` | `flutter build macos --release --no-pub`, `lipo -archs` | PASS: 46.8 MB 앱. runner와 App.framework의 x86_64/arm64 slice 확인 |

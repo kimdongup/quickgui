@@ -30,7 +30,7 @@
 | 2 | Intel macOS → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 UEFI/설치 ISO/드라이버를 분리하고 TCG 부팅·설치·재부팅·SSH 검증. 성능 한계 기록 | 대기. 다운로드·VM 실행 미착수 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 실제 Apple Silicon 장비 확보. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. ARM Mac과 별도 backend 필요 |
 
-설치 완료와 연결 기능은 각각 기록한다. 현재 Homebrew QEMU 11.1.1은 `-spice`를 지원하지 않아 이 Intel Mac의 SPICE 서버 검증은 **환경상 차단**이다. `spicy` 클라이언트가 설치돼 있어도 서버 지원을 대체하지 않는다. Cocoa 화면을 SPICE 통과로 기록하지 않는다. 이 제약은 설치·SSH 결과와 분리하며, SPICE 지원 QEMU를 준비한 뒤 별도 검증한다.
+설치 완료와 연결 기능은 각각 기록한다. Homebrew QEMU 11.1.1은 `-spice`를 지원하지 않아 별도의 QEMU/SPICE 서버를 준비했다. [SPICE backend 기록](MACOS_SPICE_BACKEND.ko.md)에서 폐기 가능한 검사 VM의 화면·키 입력·재접속 및 실제 spicy 채널 연결을 확인했다. 설치 중인 macOS는 계속 기존 Cocoa backend를 사용한다. 이 결과는 설치된 macOS의 SPICE·SSH 검증이나 Linux 호스트 검증을 대신하지 않는다.
 
 기존 macOS/Windows 항목은 x64를 기준으로 유지한다. ARM 메뉴는 실제 backend와 함께 확장한다. Quickget 4.9.9는 Windows/macOS용 ARM 다운로드 경로를 제공하지 않으므로 메뉴 이름과 `--arch arm64` 인자만 추가해 지원을 표시하지 않는다. Windows ARM은 실험 항목, macOS ARM은 Apple Silicon 호스트와 Apple Virtualization backend가 필요한 항목으로 설계한다.
 
@@ -55,6 +55,7 @@
 - 설치 화면에서 `QuickguiMac` 137.23 GB가 표시되고 선택 가능함을 확인. 설치 시작 후 `OSISDownloadOperation` 시작 로그 및 진행 화면 확인. 새 qcow2가 약 17 MB에서 233 MB로 증가했으나, 이 크기나 초기 남은 시간(약 2시간 52분)으로 다운로드/설치 완료를 추정하지 않음.
 - 설치 중 실제 config를 Quickgui의 `VmRepository.inspect`와 `list`로 조회한 별도 읽기 검사 PASS. 실행 중 QEMU PID, 상태 디렉터리와 SSH 전달 포트 22220을 인식하고 SPICE 포트는 없음을 확인. 전후 config bytes 동일. 포트 전달 정보 인식은 SSH 서비스/로그인 성공을 뜻하지 않음.
 - 전체 설치 로그는 `InstallAssistant.pkg` 15.656 GB 다운로드를 표시. 새 qcow2는 이후 5 GB 이상으로 증가했으며 남은 시간은 약 56분~4시간 사이로 변동. 진행률/예상 시간은 설치 완료 판정에 사용하지 않음. 현재 QEMU PID가 종료될 때까지만 `caffeinate -i -w <pid>`로 호스트 유휴 절전을 방지.
+- 다운로드 이후 파일 추출 단계로 넘어가며 남은 시간 표시가 약 4시간에서 13분으로 변경됨. 13분 표시가 한동안 유지됐으나 qcow2는 31 GB 이상으로 계속 증가했고 다음 관찰에서는 12분으로 바뀜. 아직 바탕화면·설치 완료·SSH 로그인은 미확인. 이 대기 중 별도 SPICE backend와 앱 재접속 수정을 검증했으며 ARM 실험은 시작하지 않음.
 - `3f85b3d`의 GitHub CI: [개인 작업 브랜치 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252565602), [실제 Linux backend](https://github.com/kimdongup/quickgui/actions/runs/34252565587), [개인 통합 후보 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252666094), [통합 후보 backend](https://github.com/kimdongup/quickgui/actions/runs/34252665969) 모두 PASS. Linux/macOS/Nix 및 36개 앱 테스트 포함. 이후 문서/화면 증거만 추가한 커밋과 구분.
 
 OpenCore 실제 게스트 화면(복구 OS 설치 완료 화면은 아님):
@@ -76,5 +77,7 @@ QuickguiMac을 선택한 실제 설치 시작 화면(완료 전):
 이번 프로필과 외부 설치 실행기 연동은 개인 후보에만 포함하며, `pr/*` 및 `integration/stabilization` 공통 후보에는 포함하지 않는다. `main`은 upstream 기준으로 유지한다. CPU 감지 수정은 Quickgui가 아닌 **Quickemu** 변경 후보이며 별도 패치와 재현 테스트로 보관한다. 범용 설치 상태 모델은 명시적 설치/재개/설치 완료 계약이 backend에 마련된 뒤 공통 PR로 추출한다.
 
 설치 대기 중 별도로 재현한 공유 저장소 삭제 오류는 공통 수정이다. 다른 config의 디렉터리 별칭/중첩 경로/디스크 링크를 실제 경로로 비교하여 삭제 명령 호출 전에 거부한다. `ab1ff85`를 공통 통합·회귀 후보에 반영하고 개인 후보에는 `bbd021f`로 적용했다. 공통 26 tests, 개인 39 tests 및 양쪽 정적 분석 PASS. 위 Windows 기능의 초기 36개 검사 결과와 구분한다.
+
+SPICE Unix 소켓을 읽지 못하던 오류도 공통 수정이다. `ae57d7d`를 공통 후보에, `09fce12`를 개인 후보에 적용했다. 현재 공통 30 tests, 개인 43 tests 및 Linux/macOS/Nix CI와 실제 Linux backend CI가 통과했다. 호스트별 SPICE 재현 도구와 빌드 기록은 개인 후보에서 관리한다.
 
 공식 자료: [Apple macOS 다운로드](https://support.apple.com/en-us/102662), [Apple Silicon macOS 가상 머신](https://developer.apple.com/documentation/virtualization/running-macos-in-a-virtual-machine-on-apple-silicon), [Windows ARM64 ISO](https://www.microsoft.com/ko-kr/software-download/windows11arm64), [QEMU vmapple 지원 조건](https://www.qemu.org/docs/master/system/arm/vmapple.html).
