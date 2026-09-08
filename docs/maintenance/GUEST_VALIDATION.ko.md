@@ -27,8 +27,12 @@
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
 | 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Sequoia 다운로드/chunklist/복구 GUI/APFS 디스크 준비 통과. CPU 감지 수정 사본 + 8 GB. QuickguiMac 대상 설치 시작, 완료는 미확인 |
-| 2 | Intel macOS → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 UEFI/설치 ISO/드라이버를 분리하고 TCG 부팅·설치·재부팅·SSH 검증. 성능 한계 기록 | 대기. 다운로드·VM 실행 미착수 |
+| 2 | M1 맥미니 → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 QEMU/HVF·UEFI·설치 ISO·드라이버를 확인하고 설치·재부팅·SSH·SPICE를 각각 검증 | 대기. 주 검증 호스트로 M1 권장. 다운로드·VM 실행 미착수 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
+
+M1 보유 확인 후 Windows ARM64의 주 검증 호스트도 M1으로 조정하는 것을 권장한다. [QEMU의 가속기 문서](https://www.qemu.org/docs/master/system/introduction.html)에 따르면 macOS ARM 호스트에서 HVF를 사용할 수 있다. 현재 Quickemu 4.9.9 소스도 ARM 호스트의 ARM 게스트는 HVF를 선택하고 Intel 호스트의 ARM 게스트는 TCG로 전환한다. 따라서 M1은 Windows ARM64의 설치·재부팅·실사용 검토에 유리할 것으로 예상하며, 실제 속도를 측정한 결과는 아니다. Intel의 Windows ARM64 TCG 실행은 추가 호환성 실험으로 남기고 M1 검증의 선행 필수 조건으로 두지 않는다. OS별 순차 검증 원칙은 유지한다.
+
+M1에서도 현재 Quickgui/Quickget의 Windows ARM 설치 경로가 완성된 것은 아니다. [Microsoft 공식 ARM64 ISO](https://www.microsoft.com/en-us/software-download/windows11arm64), ARM64 UEFI와 저장소·네트워크·화면 드라이버, TPM/Secure Boot 구성, QEMU의 실제 HVF 선택과 SPICE 지원을 먼저 확인한다. Intel용 Windows 프로필이나 별도 빌드한 x86_64 SPICE 실행 파일을 ARM에 적용하지 않는다. Windows ARM은 QEMU/HVF 경로를 검증하고, macOS ARM용 Apple Virtualization/IPSW backend 작업과 구분한다.
 
 설치 완료와 연결 기능은 각각 기록한다. Homebrew QEMU 11.1.1은 `-spice`를 지원하지 않아 별도의 QEMU/SPICE 서버를 준비했다. [SPICE backend 기록](MACOS_SPICE_BACKEND.ko.md)에서 폐기 가능한 검사 VM의 화면·키 입력·재접속 및 실제 spicy 채널 연결을 확인했다. 설치 중인 macOS는 계속 기존 Cocoa backend를 사용한다. 이 결과는 설치된 macOS의 SPICE·SSH 검증이나 Linux 호스트 검증을 대신하지 않는다.
 

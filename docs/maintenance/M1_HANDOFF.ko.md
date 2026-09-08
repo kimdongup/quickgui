@@ -106,9 +106,11 @@ quickget --version
 
 **소스를 받거나 ARM64 앱을 빌드했다고 macOS ARM 게스트 지원이 완성되는 것은 아니다.** 현재 앱에는 Apple Virtualization/IPSW backend가 구현되어 있지 않다. ARM 메뉴도 실제 backend 동작을 확인한 뒤 연결한다.
 
-게스트 검증 순서는 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)의 **Intel에서 macOS x64 → Intel에서 Windows ARM64 실험 → M1에서 macOS ARM**을 유지한다. 맥미니 개발 환경·소스·UI 준비는 지금 할 수 있지만, 3단계 게스트 설치·실행은 앞 단계 결과를 확정한 뒤 진행한다. Intel macOS 설치 완료는 사용자 보고를 기다리는 상태다.
+게스트 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)의 **Intel에서 macOS x64 → M1에서 Windows ARM64 실험 → M1에서 macOS ARM** 순서로 진행하는 것을 권장한다. M1 장비를 보유한 것이 확인되어 Windows ARM64도 하드웨어 가속이 가능한 M1을 주 검증 호스트로 제안한다. Intel에서의 ARM64 TCG 실행은 추가 호환성 실험으로 남긴다. 맥미니 개발 환경·소스·UI 준비는 지금 할 수 있지만, 각 게스트 설치·실행은 앞 단계 결과를 확정한 뒤 진행한다. Intel macOS 설치 완료는 사용자 보고를 기다리는 상태다.
 
-M1 단계에서는 [Apple의 macOS 가상 머신 예제](https://developer.apple.com/documentation/virtualization/running-macos-in-a-virtual-machine-on-apple-silicon)를 기준으로 Virtualization.framework와 Apple restore image(`.ipsw`)를 사용하는 backend부터 검증한다. 호스트에서 지원하는 이미지를 확인하고 별도 ARM VM을 만든다. 설치·바탕화면·재부팅·SSH를 각각 기록한다. 이 backend의 화면 연결 방식은 QEMU/SPICE와 별도로 설계·검증한다.
+Windows ARM64는 QEMU/HVF, ARM64 UEFI와 공식 ISO·게스트 드라이버를 준비하는 경로다. macOS ARM용 Apple Virtualization backend가 완성될 때까지 Windows ARM 검증을 기다릴 필요는 없다. 다만 현재 앱의 ARM 설치 흐름과 M1의 QEMU/SPICE 구성은 아직 검증되지 않았다.
+
+macOS ARM 단계에서는 [Apple의 macOS 가상 머신 예제](https://developer.apple.com/documentation/virtualization/running-macos-in-a-virtual-machine-on-apple-silicon)를 기준으로 Virtualization.framework와 Apple restore image(`.ipsw`)를 사용하는 backend부터 검증한다. 호스트에서 지원하는 이미지를 확인하고 별도 ARM VM을 만든다. 설치·바탕화면·재부팅·SSH를 각각 기록한다. 이 backend의 화면 연결 방식은 QEMU/SPICE와 별도로 설계·검증한다.
 
 Intel에서 만든 macOS/Windows x64 VM 디스크는 ARM 게스트 설치를 대신하지 않는다. `/Users/mac/quickemu/validation/spice-backend`의 QEMU/SPICE 바이너리와 `tool/spice`의 x86 부팅 검사는 Intel에서 검증한 것으로 M1용 실행 절차가 아니다. 빌드 기록은 [MACOS_SPICE_BACKEND.ko.md](MACOS_SPICE_BACKEND.ko.md)에 보존되어 있다.
 
@@ -116,7 +118,7 @@ Intel에서 만든 macOS/Windows x64 VM 디스크는 ARM 게스트 설치를 대
 
 맥미니에서 새 작업을 시작할 때 다음 내용을 전달하면 된다.
 
-> `docs/maintenance/M1_HANDOFF.ko.md`, `STATUS.ko.md`, `GUEST_VALIDATION.ko.md`, `UPSTREAM_PRS.md`를 읽고 현재 브랜치와 M1 환경부터 확인해 주세요. 개인 기능과 공통 PR 수정을 분리하고 기존 UI를 유지합니다. 지금은 환경·빌드·UI 검토를 진행하고, macOS ARM 게스트 검증은 Intel macOS와 Windows ARM64 실험 결과를 확정한 뒤 시작합니다. Intel 게스트 설치 완료 및 M1 실사용 성공을 추정하지 말고 실제 결과를 기록해 주세요.
+> `docs/maintenance/M1_HANDOFF.ko.md`, `STATUS.ko.md`, `GUEST_VALIDATION.ko.md`, `UPSTREAM_PRS.md`를 읽고 현재 브랜치와 M1 환경부터 확인해 주세요. 개인 기능과 공통 PR 수정을 분리하고 기존 UI를 유지합니다. 지금은 환경·빌드·UI 검토를 진행합니다. 게스트 검증의 권장 순서는 Intel macOS x64 → M1 Windows ARM64 → M1 macOS ARM이며 앞 단계 결과 확정 후 다음 단계로 넘어갑니다. Intel의 Windows ARM64 TCG 실행은 추가 실험입니다. Intel 게스트 설치 완료 및 M1 실사용 성공을 추정하지 말고 실제 결과를 기록해 주세요.
 
 소스의 검증 문서가 다른 컴퓨터에서 작업을 이어받는 기준이다. 로컬 VM 디스크·미추적 파일·앱 설정은 clone으로 이전되지 않는다. 최초 설계 문서와 실행 상태가 다르면 [STATUS.ko.md](STATUS.ko.md)의 기록을 기준으로 한다.
 
