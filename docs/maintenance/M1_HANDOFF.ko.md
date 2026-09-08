@@ -114,13 +114,30 @@ macOS ARM 단계에서는 [Apple의 macOS 가상 머신 예제](https://develope
 
 Intel에서 만든 macOS/Windows x64 VM 디스크는 ARM 게스트 설치를 대신하지 않는다. `/Users/mac/quickemu/validation/spice-backend`의 QEMU/SPICE 바이너리와 `tool/spice`의 x86 부팅 검사는 Intel에서 검증한 것으로 M1용 실행 절차가 아니다. 빌드 기록은 [MACOS_SPICE_BACKEND.ko.md](MACOS_SPICE_BACKEND.ko.md)에 보존되어 있다.
 
-## 작업 이어받기와 push
+## 대화 기록과 실행 호스트
+
+**Git clone은 소스·커밋·검증 문서를 전달하지만 Codex 대화 자체를 전달하지 않는다.** 맥미니에서 새 대화를 시작할 때 이전 대화를 모두 알고 있다고 가정하지 않는다. 같은 저장소의 미래 대화에 전달할 지침을 문서로 보존하는 방식은 [OpenAI 공식 프로젝트 안내](https://learn.chatgpt.com/docs/projects)에서도 설명한다.
+
+기존 대화를 이어서 옮기려면 [OpenAI 공식 원격 연결 안내의 Hand off](https://learn.chatgpt.com/docs/remote-connections#hand-off-a-chat-between-hosts)를 확인한다. 맥미니를 연결하고 양쪽에 같은 Git 저장소의 프로젝트를 등록한 뒤, 대화 하단 실행 위치에서 대상 호스트를 선택하고 목적지·브랜치를 검토하여 **Hand off**한다. 공식 문서에 따르면 목적지 worktree로 대화와 Git 상태가 전달된다. 실제 앱에서 해당 연결·메뉴를 사용할 수 있는지는 확인이 필요하며, 이 문서 작성 시에는 설정하거나 이전하지 않았다.
+
+기존 Intel 컴퓨터에 원격 접속하여 대화를 조작하는 것과, 실행 호스트를 M1으로 옮기는 것을 구분한다. M1 검증 전에 실행 위치·`uname -m`·작업 폴더·브랜치를 확인한다. Hand off는 실행 중 응답을 중단할 수 있으므로 현재 Intel 설치 관련 작업의 상태를 먼저 정리한다. 게스트 디스크·실행 중 VM·Terminal 프로세스가 함께 이전된다고 가정하지 않는다.
+
+## 새 대화로 작업 이어받기와 push
 
 맥미니에서 새 작업을 시작할 때 다음 내용을 전달하면 된다.
 
 > `docs/maintenance/M1_HANDOFF.ko.md`, `STATUS.ko.md`, `GUEST_VALIDATION.ko.md`, `UPSTREAM_PRS.md`를 읽고 현재 브랜치와 M1 환경부터 확인해 주세요. 개인 기능과 공통 PR 수정을 분리하고 기존 UI를 유지합니다. 지금은 환경·빌드·UI 검토를 진행합니다. 게스트 검증의 권장 순서는 Intel macOS x64 → M1 Windows ARM64 → M1 macOS ARM이며 앞 단계 결과 확정 후 다음 단계로 넘어갑니다. Intel의 Windows ARM64 TCG 실행은 추가 실험입니다. Intel 게스트 설치 완료 및 M1 실사용 성공을 추정하지 말고 실제 결과를 기록해 주세요.
 
 소스의 검증 문서가 다른 컴퓨터에서 작업을 이어받는 기준이다. 로컬 VM 디스크·미추적 파일·앱 설정은 clone으로 이전되지 않는다. 최초 설계 문서와 실행 상태가 다르면 [STATUS.ko.md](STATUS.ko.md)의 기록을 기준으로 한다.
+
+양쪽 대화 사이에 이후 메시지가 자동 전달된다고 가정하지 않는다. Intel 설치 결과처럼 다른 호스트의 새 결과가 필요할 때는 그 호스트에서 기록·push한 커밋을 가져온다. M1 작업 브랜치를 유지한 채 다음처럼 Intel 측 최신 기록을 읽을 수 있다.
+
+```sh
+git fetch origin
+git show origin/personal/preview:docs/maintenance/GUEST_VALIDATION.ko.md
+```
+
+M1 대화는 시작할 때 문서에서 확인한 완료 범위·미검증 항목·다음 작업을 짧게 정리하고 환경을 확인한다. M1 결과는 `docs/maintenance/M1_VALIDATION.ko.md`에 실행 호스트·검증 SHA·명령·성공/실패·남은 작업과 함께 기록하는 것을 권장한다. 이 파일은 실제 검토를 시작할 때 만들며, 현재 M1 검증을 수행한 기록은 없다. 결과와 관련 코드를 같은 M1 작업 브랜치에 커밋·push한 뒤 커밋 SHA를 Intel 측 대화에 전달하면, 그 변경을 fetch하여 검토하고 통합할 수 있다.
 
 맥미니의 변경은 파일별 diff를 검토하고 해당 검증을 마친 뒤 Conventional Commit으로 커밋한다. 자신의 GitHub 계정에 push 인증이 준비되어 있으면 다음 명령으로 M1 작업 브랜치를 fork에 올린다.
 
