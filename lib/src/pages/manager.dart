@@ -9,11 +9,14 @@ import '../globals.dart';
 import '../model/osicons.dart';
 import '../services/connections.dart';
 import '../services/vm_service.dart';
+import '../services/download_result.dart';
+import 'config_editor.dart';
 import '../widgets/workspace_picker.dart';
 
 class Manager extends StatefulWidget {
-  const Manager({this.operations, super.key});
+  const Manager({this.operations, this.highlight, super.key});
   final VmOperations? operations;
+  final DownloadedVm? highlight;
   @override
   State<Manager> createState() => _ManagerState();
 }
@@ -283,8 +286,14 @@ class _ManagerState extends State<Manager> {
     ].join(' ');
     return [
       ListTile(
+        selected: widget.highlight?.path == vm.configPath,
+        selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
         leading: _icon(vm),
-        title: Text(vm.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(
+          '${vm.name}${widget.highlight?.path == vm.configPath && widget.highlight!.isNew ? ' (${context.t('New')})' : ''}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: vm.error == null
             ? null
             : Tooltip(
@@ -298,6 +307,21 @@ class _ManagerState extends State<Manager> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            IconButton(
+              tooltip: context.t('Edit configuration'),
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: stopped && !busy
+                  ? () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ConfigEditor(vm: vm, operations: operations),
+                        ),
+                      );
+                      if (mounted) await _refresh();
+                    }
+                  : null,
+            ),
             IconButton(
               tooltip: context.t('Run'),
               icon: busy

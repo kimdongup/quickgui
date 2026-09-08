@@ -13,6 +13,8 @@ import '../model/operating_system.dart';
 import '../model/option.dart';
 import '../model/version.dart';
 import '../services/download_session.dart';
+import '../services/download_result.dart';
+import 'manager.dart';
 import '../widgets/downloader/cancel_dismiss_button.dart';
 import '../widgets/downloader/download_progress_bar.dart';
 
@@ -38,6 +40,7 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
   late final DownloadSession session;
   NotificationsClient? _notifications;
   bool _confirming = false;
+  DownloadedVm? _downloadedVm;
 
   @override
   void initState() {
@@ -62,7 +65,21 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
   }
 
   Future<void> _start() async {
+    Set<String>? before;
+    try {
+      before = await DownloadedVm.snapshot(session.directory);
+    } catch (_) {
+      /* Discovery must not prevent downloading. */
+    }
     await session.start();
+    if (before != null && mounted) {
+      try {
+        final result = await DownloadedVm.fromSession(session, before);
+        if (mounted) setState(() => _downloadedVm = result);
+      } catch (_) {
+        /* A missing result does not change the exit status. */
+      }
+    }
     if (!mounted || Platform.isMacOS) return;
     try {
       _notifications = NotificationsClient();
@@ -196,6 +213,27 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
               ),
             ),
           ),
+          if (_downloadedVm != null)
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: TextButton.icon(
+                icon: const Icon(Icons.computer),
+                label: Text(context.t('Open in Manager')),
+                onPressed: () async {
+                  try {
+                    await gWorkspace!.select(session.directory);
+                    if (!context.mounted) return;
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => Manager(highlight: _downloadedVm),
+                      ),
+                    );
+                  } catch (error) {
+                    if (mounted) setState(() => session.error = '$error');
+                  }
+                },
+              ),
+            ),
           CancelDismissButton(
             downloadFinished: session.finished,
             onCancel: () => unawaited(session.cancel()),

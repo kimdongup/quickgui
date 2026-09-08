@@ -10,7 +10,7 @@ import 'command_runner.dart';
 
 enum VmState { stopped, running, unknown }
 
-enum VmAction { start, stop, deleteDisk, deleteVm }
+enum VmAction { start, stop, deleteDisk, deleteVm, edit }
 
 class VmRecord {
   VmRecord({
@@ -186,6 +186,60 @@ class VmOperations extends ChangeNotifier {
   final Map<String, VmAction> _busy = {};
   VmAction? actionFor(String config) => _busy[config];
 
+  Future<void> saveConfig(VmRecord selected, String content) async {
+    final file = File(selected.configPath);
+    if (await FileSystemEntity.type(file.path, followLinks: false) !=
+        FileSystemEntityType.file) {
+      throw StateError('Open the original config file to edit a symbolic link');
+    }
+    final key = await file.resolveSymbolicLinks();
+    if (_busy.containsKey(key) || _busy.containsKey(file.path)) {
+      throw StateError('VM already has an operation in progress');
+    }
+    _busy[key] = VmAction.edit;
+    _busy[file.path] = VmAction.edit;
+    notifyListeners();
+    Directory? temporary;
+    try {
+      Future<void> check() async {
+        final current = await repository.inspect(file.path);
+        if (current?.state != VmState.stopped ||
+            current?.content != selected.content ||
+            await file.resolveSymbolicLinks() != key ||
+            await FileSystemEntity.type(file.path, followLinks: false) !=
+                FileSystemEntityType.file) {
+          throw StateError('VM or config changed; close and reopen the editor');
+        }
+      }
+
+      await check();
+      final stat = await file.stat();
+      temporary = await Directory(selected.directory)
+          .createTemp('.quickgui-edit-');
+      final replacement = await File(p.join(temporary.path, 'config'))
+          .writeAsString(content, flush: true);
+      final mode = (stat.mode & 0x1ff).toRadixString(8);
+      final chmod = await Process.run('/bin/chmod', [mode, replacement.path]);
+      if (chmod.exitCode != 0) {
+        throw FileSystemException(
+          'Cannot preserve config permissions',
+          file.path,
+        );
+      }
+      await check();
+      // Same-filesystem rename preserves the original if preparing the file fails.
+      await replacement.rename(file.path);
+    } finally {
+      try {
+        if (temporary != null) await temporary.delete(recursive: true);
+      } finally {
+        _busy.remove(key);
+        _busy.remove(file.path);
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> perform(
     VmRecord selected,
     VmAction action, {
@@ -193,6 +247,9 @@ class VmOperations extends ChangeNotifier {
     required Map<String, String> environment,
     List<String> startArguments = const [],
   }) async {
+    if (action == VmAction.edit) {
+      throw ArgumentError('Use saveConfig for editing');
+    }
     // Resolve aliases so two symlink names cannot bypass a per-VM lock.
     final key = await File(selected.configPath).resolveSymbolicLinks();
     if (_busy.containsKey(key) || _busy.containsKey(selected.configPath)) {
@@ -269,6 +326,7 @@ class VmOperations extends ChangeNotifier {
           VmAction.stop => ['--kill'],
           VmAction.deleteDisk => ['--delete-disk'],
           VmAction.deleteVm => ['--delete-vm'],
+          VmAction.edit => throw StateError('Not a backend action'),
         },
       ];
       // Revalidate after all preparatory awaits, especially before destructive commands.
