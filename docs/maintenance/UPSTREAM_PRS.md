@@ -33,9 +33,11 @@ Validation: nonzero exit after 100%, missing executable, large simultaneous outp
 
 ## D — VM actions
 
-VM controls could target the wrong state-file directory, split filenames containing spaces, or allow deletion while startup was pending. Use absolute config paths and argument lists, inspect literal disk paths without sourcing Bash, serialize operations per VM and recheck state/config before commands. Requery the resulting state and surface backend failures. SSH discovery has bounded connect/read timeouts.
+VM controls could target the wrong state-file directory, split filenames containing spaces, or allow deletion while startup was pending. Use absolute config paths and argument lists, inspect literal disk paths without sourcing Bash, serialize operations per VM and recheck state/config before commands. Resolve storage paths before deletion to protect shared disk symlinks, directory aliases and nested VM directories referenced by other configurations in the workspace. Requery the resulting state and surface backend failures. SSH discovery has bounded connect/read timeouts.
 
 Validation: invalid/unrelated PIDs, custom disk directories, concurrent actions, changed config, safe SSH arguments and split/silent SSH fixtures. Public Quickemu 4.9.9 starts/stops/deletes a disposable BIOS VM on Linux x86_64 and macOS x86_64. Full installed guest/SSH/SPICE GUI acceptance is still pending; do not mark that PR checklist item complete.
+
+Follow-up `ab1ff85` on `pr/shared-vm-storage` is also integrated into `pr/functional-regressions` and `integration/stabilization`. The old code invoked the mock deletion backend for aliased/shared storage; the fix rejects it before invocation. Three regression tests cover aliases, nested directories, shared disk symlinks and successful deletion of independent storage. Analysis and all 26 common tests pass locally; [Linux/macOS/Nix CI](https://github.com/kimdongup/quickgui/actions/runs/34259444705) and [real Linux backend CI](https://github.com/kimdongup/quickgui/actions/runs/34259444702) pass on that SHA. Fold this follow-up into topic D before submission; it introduces no personal installation profile or UI layout change.
 
 ## E — selection usability
 

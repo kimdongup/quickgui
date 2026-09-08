@@ -8,11 +8,11 @@
 - `upstream`: `https://github.com/quickemu-project/quickgui.git`
 - upstream 기준: `74949e086154f3f2d555f9268778545c78ff2b51`
 - 기존 텍스트 수정 보존: `archive/local-start` / `e6d30ff`. 기존 `.DS_Store`와 한국어 설계 원본은 로컬에 보존했다.
-- 공통 PR 후보: `integration/stabilization` / `5d43928`. 개인 기능과 개인 운영 문서는 포함하지 않는다.
+- 공통 PR 후보: `integration/stabilization` / `ab1ff85`. 공유 저장소 삭제 보호를 추가했고 `pr/functional-regressions`, `pr/shared-vm-storage`도 같은 커밋이다. 개인 기능과 개인 운영 문서는 포함하지 않는다.
 - 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
-- 현재 개인 통합 후보: `personal/preview`. Windows 설치 경험 반영을 `personal/windows-installation`에서 구현·검증하여 `3f85b3d`까지 두 브랜치에 push했다. 상세 내역과 후속 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
+- 현재 개인 통합 후보: `personal/preview` / `bbd021f` (이후 문서만 추가될 수 있다). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 후속 공통 삭제 보호를 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위
@@ -29,11 +29,17 @@
 | EXT-03 | 선택형 backend 경로, 도움말에서 확인한 display/sound/architecture 옵션, 기본값 유지, 저장·재시작·초기화. 기존 VM architecture는 config를 유지 |
 | OPS-01 | fork 전용 패키지/체크섬/SHA manifest, 정확한 태그 검증, 기본 build-only, upstream 배포·자동 flake PR 작업 분리 |
 | GUEST-01 | 선택형 Intel Mac Windows x64 호환 프로필, 설치 중 표시 인식·Run 차단·사용자 완료 확인 후 표시 보관, 일반 실행 시 설치 전용 환경 변수 제거. 기존 Windows VM은 읽기만 수행 |
+| CORE-05 후속 | 삭제 전 실제 경로를 비교하여 다른 설정이 참조하는 디스크 링크, 디렉터리 별칭과 중첩 VM 디렉터리를 보호. 독립 VM의 삭제는 유지 |
 
 ## 실행한 검증
 
 | 대상 | 명령/증거 | 결과 |
 | --- | --- | --- |
+| 공통 `ab1ff85` | `flutter analyze --no-pub`, `flutter test --no-pub` | PASS: 분석 0, 26 tests / 외부 실행 opt-in 2 skipped. 새 공유 경로 검사 3개 포함 |
+| 개인 `bbd021f` | `flutter analyze --no-pub`, `flutter test --no-pub` | PASS: 분석 0, 39 tests / 외부 실행 opt-in 3 skipped. Windows 설치 처리와 공통 삭제 보호 통합 |
+| 개인 `bbd021f` | `flutter build macos --release --no-pub`, `lipo -archs` | PASS: 46.8 MB 앱. runner와 App.framework의 x86_64/arm64 slice 확인 |
+| 공통 `ab1ff85` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34259444705), [실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34259444702) | PASS: Linux/macOS/Nix, 분석/26 tests 및 실제 Linux backend |
+| 개인 `bbd021f` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34259523524), [실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34259523553) | PASS: Linux/macOS/Nix, 분석/39 tests 및 실제 Linux backend |
 | PR 공통 `5d43928` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34240467191), [Linux 실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34240467194) | PASS: 분석/23 tests/Linux/macOS/Nix, 임시 VM 시작·중지·디스크 삭제·VM 삭제, Quickget 실제 catalog |
 | 개인 VM 기능 `eaba8b8` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34240406729), [Linux 실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34240406776) | PASS: 분석/28 tests/Linux/macOS/Nix 및 임시 VM |
 | 개인 고급 설정 `d6a3369` | `flutter analyze`, `flutter test` | PASS: info 포함 0, 31 tests. 외부 다운로드/VM/catalog opt-in 테스트는 별도 실행 |
@@ -60,6 +66,7 @@ macOS 환경: macOS 15.7.9, x86_64, Flutter 3.47.2, Dart 3.13.2, QEMU 11.1.1. Ho
 - 한국어는 기존 지원 locale 목록에 없다. 지원하지 않는 locale의 영어 fallback은 확인했으며 한국어 번역 완료를 주장하지 않는다.
 - 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다.
 - 외부 프로그램이 마지막 검증 직후 config/PID/파일을 변경하는 모든 경쟁을 원자적으로 방지하지 않는다. GUI 내부 작업은 직렬화하며 읽을 수 없는 상태는 거부한다.
+- 공유 저장소 삭제 검사는 현재 작업 폴더에서 읽을 수 있는 리터럴 `disk_img` 설정을 대상으로 한다. 다른 작업 폴더의 설정이나 임의 Bash 로직이 참조하는 모든 디스크를 자동 발견하는 것은 아니다.
 
 따라서 S3 전체 및 안정 릴리스 수용 검증은 **부분 완료**다. 실제 실행하지 않은 항목을 pass로 바꾸거나 `main`을 안정판으로 승격하지 않는다. 개인 기능은 별도 후보 브랜치에 구현·푸시하여 공통 PR 후보와 격리했다.
 

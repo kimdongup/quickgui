@@ -1,6 +1,6 @@
 # 게스트 설치 경험과 순차 검증
 
-2026-09-08. 개인 후보 `personal/windows-installation`에서 관리한다. 기존 Windows 디스크·설정·설치 중 표시 파일은 읽기만 했으며, 이 작업에서 재설치하거나 표시를 해제하지 않았다.
+2026-09-08. 코드는 개인 후보 `personal/windows-installation`에서 구현하고, 통합 후의 실사용 검증 기록은 `personal/preview`에서 이어서 관리한다. 기존 Windows 디스크·설정·설치 중 표시 파일은 읽기만 했으며, 이 작업에서 재설치하거나 표시를 해제하지 않았다.
 
 ## Windows 11 x64 경험을 앱에 반영
 
@@ -53,6 +53,8 @@
 - 게스트 `diskutil list internal`에서 이번에 만든 128 GiB(137.4 GB) 빈 disk0, 402.7 MB 부팅 disk1, 3.2 GB 복구 disk2를 구분. 새 disk0를 GPT/APFS `QuickguiMac`으로 준비하고 `Finished erase on disk0`와 명령 프롬프트 복귀를 확인. 이 시점의 Terminal은 멈춤이 아닌 다음 명령 대기 상태. 호스트 디스크에서 diskutil을 실행하지 않음.
 - Terminal 종료 후 **Reinstall macOS Sequoia** 실행 확인. 검증 자동화의 HMP 상대 마우스 입력은 기본 USB tablet에 전달되지 않아, 실행 중인 검증 VM에 임시 `usb-mouse`를 추가하여 조작. 이는 호스트에서 직접 조작한 Cocoa 마우스의 실패를 뜻하지 않음. 설치 정보 조회는 수 분이 걸렸고 로그에 Apple 업데이트 메타데이터 요청의 timeout과 번들 라이선스 문서 fallback을 기록. 설치 앱 시작과 실제 설치 파일 다운로드 성공은 구분.
 - 설치 화면에서 `QuickguiMac` 137.23 GB가 표시되고 선택 가능함을 확인. 설치 시작 후 `OSISDownloadOperation` 시작 로그 및 진행 화면 확인. 새 qcow2가 약 17 MB에서 233 MB로 증가했으나, 이 크기나 초기 남은 시간(약 2시간 52분)으로 다운로드/설치 완료를 추정하지 않음.
+- 설치 중 실제 config를 Quickgui의 `VmRepository.inspect`와 `list`로 조회한 별도 읽기 검사 PASS. 실행 중 QEMU PID, 상태 디렉터리와 SSH 전달 포트 22220을 인식하고 SPICE 포트는 없음을 확인. 전후 config bytes 동일. 포트 전달 정보 인식은 SSH 서비스/로그인 성공을 뜻하지 않음.
+- 전체 설치 로그는 `InstallAssistant.pkg` 15.656 GB 다운로드를 표시. 새 qcow2는 이후 5 GB 이상으로 증가했으며 남은 시간은 약 56분~4시간 사이로 변동. 진행률/예상 시간은 설치 완료 판정에 사용하지 않음. 현재 QEMU PID가 종료될 때까지만 `caffeinate -i -w <pid>`로 호스트 유휴 절전을 방지.
 - `3f85b3d`의 GitHub CI: [개인 작업 브랜치 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252565602), [실제 Linux backend](https://github.com/kimdongup/quickgui/actions/runs/34252565587), [개인 통합 후보 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252666094), [통합 후보 backend](https://github.com/kimdongup/quickgui/actions/runs/34252665969) 모두 PASS. Linux/macOS/Nix 및 36개 앱 테스트 포함. 이후 문서/화면 증거만 추가한 커밋과 구분.
 
 OpenCore 실제 게스트 화면(복구 OS 설치 완료 화면은 아님):
@@ -71,6 +73,8 @@ QuickguiMac을 선택한 실제 설치 시작 화면(완료 전):
 
 ## upstream과 개인용 경계
 
-이번 프로필과 외부 설치 실행기 연동은 개인 후보에만 포함한다. 기존 `pr/*` 및 `integration/stabilization`의 공통 PR 후보와 `main`은 유지한다. CPU 감지 수정은 Quickgui가 아닌 **Quickemu** 변경 후보이며 별도 패치와 재현 테스트로 보관한다. 범용 설치 상태 모델은 명시적 설치/재개/설치 완료 계약이 backend에 마련된 뒤 공통 PR로 추출한다.
+이번 프로필과 외부 설치 실행기 연동은 개인 후보에만 포함하며, `pr/*` 및 `integration/stabilization` 공통 후보에는 포함하지 않는다. `main`은 upstream 기준으로 유지한다. CPU 감지 수정은 Quickgui가 아닌 **Quickemu** 변경 후보이며 별도 패치와 재현 테스트로 보관한다. 범용 설치 상태 모델은 명시적 설치/재개/설치 완료 계약이 backend에 마련된 뒤 공통 PR로 추출한다.
+
+설치 대기 중 별도로 재현한 공유 저장소 삭제 오류는 공통 수정이다. 다른 config의 디렉터리 별칭/중첩 경로/디스크 링크를 실제 경로로 비교하여 삭제 명령 호출 전에 거부한다. `ab1ff85`를 공통 통합·회귀 후보에 반영하고 개인 후보에는 `bbd021f`로 적용했다. 공통 26 tests, 개인 39 tests 및 양쪽 정적 분석 PASS. 위 Windows 기능의 초기 36개 검사 결과와 구분한다.
 
 공식 자료: [Apple macOS 다운로드](https://support.apple.com/en-us/102662), [Apple Silicon macOS 가상 머신](https://developer.apple.com/documentation/virtualization/running-macos-in-a-virtual-machine-on-apple-silicon), [Windows ARM64 ISO](https://www.microsoft.com/ko-kr/software-download/windows11arm64), [QEMU vmapple 지원 조건](https://www.qemu.org/docs/master/system/arm/vmapple.html).
