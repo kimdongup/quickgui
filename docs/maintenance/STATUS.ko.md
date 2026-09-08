@@ -12,7 +12,7 @@
 - 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
-- 현재 개인 통합 후보: `personal/preview`. `2f0d9fd` 이후에는 운영 문서와 편집 화면 회귀 테스트만 추가했다.
+- 현재 개인 통합 후보: `personal/preview`. Windows 설치 경험 반영은 `personal/windows-installation`에서 추가 구현 후 통합한다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위
@@ -28,6 +28,7 @@
 | EXT-02 | 중지된 VM 편집, 로딩 중 저장 차단, 외부 변경 감지, 같은 파일시스템의 임시 파일 교체, 주석·개행·권한 보존, symlink 편집 거부, VM 작업과 잠금 공유 |
 | EXT-03 | 선택형 backend 경로, 도움말에서 확인한 display/sound/architecture 옵션, 기본값 유지, 저장·재시작·초기화. 기존 VM architecture는 config를 유지 |
 | OPS-01 | fork 전용 패키지/체크섬/SHA manifest, 정확한 태그 검증, 기본 build-only, upstream 배포·자동 flake PR 작업 분리 |
+| GUEST-01 | 선택형 Intel Mac Windows x64 호환 프로필, 설치 중 표시 인식·Run 차단·사용자 완료 확인 후 표시 보관, 일반 실행 시 설치 전용 환경 변수 제거. 기존 Windows VM은 읽기만 수행 |
 
 ## 실행한 검증
 
