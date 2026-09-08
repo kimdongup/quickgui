@@ -106,6 +106,9 @@ msgstr ""
 msgid "SPICE port"
 msgstr ""
 
+msgid "SPICE socket"
+msgstr ""
+
 msgid "SSH port"
 msgstr ""
 

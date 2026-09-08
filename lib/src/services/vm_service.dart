@@ -21,16 +21,18 @@ class VmRecord {
     this.pid,
     this.sshPort,
     this.spicePort,
+    this.spiceSocketPath,
     this.error,
     this.installationPending = false,
   });
   final String configPath, content;
   final VmState state;
-  final String? stateDirectory, error;
+  final String? stateDirectory, error, spiceSocketPath;
   final int? pid, sshPort, spicePort;
   final bool installationPending;
   String get name => p.basenameWithoutExtension(configPath);
   String get directory => p.dirname(configPath);
+  bool get hasSpice => spiceSocketPath != null || spicePort != null;
 }
 
 /// Only literal assignments are interpreted. Bash expressions are never sourced.
@@ -110,7 +112,7 @@ class VmRepository {
     final name = p.basenameWithoutExtension(configPath);
     var state = VmState.stopped;
     int? pid, ssh, spice;
-    String? error;
+    String? error, spiceSocket;
     final pidFile = File(p.join(stateDir, '$name.pid'));
     if (await pidFile.exists()) {
       pid = int.tryParse((await pidFile.readAsString()).trim());
@@ -155,10 +157,22 @@ class VmRepository {
     final ports = File(p.join(stateDir, '$name.ports'));
     if (state == VmState.running && await ports.exists()) {
       for (final line in await ports.readAsLines()) {
-        final parts = line.split(',');
-        if (parts.length != 2) continue;
-        if (parts[0] == 'ssh') ssh = parsePort(parts[1]);
-        if (parts[0] == 'spice') spice = parsePort(parts[1]);
+        // Unix socket paths can themselves contain commas.
+        final separator = line.indexOf(',');
+        if (separator < 0) continue;
+        final kind = line.substring(0, separator);
+        final value = line.substring(separator + 1);
+        if (kind == 'ssh') ssh = parsePort(value);
+        if (kind == 'spice') spice = parsePort(value);
+        if (kind == 'unix' && value.isNotEmpty && !value.contains('\u0000')) {
+          final path = p.normalize(
+            p.isAbsolute(value) ? value : p.join(p.dirname(configPath), value),
+          );
+          if (await FileSystemEntity.type(path) ==
+              FileSystemEntityType.unixDomainSock) {
+            spiceSocket = path;
+          }
+        }
       }
     }
     return VmRecord(
@@ -169,6 +183,7 @@ class VmRepository {
       pid: pid,
       sshPort: ssh,
       spicePort: spice,
+      spiceSocketPath: spiceSocket,
       error: error,
       installationPending:
           await FileSystemEntity.type(
