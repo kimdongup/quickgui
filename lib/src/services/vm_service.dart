@@ -172,6 +172,18 @@ class VmRepository {
   }
 }
 
+// Resolve existing ancestors too: a disk may be absent after Delete disk while
+// its directory is still reached through a symbolic link.
+Future<String> _resolvedStoragePath(String path) async {
+  final absolute = p.normalize(p.absolute(path));
+  if (await FileSystemEntity.type(absolute) != FileSystemEntityType.notFound) {
+    return File(absolute).resolveSymbolicLinks();
+  }
+  final parent = p.dirname(absolute);
+  if (parent == absolute) return absolute;
+  return p.join(await _resolvedStoragePath(parent), p.basename(absolute));
+}
+
 class VmOperations extends ChangeNotifier {
   VmOperations({
     this.repository = const VmRepository(),
@@ -242,23 +254,42 @@ class VmOperations extends ChangeNotifier {
           throw StateError('Stopping VMs requires Quickemu 4.9.6 or newer');
         }
       }
-      if (action == VmAction.deleteVm) {
-        final stateDirectory = await Directory(current.stateDirectory!)
-            .resolveSymbolicLinks();
-        final workspace = await Directory(current.directory)
-            .resolveSymbolicLinks();
-        if (!p.isWithin(workspace, stateDirectory)) {
-          throw StateError(
-            'Whole-VM deletion requires a dedicated directory inside the workspace',
-          );
+      if (action == VmAction.deleteVm || action == VmAction.deleteDisk) {
+        final wholeVm = action == VmAction.deleteVm;
+        final disk = configLiteral(current.content, 'disk_img')!;
+        final diskPath = p.isAbsolute(disk)
+            ? disk
+            : p.join(current.directory, disk);
+        final target = await _resolvedStoragePath(
+          wholeVm ? current.stateDirectory! : diskPath,
+        );
+        if (wholeVm) {
+          final workspace = await Directory(current.directory)
+              .resolveSymbolicLinks();
+          if (!p.isWithin(workspace, target)) {
+            throw StateError(
+              'Whole-VM deletion requires a dedicated directory inside the workspace',
+            );
+          }
         }
         final otherVms = await repository.list(current.directory);
-        if (otherVms.any(
-          (vm) =>
-              vm.configPath != current.configPath &&
-              vm.stateDirectory == current.stateDirectory,
-        )) {
-          throw StateError('Another VM uses this disk directory');
+        for (final vm in otherVms) {
+          if (vm.configPath == current.configPath) continue;
+          final otherDisk = configLiteral(vm.content, 'disk_img');
+          if (otherDisk == null || vm.stateDirectory == null) continue;
+          final otherPath = await _resolvedStoragePath(
+            p.isAbsolute(otherDisk)
+                ? otherDisk
+                : p.join(vm.directory, otherDisk),
+          );
+          final otherDirectory = await _resolvedStoragePath(vm.stateDirectory!);
+          if (target == otherPath ||
+              (wholeVm &&
+                  (target == otherDirectory ||
+                      p.isWithin(target, otherDirectory) ||
+                      p.isWithin(target, otherPath)))) {
+            throw StateError('Another VM uses this disk or directory');
+          }
         }
       }
       final arguments = [
