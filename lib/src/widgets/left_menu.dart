@@ -60,7 +60,7 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Text(
-                    "Quickgui $version",
+                    "Quickgui $version (kimdongup)",
                     style: const TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,

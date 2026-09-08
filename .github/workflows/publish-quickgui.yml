@@ -20,6 +20,7 @@ on:
 
 jobs:
   version-check:
+    if: github.repository == 'quickemu-project/quickgui'
     # The git tag and pubspec.yaml version must be identical.
     name: "Check versions ⚖️"
     runs-on: ubuntu-22.04
