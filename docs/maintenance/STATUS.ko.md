@@ -1,0 +1,80 @@
+# Fork 구현·검증 기록
+
+2026-09-08. 이전 세 설계 문서는 최초 계획의 보존본이다. 현재 실행 상태는 이 문서를 따른다.
+
+## 운영 상태
+
+- `origin`: `https://github.com/kimdongup/quickgui.git`
+- `upstream`: `https://github.com/quickemu-project/quickgui.git`
+- upstream 기준: `74949e086154f3f2d555f9268778545c78ff2b51`
+- 기존 텍스트 수정 보존: `archive/local-start` / `e6d30ff`. 기존 `.DS_Store`와 한국어 설계 원본은 로컬에 보존했다.
+- 공통 PR 후보: `integration/stabilization` / `5d43928`. 개인 기능과 개인 운영 문서는 포함하지 않는다.
+- 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
+- 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
+- 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
+- 현재 개인 통합 후보: `personal/preview`. `2f0d9fd` 이후에는 운영 문서와 편집 화면 회귀 테스트만 추가했다.
+- `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
+
+## 구현한 범위
+
+| 작업 | 결과 |
+| --- | --- |
+| CORE-01/02 | AssetManifest API, 도구/메타데이터 분리, 실행 가능한 PATH 우선 탐색, 저장 경로 복구, 명시적 작업 디렉터리, 설정 저장 오류 표시 |
+| CORE-03 | 4/5/7열 CSV와 quoted field 처리, 목록 오류·재시도·빈 결과 구분, 단일 스크롤 목록과 검색 |
+| CORE-04 | 양쪽 출력 소비, 종료 코드 기반 완료, 제한된 로그, 시작 전 취소 및 자식 프로세스 종료, 앱 종료 확인, 알림 실패 격리 |
+| CORE-05/06 | config/disk 경로에 맞춘 상태 조회, unknown 상태, VM별 잠금, 실행 직전 재확인, 실제 상태 확인, SSH timeout과 인자 경계, SPICE 클라이언트 오류 처리 |
+| CORE-07/08 | 기존 주요 UI 구성 유지, 설정/locale fallback, 반복 화면 생명주기, Flutter 3.47.2/Dart 3.13.2, Linux/macOS/Nix 빌드 CI |
+| EXT-01 | Quickget의 성공 출력이 명시한 config를 검증하여 Manager에서 강조. 실패·취소·모호한 출력 제외, 기존 VM과 신규 VM 구분 |
+| EXT-02 | 중지된 VM 편집, 로딩 중 저장 차단, 외부 변경 감지, 같은 파일시스템의 임시 파일 교체, 주석·개행·권한 보존, symlink 편집 거부, VM 작업과 잠금 공유 |
+| EXT-03 | 선택형 backend 경로, 도움말에서 확인한 display/sound/architecture 옵션, 기본값 유지, 저장·재시작·초기화. 기존 VM architecture는 config를 유지 |
+| OPS-01 | fork 전용 패키지/체크섬/SHA manifest, 정확한 태그 검증, 기본 build-only, upstream 배포·자동 flake PR 작업 분리 |
+
+## 실행한 검증
+
+| 대상 | 명령/증거 | 결과 |
+| --- | --- | --- |
+| PR 공통 `5d43928` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34240467191), [Linux 실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34240467194) | PASS: 분석/23 tests/Linux/macOS/Nix, 임시 VM 시작·중지·디스크 삭제·VM 삭제, Quickget 실제 catalog |
+| 개인 VM 기능 `eaba8b8` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34240406729), [Linux 실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34240406776) | PASS: 분석/28 tests/Linux/macOS/Nix 및 임시 VM |
+| 개인 고급 설정 `d6a3369` | `flutter analyze`, `flutter test` | PASS: info 포함 0, 31 tests. 외부 다운로드/VM/catalog opt-in 테스트는 별도 실행 |
+| 개인 고급 설정 `d6a3369` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34241115918), [Linux 실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34241115908) | PASS: Linux/macOS/Nix 및 임시 VM |
+| 개인 패키지 코드 `2f0d9fd` | [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34241482643), [실제 backend](https://github.com/kimdongup/quickgui/actions/runs/34241482412), [패키징 CI](https://github.com/kimdongup/quickgui/actions/runs/34241482709) | PASS: 모든 job 성공. Linux x64 9.9 MB, macOS ARM64 18 MB, 두 SHA256 검증과 앱 번들 내부 실행 파일 확인 |
+| 편집 화면 추가 회귀 | `flutter test test/config_editor_widget_test.dart` | PASS: 초기 Save 비활성, 저장 중 Save·닫기 차단, 저장 완료 후 원래 화면 복귀. 기존 31개에 1개 추가 |
+| macOS Intel, 공통 `d27e7d3` | `QUICKGUI_REAL_VM_TESTS=1 flutter test test/real_vm_smoke_test.dart` | PASS: 실제 Cocoa VM 시작·중지·삭제. 빈 디스크 BIOS 부팅이며 게스트 설치 완료 검증은 아님 |
+| macOS Intel, 개인 `d6a3369` | `QUICKGUI_REAL_DOWNLOAD_TESTS=1 flutter test test/real_download_test.dart` | PASS: Tiny Core 15 CorePure64 이미지 실제 다운로드, 완료 판정, 신규 config 식별, 테스트 데이터 정리 |
+| macOS Intel, 공통 `d27e7d3` | `flutter build macos --release` | PASS: 46.7 MB 앱 생성 |
+| 시각 검토, 공통 `5d43928` | `QUICKGUI_SCREENSHOT_DIR=... QUICKGUI_TEST_FONT_DIR=... flutter test test/ui_regression_test.dart` | PASS: 692×580, Roboto/MaterialIcons, 홈·다운로더·Manager·설정 렌더링. 저장소의 기존 정상 홈 화면과 구성 비교 |
+| 반복 조작 | `ui_regression_test.dart` | PASS: 30회 Manager/홈 전환, 타이머/리스너 정리, 미처리 위젯 예외 없음 |
+| 개인 릴리스 스크립트 | `python3 -m unittest discover -s tool -p 'test_*.py'` | PASS: 3 tests, 태그/버전 매핑 및 잘못된 태그 거부 |
+
+macOS 환경: macOS 15.7.9, x86_64, Flutter 3.47.2, Dart 3.13.2, QEMU 11.1.1. Homebrew Quickemu/Quickget 4.9.9 파일의 Git blob을 공개 태그 `a28a9ebd56c086cc1463733a1674bb88613b92e3`와 비교해 일치를 확인했다. 부모 디렉터리의 수정된 Quickemu를 기준으로 통과를 주장하지 않는다.
+
+선택 브랜치 `bb50a80`의 [CI](https://github.com/kimdongup/quickgui/actions/runs/34238936068)는 분석/테스트/Linux/macOS/Nix **빌드 단계는 모두 성공**했으나 Magic Nix Cache 후처리 업로드가 장시간 끝나지 않아 해당 run을 취소했다. 전체 run을 success로 표기하지 않는다. 후속 통합 SHA의 동일 빌드·캐시 workflow는 정상 완료됐다.
+
+## 아직 통과로 표시하지 않는 항목
+
+- Q21의 실제 GUI 전체 흐름: 게스트 OS 설치 완료, 게스트 SSH 로그인, Linux SPICE 연결, 앱 재실행 후 재접속. 현재 실제 이미지 다운로드와 폐기 가능한 VM 수명 검증은 각각 통과했지만 이 전체 흐름을 대체하지 않는다.
+- Finder에서 시작한 배포 앱의 수동 조작, X11/Wayland 각각의 실사용, dark/light 전체 화면 비교, 실제 휠·트랙패드·키보드 조작. 위젯 렌더링 테스트가 모든 네이티브 동작을 증명하지 않는다.
+- Linux ARM64와 macOS ARM64의 실제 게스트 실행. CI의 macOS 빌드 성공과 가상화 검증은 구분한다.
+- 최소 Quickemu 버전의 전체 실행 matrix. 중지는 4.9.6 이상을 요구하지만 주 검증 backend는 4.9.9이다.
+- 한국어는 기존 지원 locale 목록에 없다. 지원하지 않는 locale의 영어 fallback은 확인했으며 한국어 번역 완료를 주장하지 않는다.
+- 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다.
+- 외부 프로그램이 마지막 검증 직후 config/PID/파일을 변경하는 모든 경쟁을 원자적으로 방지하지 않는다. GUI 내부 작업은 직렬화하며 읽을 수 없는 상태는 거부한다.
+
+따라서 S3 전체 및 안정 릴리스 수용 검증은 **부분 완료**다. 실제 실행하지 않은 항목을 pass로 바꾸거나 `main`을 안정판으로 승격하지 않는다. 개인 기능은 별도 후보 브랜치에 구현·푸시하여 공통 PR 후보와 격리했다.
+
+순서 조정: PR용 구현과 자동·실제 backend 검토 후, 남은 네이티브 실사용 항목을 명시한 상태에서 개인 기능을 후보 브랜치에 선행 구현했다. 이는 S3 전체 통과나 S4 안정판 승격을 의미하지 않는다.
+
+## 재현 명령과 다음 승격
+
+```sh
+flutter pub get --enforce-lockfile
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+QUICKGUI_REAL_VM_TESTS=1 flutter test test/real_vm_smoke_test.dart
+QUICKGUI_REAL_CATALOG_TESTS=1 flutter test test/real_catalog_test.dart
+# 개인 브랜치만: 외부 이미지 다운로드 약 20 MB, 임시 경로만 사용
+QUICKGUI_REAL_DOWNLOAD_TESTS=1 flutter test test/real_download_test.dart
+```
+
+위 실사용 항목의 host/backend/후보 SHA와 결과를 추가한 뒤, 검증된 개인 후보를 `main`에 merge하고 `git push origin main`으로 반영한다. upstream 대응표와 제출 순서는 [UPSTREAM_PRS.md](UPSTREAM_PRS.md), 개인 패키지 생성은 [RELEASES.ko.md](RELEASES.ko.md)를 따른다.

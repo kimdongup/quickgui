@@ -1,3 +1,5 @@
+> Fork candidate: [`personal/preview`](https://github.com/kimdongup/quickgui/tree/personal/preview). Upstream fixes are isolated in `pr/*` and `integration/stabilization`; `main` awaits full guest acceptance. See [implementation and validation status](docs/maintenance/STATUS.ko.md), [upstream PR drafts](docs/maintenance/UPSTREAM_PRS.md), and [fork releases](docs/maintenance/RELEASES.ko.md).
+
 <div align="center">
 <img src=".github/logo.png" alt="Quickgui" width="256" />
 

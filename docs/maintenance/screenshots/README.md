@@ -1,0 +1,1 @@
+Rendered widget fixtures for common commit 5d43928, 692×580, light theme, Roboto/MaterialIcons. These are not native OS screenshots. The workspace path is a disposable test path; Manager contains no user VM data. Compare the home composition with assets/github/screenshot_01_main.png.
