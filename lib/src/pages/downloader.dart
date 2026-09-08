@@ -22,12 +22,14 @@ class Downloader extends StatefulWidget {
     required this.version,
     this.option,
     this.session,
+    this.directory,
     super.key,
   });
   final OperatingSystem operatingSystem;
   final Version version;
   final Option? option;
   final DownloadSession? session;
+  final String? directory;
   @override
   State<Downloader> createState() => _DownloaderState();
 }
@@ -51,7 +53,7 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
             if (widget.option?.option.isNotEmpty ?? false)
               widget.option!.option,
           ],
-          directory: workingDirectory,
+          directory: widget.directory ?? workingDirectory,
           environment: Map.of(gProcessEnvironment),
           runner: gRunner,
         );

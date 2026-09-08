@@ -5,123 +5,30 @@ import 'package:tuple/tuple.dart';
 import '../model/operating_system.dart';
 import '../model/option.dart';
 import '../model/version.dart';
+import '../widgets/selection_list.dart';
 import 'option_selection.dart';
 
-class VersionSelection extends StatefulWidget {
+class VersionSelection extends StatelessWidget {
   const VersionSelection({required this.operatingSystem, super.key});
-
   final OperatingSystem operatingSystem;
-
   @override
-  State<VersionSelection> createState() => _VersionSelectionState();
-}
-
-class _VersionSelectionState extends State<VersionSelection> {
-  var term = "";
-  final focusNode = FocusNode();
-
-  @override
-  void initState() {
-    focusNode.requestFocus();
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var list = widget.operatingSystem.versions
-        .where(
-          (version) =>
-              version.version.toLowerCase().contains(term.toLowerCase()),
-        )
-        .toList();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          context.t(
-            'Select version for {0}',
-            args: [widget.operatingSystem.name],
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              decoration: BoxDecoration(color: Theme.of(context).canvasColor),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Material(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      const Icon(Icons.search),
-                      Expanded(
-                        child: TextField(
-                          focusNode: focusNode,
-                          decoration: InputDecoration.collapsed(
-                            hintText: context.t('Search version'),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              term = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+  Widget build(BuildContext context) => SelectionList<Version>(
+    title: context.t('Select version for {0}', args: [operatingSystem.name]),
+    searchHint: context.t('Search version'),
+    items: operatingSystem.versions,
+    label: (version) => version.version,
+    onSelect: (version) async {
+      final option = version.options.length > 1
+          ? await Navigator.of(context).push<Option>(
+              MaterialPageRoute(
+                fullscreenDialog: true,
+                builder: (context) => OptionSelection(version),
               ),
-            ),
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ListView.builder(
-              padding: const EdgeInsets.only(top: 4),
-              shrinkWrap: true,
-              itemCount: list.length,
-              itemBuilder: (context, index) {
-                var item = list[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(item.version),
-                    onTap: () {
-                      if (item.options.length > 1) {
-                        Navigator.of(context)
-                            .push<Option>(
-                              MaterialPageRoute(
-                                fullscreenDialog: true,
-                                builder: (context) =>
-                                    OptionSelection(list[index]),
-                              ),
-                            )
-                            .then((selection) {
-                              if (selection != null && context.mounted) {
-                                Navigator.of(context).pop(
-                                  Tuple2<Version, Option?>(item, selection),
-                                );
-                              }
-                            });
-                      } else {
-                        Navigator.of(context).pop(
-                          Tuple2<Version, Option?>(
-                            item,
-                            list[index].options[0],
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            )
+          : version.options.firstOrNull ?? Option('', 'curl');
+      if (option != null && context.mounted) {
+        Navigator.of(context).pop(Tuple2<Version, Option?>(version, option));
+      }
+    },
+  );
 }

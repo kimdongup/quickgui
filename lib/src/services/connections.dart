@@ -45,6 +45,11 @@ const terminals = [
   'sakura',
   'guake',
   'uxterm',
+  'cool-retro-term',
+  'lxterm',
+  'pterm',
+  'uxrvt',
+  'xrvt',
 ];
 String? findTerminal(Toolchain tools) {
   final preferred = tools.find('x-terminal-emulator');

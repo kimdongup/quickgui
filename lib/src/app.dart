@@ -37,9 +37,13 @@ class _AppState extends State<App> {
       try {
         final prefs = await SharedPreferences.getInstance();
         settings.setActiveLocaleSilently(
-          prefs.getString(prefCurrentLocale) ?? Platform.localeName,
+          prefs.get(prefCurrentLocale) is String
+              ? prefs.getString(prefCurrentLocale)!
+              : Platform.localeName,
         );
-        settings.useDarkModeSilently = prefs.getBool(prefThemeMode) ?? false;
+        settings.useDarkModeSilently = prefs.get(prefThemeMode) is bool
+            ? prefs.getBool(prefThemeMode)!
+            : false;
       } catch (error) {
         gStartupError = 'Unable to read settings: $error';
       }

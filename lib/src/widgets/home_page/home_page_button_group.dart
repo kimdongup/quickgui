@@ -25,6 +25,7 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
   OperatingSystem? _selectedOperatingSystem;
   Version? _selectedVersion;
   Option? _selectedOption;
+  bool _startingDownload = false;
 
   @override
   Widget build(BuildContext context) {
@@ -92,18 +93,27 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
         DownloaderPageButton(
           label: context.t('Download'),
           text: context.t('Download'),
-          onPressed: (_selectedVersion == null)
+          onPressed: (_selectedVersion == null || _startingDownload)
               ? null
               : () async {
+                  final target = workingDirectory;
+                  final os = _selectedOperatingSystem!;
+                  final version = _selectedVersion!;
+                  final option = _selectedOption;
+                  setState(() => _startingDownload = true);
                   try {
                     await gWorkspace!.verifyWritable();
+                    if (target != workingDirectory) {
+                      throw StateError('Workspace changed');
+                    }
                     if (!context.mounted) return;
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => Downloader(
-                          operatingSystem: _selectedOperatingSystem!,
-                          version: _selectedVersion!,
-                          option: _selectedOption,
+                          operatingSystem: os,
+                          version: version,
+                          option: option,
+                          directory: target,
                         ),
                       ),
                     );
@@ -128,6 +138,8 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                         ],
                       ),
                     );
+                  } finally {
+                    if (mounted) setState(() => _startingDownload = false);
                   }
                 },
         ),

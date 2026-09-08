@@ -198,3 +198,30 @@ msgstr ""
 
 msgid "Powered by"
 msgstr ""
+
+msgid "Retry"
+msgstr ""
+
+msgid "Select folder"
+msgstr ""
+
+msgid "Download failed"
+msgstr ""
+
+msgid "Cancelling download"
+msgstr ""
+
+msgid "Cancel download?"
+msgstr ""
+
+msgid "Run"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "No results"
+msgstr ""

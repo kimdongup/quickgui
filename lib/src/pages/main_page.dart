@@ -24,7 +24,6 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    GettextLocalizations.of(context).enableExceptions(true);
     return Scaffold(
       appBar: AppBar(
         title: Text(context.t('Main menu')),

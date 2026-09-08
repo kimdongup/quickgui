@@ -196,3 +196,30 @@ msgstr "Error"
 
 msgid "Could not write to the working directory. Please check the permissions."
 msgstr "Could not write to the working directory. Please check the permissions."
+
+msgid "Retry"
+msgstr "Retry"
+
+msgid "Select folder"
+msgstr "Select folder"
+
+msgid "Download failed"
+msgstr "Download failed"
+
+msgid "Cancelling download"
+msgstr "Cancelling download"
+
+msgid "Cancel download?"
+msgstr "Cancel download?"
+
+msgid "Run"
+msgstr "Run"
+
+msgid "Stop"
+msgstr "Stop"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "No results"
+msgstr "No results"
