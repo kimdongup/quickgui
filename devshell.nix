@@ -11,7 +11,7 @@
   dpkg,
   flutter,
   git,
-  gnome,
+  zenity,
   gtk3,
   ninja,
   patchelf,
@@ -32,7 +32,7 @@ mkShell rec {
     dpkg
     flutter
     git
-    gnome.zenity
+    zenity
     gtk3
     ninja
     patchelf

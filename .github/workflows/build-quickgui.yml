@@ -145,12 +145,6 @@ jobs:
         uses: "DeterminateSystems/nix-installer-action@v22"
       - name: "Enable Magic Nix Cache 🪄"
         uses: "DeterminateSystems/magic-nix-cache-action@v9"
-      - name: Refresh Nix SDK lock during toolchain migration
-        run: nix flake update nixpkgs
-      - uses: actions/upload-artifact@v7
-        with:
-          name: refreshed-flake-lock
-          path: flake.lock
       - name: "Build with Nix ❄️"
         run: |
           nix build .#quickgui
