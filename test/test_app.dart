@@ -18,6 +18,7 @@ class TestTranslations extends LocalizationsDelegate<GettextLocalizations> {
 
 Widget testApp(Widget child) => MaterialApp(
   theme: ThemeData(
+    fontFamily: 'Roboto',
     useMaterial3: true,
     colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.pink),
   ),
