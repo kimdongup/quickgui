@@ -34,6 +34,21 @@ void main() {
       const MethodChannel('flutter/windowsize'),
       (_) async => null,
     );
+    final fontDirectory = Platform.environment['QUICKGUI_TEST_FONT_DIR'];
+    if (fontDirectory != null) {
+      await tester.runAsync(() async {
+        for (final font in {
+          'Roboto': 'Roboto-Regular.ttf',
+          'MaterialIcons': 'MaterialIcons-Regular.otf',
+        }.entries) {
+          final bytes = await File('$fontDirectory/${font.value}')
+              .readAsBytes();
+          await (FontLoader(
+            font.key,
+          )..addFont(Future.value(ByteData.sublistView(bytes)))).load();
+        }
+      });
+    }
     SharedPreferences.setMockInitialValues({});
     final settings = AppSettings();
     final ops = VmOperations(repository: EmptyRepository());
@@ -51,6 +66,12 @@ void main() {
       'settings': const Scaffold(body: LeftMenu()),
     }.entries) {
       await tester.pumpWidget(wrap(entry.value));
+      await tester.runAsync(
+        () => precacheImage(
+          const AssetImage('assets/images/logo_pink.png'),
+          key.currentContext!,
+        ),
+      );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: entry.key);
       final screenshots = Platform.environment['QUICKGUI_SCREENSHOT_DIR'];
