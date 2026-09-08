@@ -49,6 +49,12 @@
 - 릴리스 도구와 적용된 CPU 패치의 Python 테스트: 총 6 PASS. CPU 패치 테스트는 `QUICKGUI_PATCHED_QUICKEMU`와 Bash 4 이상 경로를 지정하여 실행.
 - 실제 Windows config를 새 `VmRepository`로 읽는 별도 검사: PASS. 중지 상태, Windows x64, 설치 중 표시 인식 및 조건문 config의 자동 프로필 변환 거부 확인. 검사 전후 config bytes 동일. 이 검사는 Windows를 부팅하지 않음.
 - macOS 복구 부팅은 서비스 초기화까지 진행했으나 여러 `vm_shared_region_start_address() failed` 메시지와 긴 지연을 관찰. 명시적 `+invtsc` 비교도 진행하며, 이것만으로 해결됐다고 주장하지 않음. 이 추가 인자는 검증 VM의 config에만 적용하고 범용 CPU 감지 패치에는 포함하지 않음.
+- 8 GB RAM 비교에서는 `+invtsc` 실험을 되돌리고 메모리만 변경. 복구 서비스와 WindowServer 시작/대기 커서 표시까지 관찰. 해당 로그 문자열만으로 원인이나 kernel panic을 단정하지 않음. 설치 GUI 진입은 별도 확인 대상.
+- `3f85b3d`의 GitHub CI: [개인 작업 브랜치 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252565602), [실제 Linux backend](https://github.com/kimdongup/quickgui/actions/runs/34252565587), [개인 통합 후보 빌드](https://github.com/kimdongup/quickgui/actions/runs/34252666094), [통합 후보 backend](https://github.com/kimdongup/quickgui/actions/runs/34252665969) 모두 PASS. Linux/macOS/Nix 및 36개 앱 테스트 포함. 이후 문서/화면 증거만 추가한 커밋과 구분.
+
+OpenCore 실제 게스트 화면(복구 OS 설치 완료 화면은 아님):
+
+![Intel Mac에서 부팅한 macOS Base System 선택 화면](screenshots/macos-intel-opencore.png)
 
 추가 부팅/설치 결과는 이 문서에 이어서 기록하며, 위 중간 결과를 전체 macOS 설치 성공으로 승격하지 않는다.
 

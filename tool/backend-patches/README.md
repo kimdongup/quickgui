@@ -16,3 +16,15 @@ QUICKGUI_PATCHED_QUICKEMU=/path/to/validation/backend/quickemu \
 ```
 
 On Intel macOS, select the patched copy through Quickgui's Advanced backend settings only for this validation. Use Cocoa/output-only audio. A successful backend launch proves neither guest installation nor SPICE support; see [the guest validation record](../../docs/maintenance/GUEST_VALIDATION.ko.md).
+
+## Draft for a separate Quickemu PR
+
+Title: `fix(quickemu): correct CPU detection on Intel macOS`
+
+On an Intel Mac, `configure_cpu` requests `get_cpu_info 'Vendor'`, but the Darwin implementation only accepts `^Vendor ID`. In addition, the Darwin feature check reads only `machdep.cpu.features`, although AVX2 is reported in `machdep.cpu.leaf7_features`. As a result, launching a Sequoia guest on an i9-9880H reports an unknown CPU vendor and rejects the host for missing SSE4.2/AVX2 before QEMU starts.
+
+Accept both vendor query keys and check exact feature tokens from both sysctl properties. Unsupported or unavailable features still fail the check. The Linux code path is unchanged.
+
+Validation: Bash syntax and ShellCheck 0.11.0 pass; three regression tests cover vendor aliases, features from both properties, and missing/substring rejection. On macOS 15.7.9 with Quickemu 4.9.9 and QEMU 11.1.1, the same guest now passes CPU checks and reaches OpenCore and the recovery kernel. Guest installation, recovery GUI completion and SSH remain separate acceptance checks.
+
+This draft has not been submitted. The reproduction patch targets the pinned 4.9.9 script; rebase and rerun these checks against the then-current Quickemu branch before submission.

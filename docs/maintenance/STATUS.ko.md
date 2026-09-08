@@ -12,7 +12,7 @@
 - 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
-- 현재 개인 통합 후보: `personal/preview`. Windows 설치 경험 반영은 `personal/windows-installation`에서 추가 구현 후 통합한다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
+- 현재 개인 통합 후보: `personal/preview`. Windows 설치 경험 반영을 `personal/windows-installation`에서 구현·검증하여 `3f85b3d`까지 두 브랜치에 push했다. 상세 내역과 후속 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위
