@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 
 import '../services/vm_service.dart';
+import '../services/windows_installation.dart';
 
 class ConfigEditor extends StatefulWidget {
   const ConfigEditor({required this.vm, required this.operations, super.key});
@@ -61,6 +62,63 @@ class _ConfigEditorState extends State<ConfigEditor> {
     }
   }
 
+  Future<void> _windowsProfile() async {
+    try {
+      final proposed = windowsIntelProfile(_text.text, intelMac: isIntelMac);
+      final use = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.t('Windows x64 on Intel Mac')),
+          content: SizedBox(
+            width: 600,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(context.t(windowsIntelNotice)),
+                  const SizedBox(height: 16),
+                  SelectableText(
+                    proposed,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.t('Cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(context.t('Use in editor')),
+            ),
+          ],
+        ),
+      );
+      if (use == true && mounted) setState(() => _text.text = proposed);
+    } catch (e) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.t('Profile unavailable')),
+          content: Text('$e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.t('OK')),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _text.dispose();
@@ -98,6 +156,14 @@ class _ConfigEditorState extends State<ConfigEditor> {
       appBar: AppBar(
         title: Text(widget.vm.name),
         actions: [
+          if (isIntelMac && isWindowsX64(widget.vm.content))
+            IconButton(
+              tooltip: context.t('Windows x64 on Intel Mac'),
+              icon: const Icon(Icons.build_outlined),
+              onPressed: _loading || _saving || _error != null
+                  ? null
+                  : _windowsProfile,
+            ),
           TextButton(
             onPressed: _loading || _saving || !_dirty || _error != null
                 ? null

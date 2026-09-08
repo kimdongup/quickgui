@@ -10,7 +10,7 @@ import 'command_runner.dart';
 
 enum VmState { stopped, running, unknown }
 
-enum VmAction { start, stop, deleteDisk, deleteVm, edit }
+enum VmAction { start, stop, deleteDisk, deleteVm, edit, confirmInstallation }
 
 class VmRecord {
   VmRecord({
@@ -22,11 +22,13 @@ class VmRecord {
     this.sshPort,
     this.spicePort,
     this.error,
+    this.installationPending = false,
   });
   final String configPath, content;
   final VmState state;
   final String? stateDirectory, error;
   final int? pid, sshPort, spicePort;
+  final bool installationPending;
   String get name => p.basenameWithoutExtension(configPath);
   String get directory => p.dirname(configPath);
 }
@@ -168,6 +170,12 @@ class VmRepository {
       sshPort: ssh,
       spicePort: spice,
       error: error,
+      installationPending:
+          await FileSystemEntity.type(
+            p.join(stateDir, 'installation-in-progress'),
+            followLinks: false,
+          ) !=
+          FileSystemEntityType.notFound,
     );
   }
 }
@@ -271,6 +279,17 @@ class VmOperations extends ChangeNotifier {
           current.error ?? 'VM state changed; refresh and try again',
         );
       }
+      if (action == VmAction.start && current.installationPending) {
+        throw StateError(
+          'Installation is still marked in progress. Complete guest setup and '
+          'confirm installation in Manager before using Run. To resume setup, '
+          'use the installer workflow that created this VM.',
+        );
+      }
+      if (action == VmAction.confirmInstallation) {
+        await _confirmInstallation(current);
+        return;
+      }
       if (action == VmAction.start && isMacOS) {
         final help = await runner.run(
           executable,
@@ -331,19 +350,25 @@ class VmOperations extends ChangeNotifier {
           VmAction.deleteDisk => ['--delete-disk'],
           VmAction.deleteVm => ['--delete-vm'],
           VmAction.edit => throw StateError('Not a backend action'),
+          VmAction.confirmInstallation => throw StateError(
+            'Not a backend action',
+          ),
         },
       ];
       // Revalidate after all preparatory awaits, especially before destructive commands.
       final latest = await repository.inspect(current.configPath);
       if (latest?.state != requiredState ||
-          latest?.content != current.content) {
+          latest?.content != current.content ||
+          (action == VmAction.start && latest!.installationPending)) {
         throw StateError('VM changed while preparing the command');
       }
       final result = await runner.run(
         executable,
         arguments,
         directory: current.directory,
-        environment: environment,
+        // The external Windows installer uses this flag to attach unattended
+        // repartitioning media. Ordinary Run must never inherit installer mode.
+        environment: Map.of(environment)..remove('WINDOWS11_INSTALL'),
         timeout: const Duration(minutes: 2),
       );
       result.requireSuccess();
@@ -387,6 +412,53 @@ class VmOperations extends ChangeNotifier {
       _busy.remove(key);
       _busy.remove(selected.configPath);
       notifyListeners();
+    }
+  }
+
+  Future<void> _confirmInstallation(VmRecord current) async {
+    final marker = File(
+      p.join(current.stateDirectory!, 'installation-in-progress'),
+    );
+    final workspace = await Directory(current.directory).resolveSymbolicLinks();
+    final stateDirectory = await Directory(current.stateDirectory!)
+        .resolveSymbolicLinks();
+    if (!current.installationPending ||
+        !p.isWithin(workspace, stateDirectory) ||
+        await FileSystemEntity.type(marker.path, followLinks: false) !=
+            FileSystemEntityType.file) {
+      throw StateError(
+        'Installation confirmation requires a regular marker in this VM directory',
+      );
+    }
+    final others = await repository.list(current.directory);
+    for (final vm in others) {
+      if (vm.configPath == current.configPath || vm.stateDirectory == null) {
+        continue;
+      }
+      if (await Directory(vm.stateDirectory!).exists() &&
+          await Directory(vm.stateDirectory!).resolveSymbolicLinks() ==
+              stateDirectory) {
+        throw StateError('Another VM uses this installation directory');
+      }
+    }
+    final latest = await repository.inspect(current.configPath);
+    if (latest?.state != VmState.stopped ||
+        latest?.content != current.content ||
+        latest?.stateDirectory != current.stateDirectory ||
+        await Directory(current.stateDirectory!).resolveSymbolicLinks() !=
+            stateDirectory ||
+        await FileSystemEntity.type(marker.path, followLinks: false) !=
+            FileSystemEntityType.file) {
+      throw StateError('VM changed while confirming installation');
+    }
+    // Keep the original marker as evidence. No disk, config or installer is edited.
+    final archive = await Directory(stateDirectory)
+        .createTemp('.quickgui-installation-completed-');
+    try {
+      await marker.rename(p.join(archive.path, 'installation-in-progress'));
+    } catch (_) {
+      await archive.delete();
+      rethrow;
     }
   }
 }

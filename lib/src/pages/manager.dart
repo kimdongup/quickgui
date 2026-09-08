@@ -191,6 +191,39 @@ class _ManagerState extends State<Manager> {
     if (result == true && mounted) await _perform(vm, VmAction.stop);
   }
 
+  Future<void> _run(VmRecord vm) async {
+    if (!vm.installationPending) return _perform(vm, VmAction.start);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.t('Installation in progress')),
+        content: Text(
+          context.t(
+            'This VM has an installation-in-progress marker. Confirm only after '
+            'reaching the guest desktop, shutting down the guest, and configuring '
+            'it to boot from the installed disk. The marker will be archived; '
+            'the disk and config will stay as they are. Then use Run again. '
+            'If setup is unfinished, cancel and use the existing installer workflow. '
+            'Unattended installation media may erase the disk when booted again.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.t('Cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.t('Installation completed')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _perform(vm, VmAction.confirmInstallation);
+    }
+  }
+
   Future<void> _delete(VmRecord vm) async {
     final result = await showDialog<VmAction>(
       context: context,
@@ -298,12 +331,12 @@ class _ManagerState extends State<Manager> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: vm.error == null
+        subtitle: vm.error == null && !vm.installationPending
             ? null
             : Tooltip(
-                message: vm.error!,
+                message: vm.error ?? context.t('Installation in progress'),
                 child: Text(
-                  vm.error!,
+                  vm.error ?? context.t('Installation in progress'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -338,9 +371,7 @@ class _ManagerState extends State<Manager> {
                       active ? Icons.play_arrow : Icons.play_arrow_outlined,
                       color: active ? Colors.green : color,
                     ),
-              onPressed: stopped && !busy
-                  ? () => _perform(vm, VmAction.start)
-                  : null,
+              onPressed: stopped && !busy ? () => _run(vm) : null,
             ),
             IconButton(
               tooltip: context.t('Stop'),

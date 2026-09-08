@@ -273,3 +273,25 @@ msgstr ""
 
 msgid "Default"
 msgstr ""
+
+msgid "Windows x64 on Intel Mac"
+msgstr ""
+
+
+msgid "Use in editor"
+msgstr ""
+
+msgid "Profile unavailable"
+msgstr ""
+
+msgid "Installation in progress"
+msgstr ""
+
+msgid "This VM has an installation-in-progress marker. Confirm only after reaching the guest desktop, shutting down the guest, and configuring it to boot from the installed disk. The marker will be archived; the disk and config will stay as they are. Then use Run again. If setup is unfinished, cancel and use the existing installer workflow. Unattended installation media may erase the disk when booted again."
+msgstr ""
+
+msgid "Installation completed"
+msgstr ""
+
+msgid "Experimental profile from a Windows 11 x64 installation on an Intel Mac: Nehalem CPU, HVF with HPET, 2 cores, 4 GB RAM, SATA disk, Intel network, Cocoa display and no audio. The windows-server setting selects hardware; it does not change the installed Windows edition. TPM and Secure Boot are disabled, so this profile does not meet standard Windows 11 requirements. Setup may require a separate requirements workaround. Only config text is changed. No answer file, installer or disk is created. Do not reattach unattended installation media to an installed disk."
+msgstr ""
