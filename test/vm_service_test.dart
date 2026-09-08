@@ -32,6 +32,20 @@ class GateRunner extends CommandRunner {
 }
 
 void main() {
+  test('a corrupt config does not hide healthy VMs', () async {
+    final tmp = await Directory.systemTemp.createTemp('quickgui-corrupt-');
+    try {
+      await File('${tmp.path}/bad.conf').writeAsBytes([0xff, 0xfe]);
+      await File('${tmp.path}/good.conf')
+          .writeAsString('guest_os="linux"\ndisk_img="good/disk.qcow2"\n');
+      final records = await const VmRepository().list(tmp.path);
+      expect(records.length, 2);
+      expect(records.first.state, VmState.unknown);
+      expect(records.last.state, VmState.stopped);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
   test(
     'mac defaults honor backend capabilities and explicit config values',
     () {

@@ -17,6 +17,10 @@ class TestTranslations extends LocalizationsDelegate<GettextLocalizations> {
 }
 
 Widget testApp(Widget child) => MaterialApp(
+  theme: ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.pink),
+  ),
   locale: const Locale('en'),
   localizationsDelegates: const [TestTranslations()],
   home: child,

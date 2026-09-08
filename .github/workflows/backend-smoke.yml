@@ -1,0 +1,43 @@
+name: Public Quickemu smoke tests
+
+on:
+  push:
+    branches: ['pr/functional-regressions', 'integration/**', 'personal/**', main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-vm:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: quickemu-project/quickemu
+          ref: a28a9ebd56c086cc1463733a1674bb88613b92e3 # 4.9.9
+          path: .backend
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version-file: pubspec.yaml
+      - name: Install public backend dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bsdmainutils genisoimage jq mesa-utils ovmf qemu-system-x86 qemu-utils socat spice-client-gtk swtpm unzip usbutils uuid-runtime xdg-user-dirs zsync
+          if [ -e /dev/kvm ]; then sudo chmod a+rw /dev/kvm; fi
+      - run: flutter pub get --enforce-lockfile
+      - name: Start, stop and delete a disposable VM
+        env:
+          QUICKGUI_REAL_VM_TESTS: '1'
+          QUICKGUI_TEST_QUICKEMU: ${{ github.workspace }}/.backend/quickemu
+        run: flutter test test/real_vm_smoke_test.dart
+      - name: Parse the public quickget catalog
+        env:
+          QUICKGUI_REAL_CATALOG_TESTS: '1'
+          QUICKGUI_TEST_QUICKGET: ${{ github.workspace }}/.backend/quickget
+        run: flutter test test/real_catalog_test.dart

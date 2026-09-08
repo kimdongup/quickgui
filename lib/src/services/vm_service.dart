@@ -71,7 +71,7 @@ class VmRepository {
         }
         final record = await inspect(p.normalize(p.absolute(entity.path)));
         if (record != null) records.add(record);
-      } on FileSystemException catch (e) {
+      } catch (e) {
         records.add(
           VmRecord(
             configPath: entity.path,
@@ -125,10 +125,16 @@ class VmRepository {
           );
           if (result.exitCode == 0) {
             // Verify both QEMU and this VM; an unrelated recycled PID is unknown.
-            if (result.stdout.contains('qemu-system-') &&
-                (result.stdout.contains('-name $name') ||
-                    result.stdout.contains(p.join(stateDir, '$name.pid')) ||
-                    result.stdout.contains('$name.pid'))) {
+            final pidPaths = [
+              p.join(stateDir, '$name.pid'),
+              p.join(p.dirname(disk), '$name.pid'),
+            ];
+            if (RegExp(r'^\S*qemu-system-\S+\s').hasMatch(result.stdout) &&
+                pidPaths.any(
+                  (path) => RegExp(
+                    '(?:^|\\s)-pidfile ${RegExp.escape(path)}(?:\\s|\$)',
+                  ).hasMatch(result.stdout),
+                )) {
               state = VmState.running;
             } else {
               state = VmState.unknown;
@@ -138,9 +144,9 @@ class VmRepository {
             state = VmState.unknown;
             error = result.message;
           }
-        } on ProcessException catch (e) {
+        } catch (e) {
           state = VmState.unknown;
-          error = e.message;
+          error = '$e';
         }
       }
     }

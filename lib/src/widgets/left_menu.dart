@@ -18,11 +18,13 @@ class LeftMenu extends StatefulWidget {
 class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
   List<DropdownMenuItem<String>> _dropdownMenuItems = [];
   late String currentLocale;
+  late final Future<String> _quickemuVersion;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    fetchQuickemuVersion();
+    _quickemuVersion = fetchQuickemuVersion();
     _dropdownMenuItems = supportedLocales
         .map((e) => DropdownMenuItem(value: e, child: Text(e)))
         .toList();
@@ -66,7 +68,7 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                 ),
               ),
               FutureBuilder<String>(
-                future: fetchQuickemuVersion(),
+                future: _quickemuVersion,
                 builder:
                     (BuildContext context, AsyncSnapshot<String> snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -97,10 +99,7 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Text(
-                      context.t('Use dark mode'),
-                      style: TextStyle(color: Colors.grey[300]),
-                    ),
+                    Flexible(child: Text(context.t('Use dark mode'))),
                     Expanded(child: Container()),
                     Switch(
                       value:
@@ -111,10 +110,13 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                       inactiveThumbColor: Colors.grey[500],
                       inactiveTrackColor: Colors.grey[300],
 
-                      onChanged: (value) {
-                        appSettings.useDarkMode = value;
-                        savePreference(prefThemeMode, value);
-                      },
+                      onChanged: _saving
+                          ? null
+                          : (value) => _save(
+                              prefThemeMode,
+                              value,
+                              () => appSettings.useDarkMode = value,
+                            ),
                       // activeColor: Colors.white,
                       // activeTrackColor: Colors.black26,
                       // inactiveThumbColor:
@@ -134,13 +136,15 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
                     DropdownButton<String>(
                       value: currentLocale,
                       items: _dropdownMenuItems,
-                      onChanged: (value) {
-                        setState(() {
-                          currentLocale = value!;
-                          appSettings.activeLocale = currentLocale;
-                          savePreference(prefCurrentLocale, currentLocale);
-                        });
-                      },
+                      onChanged: _saving
+                          ? null
+                          : (value) {
+                              if (value == null) return;
+                              _save(prefCurrentLocale, value, () {
+                                currentLocale = value;
+                                appSettings.activeLocale = value;
+                              });
+                            },
                     ),
                   ],
                 ),
@@ -186,5 +190,30 @@ class _LeftMenuState extends State<LeftMenu> with PreferencesMixin {
         );
       },
     );
+  }
+
+  Future<void> _save(String key, Object value, VoidCallback apply) async {
+    setState(() => _saving = true);
+    try {
+      await savePreference(key, value);
+      if (mounted) setState(apply);
+    } catch (error) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.t('Error')),
+          content: Text('$error'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.t('OK')),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
