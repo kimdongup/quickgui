@@ -1,17 +1,19 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_notifications/desktop_notifications.dart';
 import 'package:flutter/material.dart';
+
+import 'dart:ui' show AppExitResponse;
+
 import 'package:gettext_i18n/gettext_i18n.dart';
 
 import '../globals.dart';
 import '../model/operating_system.dart';
 import '../model/option.dart';
 import '../model/version.dart';
+import '../services/download_session.dart';
 import '../widgets/downloader/cancel_dismiss_button.dart';
-import '../widgets/downloader/download_label.dart';
 import '../widgets/downloader/download_progress_bar.dart';
 
 class Downloader extends StatefulWidget {
@@ -19,148 +21,185 @@ class Downloader extends StatefulWidget {
     required this.operatingSystem,
     required this.version,
     this.option,
+    this.session,
     super.key,
   });
-
   final OperatingSystem operatingSystem;
   final Version version;
   final Option? option;
-
+  final DownloadSession? session;
   @override
   State<Downloader> createState() => _DownloaderState();
 }
 
-class _DownloaderState extends State<Downloader> {
-  final notificationsClient = Platform.isMacOS ? null : NotificationsClient();
-  final curlPattern = RegExp("( [0-9.]+%)");
-  late final Stream<double> _progressStream;
-  bool _downloadFinished = false;
-  var controller = StreamController<double>();
-  Process? _process;
+class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
+  late final DownloadSession session;
+  NotificationsClient? _notifications;
+  bool _confirming = false;
 
   @override
   void initState() {
-    _progressStream = progressStream();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    session =
+        widget.session ??
+        DownloadSession(
+          executable: gQuickgetExecutable ?? 'quickget',
+          arguments: [
+            widget.operatingSystem.code,
+            widget.version.version,
+            if (widget.option?.option.isNotEmpty ?? false)
+              widget.option!.option,
+          ],
+          directory: workingDirectory,
+          environment: Map.of(gProcessEnvironment),
+          runner: gRunner,
+        );
+    session.addListener(_changed);
+    unawaited(_start());
   }
 
-  void parseCurlProgress(String line) {
-    var matches = curlPattern.allMatches(line).toList();
-    if (matches.isNotEmpty) {
-      var percent = matches[0].group(1);
-      if (percent != null) {
-        var value = double.parse(percent.replaceAll('%', '')) / 100.0;
-        controller.add(value);
-      }
+  Future<void> _start() async {
+    await session.start();
+    if (!mounted || Platform.isMacOS) return;
+    try {
+      _notifications = NotificationsClient();
+      await _notifications!.notify(
+        _label(),
+        appName: 'Quickgui',
+        expireTimeoutMs: 10000,
+      );
+    } catch (_) {
+      /* Notification availability cannot change the download result. */
     }
   }
 
-  Stream<double> progressStream() {
-    var options = [widget.operatingSystem.code, widget.version.version];
-    if (widget.option != null) {
-      options.add(widget.option!.option);
-    }
-    Process.start(
-      gQuickgetExecutable!,
-      options,
-      environment: gProcessEnvironment,
-      workingDirectory: workingDirectory,
-    ).then((process) {
-      if (widget.option!.downloader != 'zsync') {
-        process.stderr.transform(utf8.decoder).forEach(parseCurlProgress);
-      } else {
-        controller.add(-1);
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+
+  String _label() => switch (session.status) {
+    DownloadStatus.succeeded => context.t('Download complete'),
+    DownloadStatus.failed => context.t('Download failed'),
+    DownloadStatus.cancelled => context.t('Download cancelled'),
+    DownloadStatus.cancelling => context.t('Cancelling download'),
+    DownloadStatus.starting => context.t('Waiting for download to start'),
+    DownloadStatus.running =>
+      session.progress == null
+          ? context.t('Downloading (no progress available)...')
+          : context.t(
+              'Downloading... {0}%',
+              args: [(session.progress! * 100).toInt()],
+            ),
+  };
+
+  Future<bool> _confirmExit() async {
+    if (session.finished) return true;
+    if (_confirming) return false;
+    _confirming = true;
+    try {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.t('Cancel download?')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.t('Cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(context.t('OK')),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return false;
+      await session.cancel();
+      try {
+        await session.done.timeout(const Duration(seconds: 10));
+      } on TimeoutException {
+        return false;
       }
-
-      process.exitCode.then((value) {
-        bool cancelled = value.isNegative;
-        controller.close();
-        setState(() {
-          _downloadFinished = true;
-          notificationsClient?.notify(
-            cancelled
-                ? context.t('Download cancelled')
-                : context.t('Download complete'),
-            body: cancelled
-                ? context.t(
-                    'Download of {0} has been canceled.',
-                    args: [widget.operatingSystem.name],
-                  )
-                : context.t(
-                    'Download of {0} has completed.',
-                    args: [widget.operatingSystem.name],
-                  ),
-            appName: 'Quickgui',
-            expireTimeoutMs: 10000 /* 10 seconds */,
-          );
-        });
-      });
-
-      setState(() {
-        _process = process;
-      });
-    });
-    return controller.stream;
+      if (mounted) await WidgetsBinding.instance.endOfFrame;
+      return session.finished;
+    } finally {
+      _confirming = false;
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Future<AppExitResponse> didRequestAppExit() async =>
+      await _confirmExit() ? AppExitResponse.exit : AppExitResponse.cancel;
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    session.removeListener(_changed);
+    session.dispose();
+    unawaited(_notifications?.close());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: session.finished,
+    onPopInvokedWithResult: (didPop, result) async {
+      if (didPop) return;
+      if (await _confirmExit() && context.mounted) Navigator.of(context).pop();
+    },
+    child: Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           context.t(
             'Downloading {0}',
             args: [
-              '${widget.operatingSystem.name} ${widget.version.version}${widget.option!.option.isNotEmpty ? ' (${widget.option!.option})' : ''}',
+              '${widget.operatingSystem.name} ${widget.version.version}${widget.option?.option.isNotEmpty ?? false ? ' (${widget.option!.option})' : ''}',
             ],
           ),
         ),
-        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder(
-              stream: _progressStream,
-              builder: (context, AsyncSnapshot<double> snapshot) {
-                var data =
-                    !snapshot.hasData || widget.option!.downloader != 'curl'
-                    ? null
-                    : snapshot.data;
-                return Column(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    DownloadLabel(
-                      downloadFinished: _downloadFinished,
-                      data: snapshot.hasData ? snapshot.data : null,
-                      downloader: widget.option!.downloader,
-                    ),
+                    Text(_label()),
+                    const SizedBox(height: 8),
                     DownloadProgressBar(
-                      downloadFinished: _downloadFinished,
-                      data: snapshot.hasData ? data : null,
+                      downloadFinished: session.finished,
+                      data: session.progress,
                     ),
+                    if (session.error != null)
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: SelectableText(session.error!),
+                      ),
                     Padding(
                       padding: const EdgeInsets.only(top: 32),
                       child: Text(
                         context.t(
                           'Target folder : {0}',
-                          args: [workingDirectory],
+                          args: [session.directory],
                         ),
                       ),
                     ),
                   ],
-                );
-              },
+                ),
+              ),
             ),
           ),
           CancelDismissButton(
-            onCancel: () {
-              _process?.kill();
-            },
-            downloadFinished: _downloadFinished,
+            downloadFinished: session.finished,
+            onCancel: () => unawaited(session.cancel()),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
