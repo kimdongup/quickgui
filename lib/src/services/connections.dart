@@ -6,6 +6,35 @@ import 'package:path/path.dart' as p;
 
 import 'command_runner.dart';
 import 'toolchain.dart';
+import 'vm_service.dart';
+
+/// Re-read running state and endpoints immediately before opening the viewer.
+Future<List<String>> spiceArguments(
+  VmRecord selected, {
+  required VmRepository repository,
+}) async {
+  final current = await repository.inspect(selected.configPath);
+  if (current == null ||
+      current.state != VmState.running ||
+      current.pid != selected.pid ||
+      current.content != selected.content) {
+    throw StateError('VM state changed; refresh and try again');
+  }
+  final path = current.spiceSocketPath;
+  if (path != null && p.isAbsolute(path) && !path.contains('\u0000')) {
+    // spice-gtk treats everything after spice+unix:// as a literal path. URI
+    // percent-encoding would break spaces, percent signs and non-ASCII names.
+    // Process.start passes this as one argument, without evaluating a shell.
+    return ['--uri=spice+unix://$path'];
+  }
+  final port = current.spicePort;
+  if (port != null && port > 0 && port <= 65535) {
+    return ['-h', '127.0.0.1', '-p', '$port'];
+  }
+  throw StateError(
+    'SPICE endpoint is no longer available; refresh and try again',
+  );
+}
 
 Future<bool> detectSsh(
   int port, {

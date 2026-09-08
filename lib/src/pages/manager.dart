@@ -278,6 +278,7 @@ class _ManagerState extends State<Manager> {
     final stopped = vm.state == VmState.stopped;
     final color = Theme.of(context).colorScheme.primary;
     final info = [
+      if (vm.spiceSocketPath != null) context.t('SPICE socket'),
       if (vm.spicePort != null) '${context.t('SPICE port')}: ${vm.spicePort}',
       if (vm.sshPort != null) '${context.t('SSH port')}: ${vm.sshPort}',
     ].join(' ');
@@ -343,12 +344,15 @@ class _ManagerState extends State<Manager> {
                       : 'Connect display with SPICE',
                 ),
                 icon: const Icon(Icons.monitor),
-                onPressed: _spicy != null && vm.spicePort != null
+                onPressed: _spicy != null && vm.hasSpice && !busy
                     ? () async {
                         try {
                           await launchConnection(
                             _spicy!,
-                            ['-p', '${vm.spicePort}'],
+                            await spiceArguments(
+                              vm,
+                              repository: operations.repository,
+                            ),
                             directory: vm.directory,
                             environment: gProcessEnvironment,
                           );

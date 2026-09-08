@@ -106,6 +106,9 @@ msgstr "Select..."
 msgid "SPICE port"
 msgstr "SPICE port"
 
+msgid "SPICE socket"
+msgstr "SPICE socket"
+
 msgid "SSH port"
 msgstr "SSH port"
 
