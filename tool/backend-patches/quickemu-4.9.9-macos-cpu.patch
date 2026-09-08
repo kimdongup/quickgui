@@ -1,0 +1,21 @@
+--- a/quickemu
++++ b/quickemu
+@@ -318,7 +318,7 @@
+             sysctl -n machdep.cpu.brand_string
+         elif [ "Socket" == "${INFO_NAME}" ]; then
+             sysctl -n hw.packages
+-        elif [ "^Vendor ID" == "${INFO_NAME}" ]; then
++        elif [ "^Vendor ID" == "${INFO_NAME}" ] || [ "Vendor" == "${INFO_NAME}" ]; then
+             if [ "${ARCH_HOST}" == "arm64" ]; then
+                 sysctl -n machdep.cpu.brand_string | cut -d' ' -f1
+             else
+@@ -378,7 +378,8 @@
+         if [ "${HOST_CPU_FLAG}" == "AVX" ]; then
+             HOST_CPU_FLAG="AVX1.0"
+         fi
+-        if sysctl -n machdep.cpu.features | grep -o "${HOST_CPU_FLAG}" > /dev/null; then
++        if sysctl -n machdep.cpu.features machdep.cpu.leaf7_features 2>/dev/null |
++            tr '[:space:]' '\n' | grep -Fxq "${HOST_CPU_FLAG}"; then
+             return 0
+         else
+             return 1
