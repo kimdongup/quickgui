@@ -30,29 +30,38 @@ Future<List<OperatingSystem>> loadOperatingSystems(bool showUbuntus) async {
       .where((element) => element.isNotEmpty)
       .map((e) => e.trim())
       .forEach((element) {
-    var chunks = element.split(",");
-    Tuple5 supportedVersion;
-    if (chunks.length == 4) // Legacy version of quickget
-    {
-      supportedVersion = Tuple5.fromList([...chunks, "curl"]);
-    } else {
-      var t5 = [chunks[0], chunks[1], chunks[2], chunks[3], chunks[4]].toList();
-      supportedVersion = Tuple5.fromList(t5);
-    }
+        var chunks = element.split(",");
+        Tuple5 supportedVersion;
+        if (chunks.length == 4) // Legacy version of quickget
+        {
+          supportedVersion = Tuple5.fromList([...chunks, "curl"]);
+        } else {
+          var t5 = [
+            chunks[0],
+            chunks[1],
+            chunks[2],
+            chunks[3],
+            chunks[4],
+          ].toList();
+          supportedVersion = Tuple5.fromList(t5);
+        }
 
-    if (currentOperatingSystem?.code != supportedVersion.item2) {
-      currentOperatingSystem =
-          OperatingSystem(supportedVersion.item1, supportedVersion.item2);
-      output.add(currentOperatingSystem!);
-      currentVersion = null;
-    }
-    if (currentVersion?.version != supportedVersion.item3) {
-      currentVersion = Version(supportedVersion.item3);
-      currentOperatingSystem!.versions.add(currentVersion!);
-    }
-    currentVersion!.options
-        .add(Option(supportedVersion.item4, supportedVersion.item5));
-  });
+        if (currentOperatingSystem?.code != supportedVersion.item2) {
+          currentOperatingSystem = OperatingSystem(
+            supportedVersion.item1,
+            supportedVersion.item2,
+          );
+          output.add(currentOperatingSystem!);
+          currentVersion = null;
+        }
+        if (currentVersion?.version != supportedVersion.item3) {
+          currentVersion = Version(supportedVersion.item3);
+          currentOperatingSystem!.versions.add(currentVersion!);
+        }
+        currentVersion!.options.add(
+          Option(supportedVersion.item4, supportedVersion.item5),
+        );
+      });
 
   return output;
 }
@@ -89,9 +98,7 @@ void main() async {
   }
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppSettings()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => AppSettings())],
       builder: (context, _) => const App(),
     ),
   );

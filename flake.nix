@@ -2,7 +2,7 @@
   description = "Quickgui flake";
   inputs = {
     flake-schemas.url = "https://flakehub.com/f/DeterminateSystems/flake-schemas/*.tar.gz";
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/*.tar.gz";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     quickemu.url = "https://flakehub.com/f/quickemu-project/quickemu/*.tar.gz";
     quickemu.inputs.nixpkgs.follows = "nixpkgs";
   };
