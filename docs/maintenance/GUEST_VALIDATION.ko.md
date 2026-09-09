@@ -26,7 +26,7 @@
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Sequoia 다운로드/chunklist/복구 GUI/APFS 디스크 준비 통과. CPU 감지 수정 사본 + 8 GB. QuickguiMac 대상 설치 시작, 완료는 미확인 |
+| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Recovery 복귀 후 OpenCore의 macOS Installer를 선택해 다음 설치 단계 진입. Apple 로고·진행 막대·약 29분 표시 확인. 설치 완료는 미확인 |
 | 2 | M1 맥미니 → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 QEMU/HVF·UEFI·설치 ISO·드라이버를 확인하고 설치·재부팅·SSH·SPICE를 각각 검증 | 대기. 주 검증 호스트로 M1 권장. 다운로드·VM 실행 미착수 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
 
@@ -75,6 +75,26 @@ QuickguiMac을 선택한 실제 설치 시작 화면(완료 전):
 ![QuickguiMac 대상 Sequoia 설치 진행 화면](screenshots/macos-intel-installation.png)
 
 추가 부팅/설치 결과는 이 문서에 이어서 기록하며, 위 중간 결과를 전체 macOS 설치 성공으로 승격하지 않는다.
+
+## 설치 파일 준비 후 Recovery로 복귀한 경우
+
+2026-09-08 사용자 보고 후 확인했다. 기존 검증 QEMU는 계속 실행 중이며 같은 시스템 디스크와 RecoveryImage가 연결되어 있었다. 게스트 Terminal의 읽기 명령으로 `QuickguiMac` APFS 볼륨 약 17.5 GB, Preboot 약 79 MB 및 `macOS Install Data/Locked Files/Boot Files`를 확인했다. 일반 시스템 설치와 최초 계정 설정은 아직 완료되지 않았다. 현재 Recovery의 `/var/log/install.log`는 19:58 UTC 이후 새로 부팅한 복구 환경의 기록이며, 이전 설치의 성공·실패를 단독으로 입증하지 않는다.
+
+게스트를 정상 `reboot`한 뒤 OpenCore에서 **macOS Base System**이 기본 선택된 것과 옆의 **macOS Installer** 항목을 확인했다. Installer를 선택하여 부팅했고, 화면에서 설치 대상 볼륨의 `macOS Install Data/Locked Files/Boot Files/BootKernelExtensions.kc`를 읽는 것을 확인했다. 이는 설치 재개 부팅의 증거이며 설치 완료 증거가 아니다. Ctrl+Enter도 입력했으나 기본값 저장 성공 여부는 다음 재부팅 전까지 미확인이다. 디스크 포맷·설치 파일 재다운로드·Recovery 이미지 삭제는 수행하지 않았다.
+
+이어진 커널 출력에서 `QuickguiMac` 마운트, 설치 폴더의 `BaseSystem.dmg` 검증과 서비스 초기화 진행을 확인했다. 원본 Recovery 로그 및 디스크·설치 폴더 조회 화면은 로컬 검증 경로의 `recovery-resume/`에 보관했다. 로그 수신은 해당 VM과 호스트 사이의 일회성 loopback 연결로 수행했으며 수신기는 종료했다.
+
+이후 Apple 로고·진행 막대와 **About 29 minutes remaining...** 화면을 확인하여 다음 설치 단계 진입을 검증했다. 이 예상 시간은 완료 시각을 보장하지 않는다. 최초 계정 설정·설치된 OS 재부팅·SSH·게스트 SPICE는 여전히 미검증이다.
+
+![설치 파일 준비 뒤 나타난 macOS Installer 부팅 항목](screenshots/macos-intel-installer-option.png)
+
+![macOS Installer가 기존 설치 폴더의 부팅 파일을 읽는 화면](screenshots/macos-intel-installer-boot.png)
+
+![Installer 선택 후 확인한 다음 설치 단계 진행 화면](screenshots/macos-intel-installer-progress.png)
+
+[Quickemu 공식 macOS 설치 안내](https://github.com/quickemu-project/quickemu/wiki/03-Create-macOS-virtual-machines)도 최초 재부팅 때 `macOS Installer`, 이후에는 사용자가 이름 붙인 시스템 디스크를 선택하도록 설명한다. 이 검증 VM의 시스템 디스크 이름은 `QuickguiMac`이다. Recovery 화면만 보고 재설치를 시작하거나 디스크를 다시 지우지 않고, 현재 설치 단계와 OpenCore 항목을 먼저 확인한다.
+
+앱 개선 시 반영할 내용: macOS x64의 **복구 이미지 다운로드 → 설치 파일 준비 → Installer 재부팅 → 시스템 디스크 부팅 → 최초 설정**을 구분하는 안내가 필요하다. 호스트의 디스크 크기나 QEMU PID만으로 단계를 자동 확정하지 않는다. 현재 앱에 이 단계 안내나 부팅 항목 자동 선택을 구현한 것은 아니다.
 
 ## upstream과 개인용 경계
 

@@ -106,7 +106,7 @@ quickget --version
 
 **소스를 받거나 ARM64 앱을 빌드했다고 macOS ARM 게스트 지원이 완성되는 것은 아니다.** 현재 앱에는 Apple Virtualization/IPSW backend가 구현되어 있지 않다. ARM 메뉴도 실제 backend 동작을 확인한 뒤 연결한다.
 
-게스트 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)의 **Intel에서 macOS x64 → M1에서 Windows ARM64 실험 → M1에서 macOS ARM** 순서로 진행하는 것을 권장한다. M1 장비를 보유한 것이 확인되어 Windows ARM64도 하드웨어 가속이 가능한 M1을 주 검증 호스트로 제안한다. Intel에서의 ARM64 TCG 실행은 추가 호환성 실험으로 남긴다. 맥미니 개발 환경·소스·UI 준비는 지금 할 수 있지만, 각 게스트 설치·실행은 앞 단계 결과를 확정한 뒤 진행한다. Intel macOS 설치 완료는 사용자 보고를 기다리는 상태다.
+게스트 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)의 **Intel에서 macOS x64 → M1에서 Windows ARM64 실험 → M1에서 macOS ARM** 순서로 진행하는 것을 권장한다. M1 장비를 보유한 것이 확인되어 Windows ARM64도 하드웨어 가속이 가능한 M1을 주 검증 호스트로 제안한다. Intel에서의 ARM64 TCG 실행은 추가 호환성 실험으로 남긴다. 맥미니 개발 환경·소스·UI 준비는 지금 할 수 있지만, 각 게스트 설치·실행은 앞 단계 결과를 확정한 뒤 진행한다. Intel macOS의 최신 진행 상태는 위 검증 문서에서 확인한다.
 
 Windows ARM64는 QEMU/HVF, ARM64 UEFI와 공식 ISO·게스트 드라이버를 준비하는 경로다. macOS ARM용 Apple Virtualization backend가 완성될 때까지 Windows ARM 검증을 기다릴 필요는 없다. 다만 현재 앱의 ARM 설치 흐름과 M1의 QEMU/SPICE 구성은 아직 검증되지 않았다.
 
