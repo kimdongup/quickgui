@@ -2,6 +2,12 @@
 
 2026-09-08. 이전 세 설계 문서는 최초 계획의 보존본이다. 현재 실행 상태는 이 문서를 따른다.
 
+2026-09-09 M1 후속: 시스템 PATH가 Homebrew보다 앞설 때 발생한 Bash 버전 오류를 공통 후보
+`pr/macos-homebrew-path` / `dc51dd0`에서 수정하고 `personal/apple-silicon` / `fb94a51`에 반영했다.
+M1에서 양쪽 분석·전체 테스트·release 빌드와 실제 backend/catalog 검사를 통과했다.
+기존 개인 lockfile 변경 보존, 실행 환경과 명령, 미검증 범위는 [M1 검증 기록](M1_VALIDATION.ko.md)을 따른다.
+아래 2026-09-08 기록의 M1 미실행 상태는 이 결과로 갱신하며, ARM 게스트 실행은 여전히 미검증이다.
+
 ## 운영 상태
 
 - `origin`: `https://github.com/kimdongup/quickgui.git`
