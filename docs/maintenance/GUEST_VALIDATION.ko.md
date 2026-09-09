@@ -26,7 +26,7 @@
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | Recovery 복귀 후 OpenCore의 macOS Installer를 선택해 다음 설치 단계 진입. Apple 로고·진행 막대·약 29분 표시 확인. 설치 완료는 미확인 |
+| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | 두 번째 Recovery 복귀 후 VM을 새로 실행하여 외부 복구 매체 없이 시스템 디스크의 후속 설치 단계 진입. 최초 설정·설치 완료는 미확인 |
 | 2 | M1 맥미니 → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 QEMU/HVF·UEFI·설치 ISO·드라이버를 확인하고 설치·재부팅·SSH·SPICE를 각각 검증 | 대기. 주 검증 호스트로 M1 권장. 다운로드·VM 실행 미착수 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
 
@@ -95,6 +95,30 @@ QuickguiMac을 선택한 실제 설치 시작 화면(완료 전):
 [Quickemu 공식 macOS 설치 안내](https://github.com/quickemu-project/quickemu/wiki/03-Create-macOS-virtual-machines)도 최초 재부팅 때 `macOS Installer`, 이후에는 사용자가 이름 붙인 시스템 디스크를 선택하도록 설명한다. 이 검증 VM의 시스템 디스크 이름은 `QuickguiMac`이다. Recovery 화면만 보고 재설치를 시작하거나 디스크를 다시 지우지 않고, 현재 설치 단계와 OpenCore 항목을 먼저 확인한다.
 
 앱 개선 시 반영할 내용: macOS x64의 **복구 이미지 다운로드 → 설치 파일 준비 → Installer 재부팅 → 시스템 디스크 부팅 → 최초 설정**을 구분하는 안내가 필요하다. 호스트의 디스크 크기나 QEMU PID만으로 단계를 자동 확정하지 않는다. 현재 앱에 이 단계 안내나 부팅 항목 자동 선택을 구현한 것은 아니다.
+
+## Installer 진행 후 두 번째 Recovery 복귀 조사
+
+2026-09-08, 사용자가 설치가 끝난 것처럼 보인 뒤 다시 Recovery로 돌아왔다고 보고했다. 실제 화면에서도 복구 유틸리티를 확인했다. 이 시점에는 설치 대상의 시스템 파일·최초 설정 화면을 아직 확인하지 못했으므로 설치 성공이나 실패를 확정하지 않는다.
+
+Quickemu 4.9.9의 `DISK_USED` 처리와 macOS 드라이브 연결 코드를 확인했다. Quickemu를 새로 실행하면 사용한 것으로 판단한 디스크에 대해 `iso`와 `img`를 비우지만, 이미 실행 중인 QEMU 안에서 게스트만 재부팅하면 기존 RecoveryImage 드라이브가 계속 연결된다. 따라서 **게스트 재부팅**과 **VM 종료 후 Quickemu 재실행**은 설치 매체 연결 측면에서 다르다. 이 크기 기반 판단은 Quickemu의 동작 설명이며, GUI에서 설치 완료를 자동 판정하는 근거로 사용하지 않는다.
+
+복구 메뉴 응답과 종료 과정에서 큰 지연을 관찰했다. 호스트는 16 GB RAM이며 관찰 시 스왑 사용량 약 17 GB, QEMU 샘플의 physical footprint 약 15.4 GB였다. HVF CPU 스레드는 실행 중이었다. 이 단일 관찰로 지연의 원인을 확정하지 않는다.
+
+게스트 종료가 10분 이상 지연되고 `info blockstats`에서 시스템 디스크 I/O가 8분 이상 없음을 확인했다. HMP `stop`으로 VM을 일시정지하고 `qemu-io <drive> "flush"`로 SystemDisk·RecoveryImage·BootLoader·pflash1의 캐시를 저장했다. 시스템 디스크·복구 이미지·OpenCore·UEFI 변수·설정·실행 스크립트를 APFS 복제본으로 로컬 `recovery-second-return-ifwc8cho/`에 보관한 뒤 HMP `quit`으로 QEMU를 종료했다. 이는 게스트 OS의 정상 종료 완료나 RAM 상태 저장을 뜻하지 않는다. 재부팅 로그도 APFS의 unclean unmount 후 checkpoint 재로드를 표시했다.
+
+위 **종료 전 시스템 디스크 복제본은 복원용으로 검증되지 않았다.** 별도의 읽기 전용 `qemu-img check`에서 16개 refcount 관련 오류와 46,280개 leaked cluster를 보고했다. 복제본은 `lazy-refcounts=true`, `dirty-flag=true`였다. 일시정지·flush 뒤의 파일 복사만으로 실행 중 qcow2의 일관된 백업을 보장할 수 없었다. 현재 실행 중인 원본을 이 복제본으로 덮어쓰거나 원본에 복구 명령을 실행하지 않는다.
+
+동일한 수정 Quickemu 사본과 QEMU/Cocoa/HVF·8 GB·2 vCPU로 다시 시작했다. 생성된 실행 인자에서 RecoveryImage 드라이브가 빠졌고 원본 이미지 파일과 config의 `img` 설정은 보존됐다. 게스트 화면에서 **QuickguiMac - Data** 마운트와 시스템 디스크의 **`/com.apple.installer/x86_64SURamDisk.dmg`** 검증을 확인했다. 이어 설치 프로그램의 단계별 `CHECKPOINT BEGIN/END` 출력이 진행했다. 외부 Recovery로 부팅하는 반복을 벗어나 후속 설치 단계에 진입했지만, 바탕화면이나 최초 설정 도달을 확인한 것은 아니다.
+
+새 실행에서 QEMU의 `drive_backup -f SystemDisk <target> qcow2`로 **별도의** `disk-managed-backup.qcow2`를 만들었다. 진행 중인 백업 작업이 사라진 뒤 닫힌 대상 파일에 `qemu-img check --output=json`을 실행하여 exit 0, `check-errors=0`을 확인했다. 이 사본은 후속 설치 중 한 시점의 디스크 백업이며, 게스트 RAM·APFS 정상 상태·복원 부팅 성공을 검증한 것은 아니다. 원본에 `qemu-img check -r`을 실행하지 않았다. 검사 결과와 두 사본의 차이는 같은 로컬 폴더의 `README.txt`, `managed-backup-check.json`에 보관했다.
+
+검증 QEMU는 감시 세션에서 유지하며 해당 PID가 실행되는 동안만 `caffeinate -i -w <pid>`를 사용한다. 현재 실행의 SSH 전달은 HMP에서 `127.0.0.1:22220 → guest:22`로 변경하고 `info usernet`과 `lsof`로 확인했다. Quickemu가 다음 실행에서도 이 주소를 유지하도록 수정한 것은 아니므로, 후속 실행에서는 다시 확인한다. 아직 게스트 SSH 서버·로그인 성공은 미검증이다.
+
+![Installer 진행 후 다시 나타난 Recovery 유틸리티](screenshots/macos-intel-second-recovery.png)
+
+![외부 Recovery 없이 시스템 디스크의 후속 설치 이미지로 부팅](screenshots/macos-intel-system-installer-boot.png)
+
+![시스템 디스크의 후속 설치에서 Preboot 갱신과 시스템 정리가 진행하는 화면](screenshots/macos-intel-system-installer-patching.png)
 
 ## upstream과 개인용 경계
 
