@@ -13,6 +13,7 @@
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
 - 현재 개인 통합 후보의 앱 코드: `personal/preview` / `09fce12` (이후 검증 도구·문서 커밋은 별도). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 공통 삭제 보호와 SPICE Unix 소켓 재접속을 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
+- Intel macOS 게스트는 두 차례 Recovery 복귀를 조사한 뒤 외부 복구 매체를 제외한 실행에서 후속 설치를 마쳤다. QuickguiMac 자동 부팅과 최초 설정의 국가·지역 선택 화면까지 확인했다. 사용자 계정 설정·바탕화면·설정 완료 후 재부팅·SSH·SPICE는 아직 남아 있다.
 - Apple Silicon 검증 장비는 사용자 보유 M1 맥미니로 정했다. 소스 clone, M1 전용 작업 브랜치와 개발 환경 준비는 [M1_HANDOFF.ko.md](M1_HANDOFF.ko.md)를 따른다. Windows ARM64도 M1을 주 검증 호스트로 권장하며 Intel TCG는 추가 실험으로 남긴다. macOS x64 → Windows ARM64 → macOS ARM 순서는 유지하고 M1 실행 결과는 아직 없다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 

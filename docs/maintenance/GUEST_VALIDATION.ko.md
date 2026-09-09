@@ -26,7 +26,7 @@
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | 두 번째 Recovery 복귀 후 VM을 새로 실행하여 외부 복구 매체 없이 시스템 디스크의 후속 설치 단계 진입. 최초 설정·설치 완료는 미확인 |
+| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | OS 설치 후 QuickguiMac 자동 부팅 및 최초 설정의 국가·지역 선택 화면 도달 확인. 사용자 계정 설정·바탕화면·설정 완료 후 재부팅·SSH·SPICE는 대기 |
 | 2 | M1 맥미니 → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 QEMU/HVF·UEFI·설치 ISO·드라이버를 확인하고 설치·재부팅·SSH·SPICE를 각각 검증 | 대기. 주 검증 호스트로 M1 권장. 다운로드·VM 실행 미착수 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
 
@@ -102,6 +102,8 @@ QuickguiMac을 선택한 실제 설치 시작 화면(완료 전):
 
 Quickemu 4.9.9의 `DISK_USED` 처리와 macOS 드라이브 연결 코드를 확인했다. Quickemu를 새로 실행하면 사용한 것으로 판단한 디스크에 대해 `iso`와 `img`를 비우지만, 이미 실행 중인 QEMU 안에서 게스트만 재부팅하면 기존 RecoveryImage 드라이브가 계속 연결된다. 따라서 **게스트 재부팅**과 **VM 종료 후 Quickemu 재실행**은 설치 매체 연결 측면에서 다르다. 이 크기 기반 판단은 Quickemu의 동작 설명이며, GUI에서 설치 완료를 자동 판정하는 근거로 사용하지 않는다.
 
+보관한 OpenCore 디스크를 임시 raw 파일로 변환하고 mtools로 `EFI/OC/config.plist`를 읽었다. `Misc.Security.AllowSetDefault=false`, `Misc.Boot.ShowPicker=true`, `Timeout=45`를 확인했다. [OpenCore 설정 문서](https://dortania.github.io/docs/release/Configuration.html)의 설명에 따르면 Ctrl+Enter로 기본 항목을 저장하려면 `AllowSetDefault`가 필요하다. 이 VM은 해당 기능이 꺼져 있었으므로 앞 단계에서 Ctrl+Enter를 입력한 것을 기본값 저장 성공으로 취급할 수 없다. 실제 OpenCore 이미지나 설정은 수정하지 않았다.
+
 복구 메뉴 응답과 종료 과정에서 큰 지연을 관찰했다. 호스트는 16 GB RAM이며 관찰 시 스왑 사용량 약 17 GB, QEMU 샘플의 physical footprint 약 15.4 GB였다. HVF CPU 스레드는 실행 중이었다. 이 단일 관찰로 지연의 원인을 확정하지 않는다.
 
 게스트 종료가 10분 이상 지연되고 `info blockstats`에서 시스템 디스크 I/O가 8분 이상 없음을 확인했다. HMP `stop`으로 VM을 일시정지하고 `qemu-io <drive> "flush"`로 SystemDisk·RecoveryImage·BootLoader·pflash1의 캐시를 저장했다. 시스템 디스크·복구 이미지·OpenCore·UEFI 변수·설정·실행 스크립트를 APFS 복제본으로 로컬 `recovery-second-return-ifwc8cho/`에 보관한 뒤 HMP `quit`으로 QEMU를 종료했다. 이는 게스트 OS의 정상 종료 완료나 RAM 상태 저장을 뜻하지 않는다. 재부팅 로그도 APFS의 unclean unmount 후 checkpoint 재로드를 표시했다.
@@ -119,6 +121,20 @@ Quickemu 4.9.9의 `DISK_USED` 처리와 macOS 드라이브 연결 코드를 확�
 ![외부 Recovery 없이 시스템 디스크의 후속 설치 이미지로 부팅](screenshots/macos-intel-system-installer-boot.png)
 
 ![시스템 디스크의 후속 설치에서 Preboot 갱신과 시스템 정리가 진행하는 화면](screenshots/macos-intel-system-installer-patching.png)
+
+## 후속 설치와 시스템 디스크 부팅
+
+후속 설치 로그에서 시스템 볼륨 seal 작업의 결과 0, 시스템 스냅샷 생성, 진행률 100%를 확인했다. 이후 자동 재부팅하여 `bootMode='migration'`인 환경을 거쳤고 Apple 로고·진행 막대 뒤 다시 자동 재부팅했다. 설치 내부의 여러 재부팅을 모두 완료나 실패로 일괄 판정하지 않는다.
+
+다음 OpenCore 화면에는 **QuickguiMac**이 기본 선택되어 있었고 `macOS Installer`는 사라졌다. 옆에는 시스템 디스크의 `Recovery 15.7.9 (dmg)`가 표시됐다. 별도의 키 입력 없이 QuickguiMac으로 부팅했고, `Rooting from snapshot with xid 877`, `successfully validated on-disk root hash`, QuickguiMac의 시스템 볼륨 마운트와 `/sbin/launchd` 실행을 확인했다. 이는 설치된 시스템으로 부팅한 증거이며 최초 계정 설정·바탕화면·SSH·SPICE 검증은 별도로 남는다.
+
+이어 첫 시스템 부팅의 APFS quick check에서 `FILESYSTEM CLEAN`을 확인하고, 그래픽 초기화 후 **Select Your Country or Region** 최초 설정 화면에 도달했다. OS 설치와 설치된 디스크의 자동 부팅은 확인했으며, 사용자 계정·암호 설정은 사용자에게 맡긴다. 전체 설치·실사용 수용 검증을 완료로 승격하지 않고 계정 설정 후 바탕화면·재부팅·SSH·SPICE를 차례로 확인한다. ARM 게스트 검증은 아직 시작하지 않는다.
+
+![후속 설치 완료 후 기본 선택된 QuickguiMac 부팅 항목](screenshots/macos-intel-installed-disk-option.png)
+
+![QuickguiMac 시스템 스냅샷 검증과 실제 시스템 부팅](screenshots/macos-intel-installed-system-boot.png)
+
+![설치된 macOS의 최초 설정 국가·지역 선택 화면](screenshots/macos-intel-first-setup.png)
 
 ## upstream과 개인용 경계
 
