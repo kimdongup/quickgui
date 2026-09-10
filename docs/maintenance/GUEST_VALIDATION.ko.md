@@ -38,6 +38,11 @@ M1에서도 현재 Quickgui/Quickget의 Windows ARM 설치 경로가 완성된 �
 
 기존 macOS/Windows 항목은 x64를 기준으로 유지한다. ARM 메뉴는 실제 backend와 함께 확장한다. Quickget 4.9.9는 Windows/macOS용 ARM 다운로드 경로를 제공하지 않으므로 메뉴 이름과 `--arch arm64` 인자만 추가해 지원을 표시하지 않는다. Windows ARM은 실험 항목, macOS ARM은 Apple Silicon 호스트와 Apple Virtualization backend가 필요한 항목으로 설계한다.
 
+2026-09-09 후속: 개인 브랜치에 Quickget과 분리된 [ARM 이미지 다운로드 경로](ARM_DOWNLOADS.ko.md)를 추가했다.
+Windows ARM64 공식 ISO 링크 입력과 macOS Apple Silicon의 호환 IPSW 조회·저장을 지원한다.
+OS/VERSION 단계에 아키텍처와 이미지 전용 상태를 표시하며 VM 생성·설치·부팅 지원을 뜻하지 않는다.
+이전 순차 게스트 검증 상태는 그대로이며 실제 실행한 검사는 [M1 검증 기록](M1_VALIDATION.ko.md)을 따른다.
+
 ## macOS Intel 첫 검증 기록
 
 - 전용 경로: `/Users/mac/quickemu/validation/macos-intel-sequoia`. 기존 Windows 경로와 분리.

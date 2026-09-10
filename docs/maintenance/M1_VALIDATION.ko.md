@@ -170,3 +170,63 @@ lipo -archs build/macos/Build/Products/Release/quickgui.app/Contents/Frameworks/
   사용자 지정 디렉터리에서 별도 Bash를 의도적으로 우선한 경우도 강제로 교체하지 않는다.
 - Linux PATH 순서는 테스트했지만 이번 M1 작업에서 Linux 실행·빌드를 수행하지 않았다.
 - 서명/notarization과 원격 CI는 실행하지 않았다.
+
+## 2026-09-09 후속: ARM 선택과 실제 이미지 다운로드 경로
+
+이 절은 위 PATH 수정 이후의 개인 기능 검증이다. 시작 HEAD는 `230f2d6`, 브랜치는
+`personal/apple-silicon`이다. OS 선택에서 macOS Intel x64 / Apple Silicon ARM64와
+Windows x64 / ARM64를 구분하고 VERSION 제목에도 표시한다.
+사용법과 저장 경로는 [ARM_DOWNLOADS.ko.md](ARM_DOWNLOADS.ko.md)를 따른다.
+
+Windows ARM64는 사용자가 제공한
+[Microsoft 공식 페이지](https://www.microsoft.com/en-us/software-download/windows11arm64)에서
+언어별로 발급받은 ISO 링크를 앱에 붙여 넣어 다운로드한다.
+macOS ARM64는 Apple `VZMacOSRestoreImage.fetchLatestSupported`가 반환한 호환 IPSW를 다운로드한다.
+ARM 다운로드는 설치 이미지 저장까지만 구현했으며 `.conf`, VM 디스크, 설치 실행기는 생성하지 않는다.
+기존 x64 Quickget 경로는 `--arch amd64`를 명시해 전역 ARM 설정과 혼동되지 않도록 했다.
+
+| 명령/검사 | 실제 결과 |
+| --- | --- |
+| `flutter analyze --no-pub` | PASS, No issues found |
+| `flutter test --no-pub test/arm_media_test.dart test/arm_media_widget_test.dart` | PASS, 13 tests |
+| `flutter test --no-pub` | PASS, 66 passed / 4 opt-in skipped |
+| 영문 안내 추가 후 `flutter test --no-pub test/arm_media_widget_test.dart` | PASS, 3 tests, 새 안내의 번역 누락 로그 해소 |
+| `flutter build macos --release --no-pub` | PASS, 47.2 MB |
+| release runner `lipo -archs` | x86_64 arm64 |
+| release 앱 entitlement 조회 | `com.apple.security.virtualization = true` 확인 |
+| 아래 Swift probe | PASS, Apple API에서 macOS 26.6.2 / build 25G83 반환 |
+| 반환된 공식 IPSW URL의 `Range: bytes=0-3` 요청 | PASS, HTTP 206, 4 bytes, `50 4b 03 04` |
+| 기존 사용자 lockfile SHA256 | `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a` 유지 |
+
+회귀 검사는 x64/ARM64 선택 분리, 전역 ARM 설정과 x64 인자의 충돌 방지, 잘못된 주소 거부,
+실제 로컬 HTTP 서버를 통한 ISO/IPSW fixture 전체 전송, 기존 파일 보존, 공식/비공식 리다이렉트,
+HTTP 오류·HTML 응답·잘못된 헤더·전송 중단, 취소와 임시 파일 정리, macOS 조회 실패 후 재시도를 포함한다.
+로컬 fixture는 전송 상태 검사용 데이터이며 실제 설치 가능한 OS 이미지가 아니다.
+
+Apple 조회는 앱에 포함한 동일한 `RestoreImageSource.swift`를 다음처럼 별도 프로그램으로 실행했다.
+Swift 캐시 및 네트워크 검사는 sandbox 밖 실행 승인을 받아 수행했다.
+
+```sh
+mkdir -p /tmp/quickgui-arm-validation
+xcrun swiftc macos/Runner/RestoreImageSource.swift tool/check_restore_image.swift \
+  -o /tmp/quickgui-arm-validation/check-restore-image
+codesign --force --sign - --entitlements macos/Runner/Release.entitlements \
+  /tmp/quickgui-arm-validation/check-restore-image
+/tmp/quickgui-arm-validation/check-restore-image
+```
+
+실제 반환 URL은 다음 공식 Apple 주소였다.
+
+```text
+https://updates.cdn-apple.com/2026SummerFCS/fullrestores/140-75212/A2A24B94-1FC1-45A3-93F7-C51B02AF1F4D/UniversalMac_26.6.2_25G83_Restore.ipsw
+```
+
+이 주소에 `curl --range 0-3 --max-filesize 1024 --max-time 30`으로 제한된 요청을 보냈다.
+응답은 `Content-Range: bytes 0-3/19772231540`, `Content-Length: 4`였다.
+약 19.8 GB의 전체 IPSW는 다운로드하지 않았다. Microsoft에서 새 언어별 링크를 발급받아
+전체 ISO를 받는 실검증도 수행하지 않았다. 실제 파일의 전체 SHA256, 설치, 부팅은 미검증이다.
+네이티브 GUI 수동 조작을 수행했다고 주장하지 않으며, 위젯 검사·앱 빌드·동일 Swift 소스의
+실제 Apple 조회를 구분한다. 기존 `window_size`의 Swift Package Manager 경고는 남아 있다.
+
+이 확장은 개인 브랜치에만 포함하며 공통 후보 `pr/macos-homebrew-path`에는 넣지 않는다.
+Flutter 3.47.2/Dart 3.13.2 및 기존 의존성 버전을 유지했고 원격 push/PR 제출은 수행하지 않았다.

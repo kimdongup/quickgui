@@ -5,6 +5,7 @@ import 'package:gettext_i18n/gettext_i18n.dart';
 import '../../main.dart' show loadOperatingSystems;
 import '../model/operating_system.dart';
 import '../model/osicons.dart';
+import '../services/guest_catalog.dart';
 import '../widgets/selection_list.dart';
 
 class OperatingSystemSelection extends StatefulWidget {
@@ -29,8 +30,13 @@ class _OperatingSystemSelectionState extends State<OperatingSystemSelection> {
     builder: (context, snapshot) => SelectionList<OperatingSystem>(
       title: context.t('Select operating system'),
       searchHint: context.t('Search operating system'),
-      items: snapshot.data ?? [],
-      label: (os) => os.name,
+      items: snapshot.hasData && snapshot.data!.isNotEmpty
+          ? withArmMedia(snapshot.data!)
+          : [],
+      label: (os) => os.displayName,
+      subtitle: (os) => os.armMedia == null
+          ? null
+          : Text(context.t('Installation image only; VM setup is separate.')),
       onSelect: (os) => Navigator.of(context).pop(os),
       icon: (os) => osIcons.containsKey(os.code)
           ? SvgPicture.asset(osIcons[os.code]!, width: 32, height: 32)

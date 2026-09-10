@@ -14,6 +14,7 @@ import '../model/option.dart';
 import '../model/version.dart';
 import '../services/download_session.dart';
 import '../services/download_result.dart';
+import '../services/guest_catalog.dart';
 import 'manager.dart';
 import '../widgets/downloader/cancel_dismiss_button.dart';
 import '../widgets/downloader/download_progress_bar.dart';
@@ -50,13 +51,12 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
         widget.session ??
         DownloadSession(
           executable: gQuickgetExecutable ?? 'quickget',
-          arguments: [
-            ...gBackendSettings.downloadArguments,
-            widget.operatingSystem.code,
-            widget.version.version,
-            if (widget.option?.option.isNotEmpty ?? false)
-              widget.option!.option,
-          ],
+          arguments: quickgetDownloadArguments(
+            widget.operatingSystem,
+            widget.version,
+            widget.option,
+            gBackendSettings.downloadArguments,
+          ),
           directory: widget.directory ?? workingDirectory,
           environment: Map.of(gProcessEnvironment),
           runner: gRunner,
@@ -175,7 +175,7 @@ class _DownloaderState extends State<Downloader> with WidgetsBindingObserver {
           context.t(
             'Downloading {0}',
             args: [
-              '${widget.operatingSystem.name} ${widget.version.version}${widget.option?.option.isNotEmpty ?? false ? ' (${widget.option!.option})' : ''}',
+              '${widget.operatingSystem.displayName} ${widget.version.version}${widget.option?.option.isNotEmpty ?? false ? ' (${widget.option!.option})' : ''}',
             ],
           ),
         ),

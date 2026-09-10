@@ -2,6 +2,7 @@ import Cocoa
 import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
+  private var restoreImageChannel: FlutterMethodChannel?
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
     let windowFrame = self.frame
@@ -9,6 +10,24 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+
+    restoreImageChannel = FlutterMethodChannel(
+      name: "quickgui/restore-image", binaryMessenger: flutterViewController.engine.binaryMessenger)
+    restoreImageChannel?.setMethodCallHandler { call, reply in
+      guard call.method == "latestSupported" else {
+        reply(FlutterMethodNotImplemented)
+        return
+      }
+      RestoreImageSource.latest { result in
+        DispatchQueue.main.async {
+          switch result {
+          case .success(let image): reply(image)
+          case .failure(let error):
+            reply(FlutterError(code: "restore_image_unavailable", message: error.localizedDescription, details: nil))
+          }
+        }
+      }
+    }
 
     super.awakeFromNib()
   }

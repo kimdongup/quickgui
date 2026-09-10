@@ -8,6 +8,11 @@ M1에서 양쪽 분석·전체 테스트·release 빌드와 실제 backend/catal
 기존 개인 lockfile 변경 보존, 실행 환경과 명령, 미검증 범위는 [M1 검증 기록](M1_VALIDATION.ko.md)을 따른다.
 아래 2026-09-08 기록의 M1 미실행 상태는 이 결과로 갱신하며, ARM 게스트 실행은 여전히 미검증이다.
 
+같은 날 개인 브랜치에 OS 아키텍처 구분과 [ARM 설치 이미지 다운로드](ARM_DOWNLOADS.ko.md)를 추가했다.
+Windows는 Microsoft 공식 ARM64 링크 입력, macOS는 Apple의 호환 IPSW 조회·저장 경로다.
+분석·66개 테스트·macOS release 빌드를 통과했고 Apple 이미지 메타데이터·범위 응답을 실검증했다.
+ARM 이미지 전체 실다운로드와 VM 생성·설치·부팅은 아직 검증/구현 완료로 표시하지 않는다.
+
 ## 운영 상태
 
 - `origin`: `https://github.com/kimdongup/quickgui.git`

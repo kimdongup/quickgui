@@ -296,3 +296,84 @@ msgstr "Installation completed"
 
 msgid "Experimental profile from a Windows 11 x64 installation on an Intel Mac: Nehalem CPU, HVF with HPET, 2 cores, 4 GB RAM, SATA disk, Intel network, Cocoa display and no audio. The windows-server setting selects hardware; it does not change the installed Windows edition. TPM and Secure Boot are disabled, so this profile does not meet standard Windows 11 requirements. Setup may require a separate requirements workaround. Only config text is changed. No answer file, installer or disk is created. Do not reattach unattended installation media to an installed disk."
 msgstr "Experimental profile from a Windows 11 x64 installation on an Intel Mac: Nehalem CPU, HVF with HPET, 2 cores, 4 GB RAM, SATA disk, Intel network, Cocoa display and no audio. The windows-server setting selects hardware; it does not change the installed Windows edition. TPM and Secure Boot are disabled, so this profile does not meet standard Windows 11 requirements. Setup may require a separate requirements workaround. Only config text is changed. No answer file, installer or disk is created. Do not reattach unattended installation media to an installed disk."
+
+msgid "Installation image only; VM setup is separate."
+msgstr "Installation image only; VM setup is separate."
+
+msgid "Download installation image"
+msgstr "Download installation image"
+
+msgid "This saves an installation image. Creating and installing a virtual machine is a separate step."
+msgstr "This saves an installation image. Creating and installing a virtual machine is a separate step."
+
+msgid "Open Microsoft’s ARM64 download page, choose a language, then copy the ISO download link here. Links expire after 24 hours."
+msgstr "Open Microsoft’s ARM64 download page, choose a language, then copy the ISO download link here. Links expire after 24 hours."
+
+msgid "Open Microsoft ARM64 downloads"
+msgstr "Open Microsoft ARM64 downloads"
+
+msgid "ARM64 ISO download link"
+msgstr "ARM64 ISO download link"
+
+msgid "Apple provides the latest restore image compatible with this Mac."
+msgstr "Apple provides the latest restore image compatible with this Mac."
+
+msgid "Installation image saved. VM setup is still required."
+msgstr "Installation image saved. VM setup is still required."
+
+msgid "Open download folder"
+msgstr "Open download folder"
+
+msgid "Download ISO"
+msgstr "Download ISO"
+
+msgid "Download IPSW"
+msgstr "Download IPSW"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Keep downloading"
+msgstr "Keep downloading"
+
+msgid "Cancel download"
+msgstr "Cancel download"
+
+msgid "Could not find a compatible image. Use an Apple Silicon Mac with macOS 12 or later and check the connection."
+msgstr "Could not find a compatible image. Use an Apple Silicon Mac with macOS 12 or later and check the connection."
+
+msgid "Could not start the download."
+msgstr "Could not start the download."
+
+msgid "Could not open the link or folder."
+msgstr "Could not open the link or folder."
+
+msgid "Use an HTTPS download link from the official publisher."
+msgstr "Use an HTTPS download link from the official publisher."
+
+msgid "Paste the Windows 11 ARM64 ISO download link, not the web page or an x64 ISO."
+msgstr "Paste the Windows 11 ARM64 ISO download link, not the web page or an x64 ISO."
+
+msgid "The Apple download must be an IPSW restore image."
+msgstr "The Apple download must be an IPSW restore image."
+
+msgid "Download redirect has no location."
+msgstr "Download redirect has no location."
+
+msgid "Too many download redirects."
+msgstr "Too many download redirects."
+
+msgid "The selected workspace is no longer available."
+msgstr "The selected workspace is no longer available."
+
+msgid "The server returned a web page instead of installation media."
+msgstr "The server returned a web page instead of installation media."
+
+msgid "The image download is incomplete."
+msgstr "The image download is incomplete."
+
+msgid "The downloaded file is not an ISO/IPSW image."
+msgstr "The downloaded file is not an ISO/IPSW image."
+
+msgid "Could not download the image. Check the connection, free space, and link expiry, then retry."
+msgstr "Could not download the image. Check the connection, free space, and link expiry, then retry."
