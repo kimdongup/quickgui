@@ -1,5 +1,7 @@
 # Fork 구현·검증 기록
 
+2026-09-10 연결 검증 대조: Intel의 SPICE 검사 VM 화면·키 입력·재접속은 이미 완료됐다. 사용자는 Intel·Windows ARM64의 기존 검증에 실제 SSH 로그인과 SPICE 클라이언트 연결은 포함되지 않았다고 확인했다. 해당 설치 게스트의 두 접속은 미검증이며 Windows ARM64는 앱의 접속 구성도 필요하다. 최신 구분과 순서는 [게스트 검증의 기존 연결 검증 대조](GUEST_VALIDATION.ko.md)를 따른다. M1 macOS ARM SSH의 사용자 확인 완료는 유지한다.
+
 2026-09-10 통합 후속: 사용자가 M1 macOS ARM의 **바탕화면·재부팅·SSH 검증 완료**를 확인했다. Windows ARM64의 설치 후 실사용과 함께 [M1 검증 기록](M1_VALIDATION.ko.md)에 반영했다. `personal/preview`의 `64cfd59`와 `personal/apple-silicon`의 `f3f5c2b`를 별도 `personal/platform-integration` 후보에서 merge했다. 추가로 발견한 선언형 ISO 경로의 삭제 보호 오류를 수정했다. Intel 분석·82개 Flutter 테스트·12개 실제 도구/catalog 검사·57개 네이티브 검사·release 빌드가 통과했다. 상세 결과와 남은 범위는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
 
 2026-09-10 Windows ARM64 실사용 후속: 사용자께서 초기 설정·바탕화면·입력·HTTPS 및
@@ -73,8 +75,8 @@ Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
 - 개인 통합 후보: `personal/platform-integration`. Intel 기준 `personal/preview` / `64cfd59`와 M1 기준 `personal/apple-silicon` / `f3f5c2b`의 이력을 함께 보존한다. M1의 마지막 앱 코드 변경은 `0517cf2`이며 이후 두 호스트의 커밋은 검증 문서다. 이 후보의 Intel 검사·승격 결과는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
-- Intel macOS x64 설치·구동은 2026-09-10 사용자 확인 완료(`personal/preview` / `64cfd59`). 구체적 바탕화면 상태·재부팅·SSH·SPICE·앱 재접속은 별도 확인 항목이다.
-- M1의 Windows ARM64는 초기 설정·바탕화면·입력·HTTPS·정상 종료/부팅의 사용자 확인과 앱 재실행·설치 ISO 없는 실행·외부 TCP 검사를 완료했다. macOS ARM의 바탕화면·재부팅·SSH도 2026-09-10 사용자 확인 완료다. Windows SSH/SPICE·오디오·전체 게스트 도구, Intel의 남은 연결 검증과 Intel ARM64 TCG 추가 실험은 별도다.
+- Intel macOS x64 설치·구동은 2026-09-10 사용자 확인 완료(`personal/preview` / `64cfd59`)이며, 별도 SPICE 검사 VM도 통과했다. 설치 게스트의 SSH/SPICE는 기존 검증에 포함되지 않았다는 사용자 확인에 따라 다음 순서로 남긴다. 세부 상태는 [게스트 검증](GUEST_VALIDATION.ko.md)을 따른다.
+- M1의 Windows ARM64는 초기 설정·바탕화면·입력·HTTPS·정상 종료/부팅의 사용자 확인과 앱 재실행·설치 ISO 없는 실행·외부 TCP 검사를 완료했다. macOS ARM의 바탕화면·재부팅·SSH도 2026-09-10 사용자 확인 완료다. Windows SSH/SPICE는 접속 구성·검증이 필요하며, 오디오·전체 게스트 도구와 Intel ARM64 TCG 추가 실험은 별도로 관리한다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위

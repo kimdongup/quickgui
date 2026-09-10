@@ -52,4 +52,4 @@ Flutter 검사는 두 후보의 앱을 합친 `f3b1900`에 대해 실행했고, 
 - M1 `f3f5c2b`의 [Build](https://github.com/kimdongup/quickgui/actions/runs/34519762183)와 [실제 Quickemu smoke](https://github.com/kimdongup/quickgui/actions/runs/34519762199)도 성공했다. 통합 후보의 새 CI 결과와 구분한다.
 - 두 공통 브랜치는 `integration/stabilization` / `ae57d7d`에서 각각 분기했다. upstream `74949e0`에 그대로 제출하면 PATH는 14커밋·62파일, 파일 선택은 14커밋·63파일이다. [기존 제출 순서](UPSTREAM_PRS.md)에 맞춰 선행 변경이 수용된 뒤 범위를 다시 정리하거나 upstream 기준으로 개별 수정을 이식해야 한다.
 - Intel 통합 검사를 통과한 개인 후보는 `personal/preview`로 반영한다. `main` 안정판 승격·공개 릴리스·upstream PR 제출은 별도 단계다.
-- Intel macOS의 설치 후 재부팅·SSH·SPICE·앱 재접속, Windows ARM64의 SSH/SPICE·오디오·전체 게스트 도구, macOS ARM의 추가 공유·오디오 기능은 별도 검증 범위다. 이번 설치·기본 실사용 완료를 전체 수용 항목의 통과로 확대하지 않는다.
+- Intel SPICE 검사 VM의 화면·입력·재접속과 M1 macOS ARM SSH는 완료 기록을 유지한다. 사용자는 Intel·Windows ARM64의 기존 검증에 실제 SSH 로그인과 SPICE 클라이언트 연결이 포함되지 않았다고 확인했다. 다음은 [기록 대조에 정리한 순서](GUEST_VALIDATION.ko.md)에 따라 Intel macOS 설치 게스트의 SSH → SPICE → Windows ARM64 접속 구성·검증이다. Windows ARM64의 기록된 화면은 Cocoa다. 오디오·전체 게스트 도구·추가 공유 기능은 별도 범위다.
