@@ -3,6 +3,7 @@ import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
   private var restoreImageChannel: FlutterMethodChannel?
+  private var appleVMChannel: AppleVMChannel?
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
     let windowFrame = self.frame
@@ -10,6 +11,7 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    appleVMChannel = AppleVMChannel(messenger: flutterViewController.engine.binaryMessenger)
 
     restoreImageChannel = FlutterMethodChannel(
       name: "quickgui/restore-image", binaryMessenger: flutterViewController.engine.binaryMessenger)

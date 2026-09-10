@@ -254,3 +254,80 @@ Flutter 3.47.2/Dart 3.13.2 및 기존 의존성 버전을 유지했고 원격 pu
 
 복사본의 runner와 App.framework에서 각각 `x86_64 arm64`를 확인했다.
 이 앱은 로컬 검토용 빌드이며 원격 배포·notarization은 수행하지 않았다.
+
+### 사용자 다운로드 완료 후 전체 IPSW 검증
+
+2026-09-09. 사용자가 다운로드 완료와 저장 폴더를 보고했다.
+이후 다음 로컬 파일을 직접 읽어 크기·전체 SHA256·내부 manifest를 확인했다.
+
+```text
+/Users/mac/quickemu/Install Media/macos-arm64-IgBrV2/macOS-Apple-Silicon.ipsw
+```
+
+| 확인 항목 | 실제 결과 |
+| --- | --- |
+| 파일 크기 (`stat -f '%z bytes'`) | 19,772,231,540 bytes, 앞서 확인한 Apple 응답의 전체 크기와 일치 |
+| 전체 파일 `shasum -a 256` | `885503b7f4b06609e9a512f2befd40f59730640a3f1233e3892d60affdd51c95` |
+| Apple 응답의 `x-amz-meta-digest-sha256`와 비교 | PASS, 위 SHA256과 정확히 일치 |
+| ZIP 내부 `BuildManifest.plist` | ProductVersion 26.6.2, ProductBuildVersion 25G83 |
+| manifest의 SupportedProductTypes | Macmini9,1 및 VirtualMac2,1 포함 |
+
+따라서 앞 절의 macOS IPSW 전체 다운로드·SHA256 미검증 상태는 **완료 파일의 무결성 검증 PASS**로 갱신한다.
+다운로드 과정의 GUI 조작은 사용자 보고이며, 직접 관찰한 범위는 저장된 전체 파일 검사다.
+원본 IPSW는 변경하지 않았다. 이 시점에는 Windows ARM64 ISO 전체 다운로드와 ARM VM 생성·설치·부팅은 별도 단계였다.
+
+## Apple Silicon VM 생성·설치 연결 (2026-09-09)
+
+사용자의 후속 요청으로 이전 권장 순서와 별개로 macOS ARM backend를 먼저 구현했다.
+`personal/apple-silicon`, 시작 HEAD `f5fb3bc`. 기존 사용자 lockfile 및 다운로드 완료 기록을 보존했다.
+공통 `pr/macos-homebrew-path` worktree는 변경하지 않았다.
+
+다운로드/기존 IPSW → 호환성·자원 확인 → 독립 `.quickgui-macvm` 생성 → 설치 진행률/취소 →
+Manager Run/화면 다시 열기/종료를 연결했다. Apple VM은 Quickemu를 실행하지 않는다.
+네이티브 설치 상태·고유 식별 정보·MAC·UEFI 보조 저장소를 보존하며 기존 폴더 덮어쓰기,
+공유 파일/심볼릭 링크 저장소, 같은 VM 동시 실행과 미완료 VM 실행을 방지한다.
+
+| 검증 | 실제 결과 |
+| --- | --- |
+| Apple API로 로컬 IPSW 검사 | macOS 26.6.2 / 25G83, 최소 CPU 2개·RAM 4GiB, 이 호스트 최대 선택 7개·6GiB |
+| 실제 새 VM 생성·설치 | `/Users/mac/quickemu/macOS-Apple-Silicon.quickgui-macvm`, CPU 2개·4GiB·64GiB sparse disk, `VZMacOSInstaller` 성공, metadata `ready` |
+| 새 프로세스에서 90초 부팅 | `running`, macOS 최초 언어 선택 화면을 실제 VM framebuffer에서 캡처 |
+| 수정 후 새 프로세스 30초 부팅 | `running`, 중복 start 거부, 창 닫기/다시 열기 성공, 강제 중지 완료 후 즉시 `stopped` |
+| `flutter analyze --no-pub` | PASS, No issues found |
+| `flutter test --no-pub` | PASS, 73 passed / 4 external opt-in skipped; 새 Flutter 검사 7개 |
+| `tool/test_mac_vm_store.swift` | PASS, 22 checks: 이름/기존 폴더/디스크 보호, 동시 잠금·즉시 해제, sparse 용량, symlink/hardlink 거부, 상태·식별 정보 유지 |
+| `flutter build macos --release --no-pub` | PASS, `/tmp/quickgui-vm-release` 격리 worktree에 현재 변경을 복사해 빌드, 47.7MB |
+| 의존성 | `pub get --enforce-lockfile` 통과, 기존 lockfile SHA256 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a` 유지 |
+
+두 차례 부팅 후 hardware-model SHA256 `976e66740c64041cf9f127588f93eabf7efb9e7d3cbaee9582bcded88ba5e8d3`,
+machine-identifier `0351d86ffe1560c45423be9ccf70c4fb63649a99400f1183784a5c7173a2e730`을 확인했다.
+실제 이미지: [최초 설정 화면](evidence/macos-arm64-first-setup.png).
+로컬 앱: `/Users/mac/quickemu/quickgui/dist/apple-vm/quickgui.app`.
+기존 `flutter run`을 종료하거나 빌드 디렉터리를 덮어쓰지 않았다.
+
+```sh
+xcrun swiftc macos/Runner/MacVMStore.swift macos/Runner/AppleVirtualMachine.swift \
+  tool/check_apple_vm.swift -o /tmp/quickgui-arm-validation/check-apple-vm
+codesign --force --sign - --entitlements macos/Runner/Release.entitlements \
+  /tmp/quickgui-arm-validation/check-apple-vm
+/tmp/quickgui-arm-validation/check-apple-vm inspect \
+  '/Users/mac/quickemu/Install Media/macos-arm64-IgBrV2/macOS-Apple-Silicon.ipsw'
+/tmp/quickgui-arm-validation/check-apple-vm install /Users/mac/quickemu macOS-Apple-Silicon \
+  '/Users/mac/quickemu/Install Media/macos-arm64-IgBrV2/macOS-Apple-Silicon.ipsw'
+/tmp/quickgui-arm-validation/check-apple-vm boot \
+  /Users/mac/quickemu/macOS-Apple-Silicon.quickgui-macvm 30 /tmp/quickgui-arm-validation/apple-vm-reopen.png
+xcrun swiftc macos/Runner/MacVMStore.swift tool/test_mac_vm_store.swift \
+  -o /tmp/quickgui-arm-validation/test-mac-vm-store
+/tmp/quickgui-arm-validation/test-mac-vm-store
+```
+
+첫 설치 실험에서 디렉터리 URL 표현 차이로 자기 VM을 외부 잠금으로 잘못 표시했다.
+설치는 정상 완료했지만 진행률 관측은 실패했다. 경로 비교를 수정했으며 후속 재실행에서 `running`을 확인했다.
+첫 중지 직후에는 callback의 객체 수명 때문에 잠금이 잠깐 유지됐다. 명시적 잠금 해제로 수정했고
+최종 재실행에서 종료 callback 안의 즉시 `stopped` 조회를 확인했다. 대화상자 테스트의 animation 대기로 인한
+초기 timeout 2개는 프레임 대기 방식을 수정한 후 전체 테스트에서 통과했다.
+
+검증 후 VM은 중지 상태이며 원본 IPSW는 보존했다. VM 실제 사용 공간은 약 23GiB이다.
+계정 생성·바탕화면·게스트 내 정상 종료·SSH·오디오/네트워크 실사용과 앱 GUI의 설치 전체 조작은 미검증이다.
+네이티브 취소의 실제 설치 중 재현은 아직 없으며, 취소 요청/실행 차단은 Flutter 테스트로 검증했다.
+앱 전체 검증과 동일 소스 CLI 검증을 구분한다. 빌드의 기존 `window_size` SPM 및 Run Script 경고는 남아 있다.

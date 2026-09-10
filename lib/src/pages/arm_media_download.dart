@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../model/operating_system.dart';
 import '../services/arm_media.dart';
 import '../services/download_session.dart' show DownloadStatus;
+import 'apple_vm_create.dart';
 
 class ArmMediaDownload extends StatefulWidget {
   const ArmMediaDownload({
@@ -177,7 +178,9 @@ class _ArmMediaDownloadState extends State<ArmMediaDownload>
               const SizedBox(height: 8),
               Text(
                 context.t(
-                  'This saves an installation image. Creating and installing a virtual machine is a separate step.',
+                  _windows
+                      ? 'This saves an installation image. Creating and installing a virtual machine is a separate step.'
+                      : 'Download an IPSW, then create and install an Apple Silicon VM. You can also use an IPSW already on this Mac.',
                 ),
               ),
               const SizedBox(height: 16),
@@ -219,6 +222,25 @@ class _ArmMediaDownloadState extends State<ArmMediaDownload>
                 ),
               ],
               const SizedBox(height: 16),
+              if (!_windows && !_active)
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AppleVmCreate(
+                        directory: widget.directory,
+                        ipsw: saved,
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.computer),
+                  label: Text(
+                    context.t(
+                      saved == null
+                          ? 'Use an existing IPSW'
+                          : 'Create Apple Silicon VM',
+                    ),
+                  ),
+                ),
               SelectableText(
                 context.t(
                   'Target folder : {0}',

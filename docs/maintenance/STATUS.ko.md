@@ -1,5 +1,12 @@
 # Fork 구현·검증 기록
 
+2026-09-09 Apple VM 후속: IPSW → 생성·설치 → Manager 실행을 개인 기능으로 연결했다.
+M1에서 macOS 26.6.2 설치와 최초 언어 선택 화면 부팅, 새 프로세스 재실행, 창 다시 열기를 확인했다.
+전체 테스트 73 passed / 4 skipped, 네이티브 저장 안전성 22 checks, 분석 0, release 빌드 PASS.
+사용법은 [APPLE_SILICON_VM.ko.md](APPLE_SILICON_VM.ko.md), 실제 결과는 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
+이 후속 기록은 아래의 Apple Virtualization backend 미구현 상태와 이전 게스트 검증 권장 순서를 갱신한다.
+사용자가 Windows ARM64 연결도 추가 요청하여 별도 개인 구현을 진행 중이다.
+
 2026-09-08. 이전 세 설계 문서는 최초 계획의 보존본이다. 현재 실행 상태는 이 문서를 따른다.
 
 2026-09-09 M1 후속: 시스템 PATH가 Homebrew보다 앞설 때 발생한 Bash 버전 오류를 공통 후보
@@ -12,6 +19,10 @@ M1에서 양쪽 분석·전체 테스트·release 빌드와 실제 backend/catal
 Windows는 Microsoft 공식 ARM64 링크 입력, macOS는 Apple의 호환 IPSW 조회·저장 경로다.
 분석·66개 테스트·macOS release 빌드를 통과했고 Apple 이미지 메타데이터·범위 응답을 실검증했다.
 ARM 이미지 전체 실다운로드와 VM 생성·설치·부팅은 아직 검증/구현 완료로 표시하지 않는다.
+
+후속 다운로드 완료 확인: 사용자가 저장한 macOS 26.6.2 / 25G83 IPSW의 전체 크기와 SHA256이
+Apple 서버의 값과 일치했다. macOS ARM 이미지 파일 무결성 검증은 PASS로 갱신한다.
+Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 있다. 경로·체크섬은 M1 검증 기록에 추가했다.
 
 ## 운영 상태
 

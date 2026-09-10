@@ -36,7 +36,13 @@ class _OperatingSystemSelectionState extends State<OperatingSystemSelection> {
       label: (os) => os.displayName,
       subtitle: (os) => os.armMedia == null
           ? null
-          : Text(context.t('Installation image only; VM setup is separate.')),
+          : Text(
+              context.t(
+                os.armMedia == ArmMedia.macos
+                    ? 'Download IPSW or install an Apple Silicon VM.'
+                    : 'Installation image only; VM setup is separate.',
+              ),
+            ),
       onSelect: (os) => Navigator.of(context).pop(os),
       icon: (os) => osIcons.containsKey(os.code)
           ? SvgPicture.asset(osIcons[os.code]!, width: 32, height: 32)

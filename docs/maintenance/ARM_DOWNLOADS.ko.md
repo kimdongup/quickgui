@@ -1,5 +1,8 @@
 # ARM 설치 이미지 다운로드
 
+후속 갱신: macOS Apple Silicon은 다운로드 완료 후 또는 기존 IPSW 선택으로 VM 생성·설치와
+Manager 실행까지 연결했다. 아래 최초 다운로드 전용 설명보다 [Apple VM 안내](APPLE_SILICON_VM.ko.md)를 우선한다.
+
 2026-09-09. `personal/apple-silicon`의 개인 기능이다. 기존 OS → VERSION → DOWNLOAD
 구성을 유지하면서 x64/ARM64를 첫 선택에서 구분한다.
 

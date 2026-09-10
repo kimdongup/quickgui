@@ -377,3 +377,105 @@ msgstr "The downloaded file is not an ISO/IPSW image."
 
 msgid "Could not download the image. Check the connection, free space, and link expiry, then retry."
 msgstr "Could not download the image. Check the connection, free space, and link expiry, then retry."
+
+msgid "Installing macOS"
+msgstr "Installing macOS"
+
+msgid "Cancelling installation"
+msgstr "Cancelling installation"
+
+msgid "Ready to run"
+msgstr "Ready to run"
+
+msgid "Starting"
+msgstr "Starting"
+
+msgid "Running"
+msgstr "Running"
+
+msgid "Waiting for guest shutdown"
+msgstr "Waiting for guest shutdown"
+
+msgid "Installation cancelled; create a new VM to try again."
+msgstr "Installation cancelled; create a new VM to try again."
+
+msgid "Installation failed; create a new VM to try again."
+msgstr "Installation failed; create a new VM to try again."
+
+msgid "Installation interrupted; create a new VM to try again."
+msgstr "Installation interrupted; create a new VM to try again."
+
+msgid "In use by another Quickgui process"
+msgstr "In use by another Quickgui process"
+
+msgid "VM unavailable"
+msgstr "VM unavailable"
+
+msgid "Confirm"
+msgstr "Confirm"
+
+msgid "Continue"
+msgstr "Continue"
+
+msgid "Open VM display"
+msgstr "Open VM display"
+
+msgid "Shut down"
+msgstr "Shut down"
+
+msgid "Force stop"
+msgstr "Force stop"
+
+msgid "Force stop this VM? Unsaved work in the guest may be lost."
+msgstr "Force stop this VM? Unsaved work in the guest may be lost."
+
+msgid "Cancel macOS installation? The unfinished VM will be kept. Create a new VM to try again."
+msgstr "Cancel macOS installation? The unfinished VM will be kept. Create a new VM to try again."
+
+msgid "Cancel installation"
+msgstr "Cancel installation"
+
+msgid "Create Apple Silicon VM"
+msgstr "Create Apple Silicon VM"
+
+msgid "Install macOS from a downloaded IPSW. The original image is kept."
+msgstr "Install macOS from a downloaded IPSW. The original image is kept."
+
+msgid "Choose IPSW"
+msgstr "Choose IPSW"
+
+msgid "VM name"
+msgstr "VM name"
+
+msgid "Enter a short VM name without slashes or colons."
+msgstr "Enter a short VM name without slashes or colons."
+
+msgid "CPU cores"
+msgstr "CPU cores"
+
+msgid "Memory (GiB)"
+msgstr "Memory (GiB)"
+
+msgid "Disk (GiB)"
+msgstr "Disk (GiB)"
+
+msgid "The disk grows as it is used. Keep at least 32 GiB free to begin installation and allow more space as the guest grows."
+msgstr "The disk grows as it is used. Keep at least 32 GiB free to begin installation and allow more space as the guest grows."
+
+msgid "Create and install"
+msgstr "Create and install"
+
+msgid "Installation continues while Quickgui is open. You can follow progress in Manager. After installation, use Run to finish macOS setup."
+msgstr "Installation continues while Quickgui is open. You can follow progress in Manager. After installation, use Run to finish macOS setup."
+
+msgid "Closing the VM display keeps the VM running. Shut down from the guest or Manager before quitting Quickgui."
+msgstr "Closing the VM display keeps the VM running. Shut down from the guest or Manager before quitting Quickgui."
+
+msgid "Download an IPSW, then create and install an Apple Silicon VM. You can also use an IPSW already on this Mac."
+msgstr "Download an IPSW, then create and install an Apple Silicon VM. You can also use an IPSW already on this Mac."
+
+msgid "Use an existing IPSW"
+msgstr "Use an existing IPSW"
+
+msgid "Download IPSW or install an Apple Silicon VM."
+msgstr "Download IPSW or install an Apple Silicon VM."
