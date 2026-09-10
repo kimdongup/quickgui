@@ -23,12 +23,16 @@
 
 ## 검증 순서와 통과 기준
 
+2026-09-10 갱신. Intel 결과는 아래 사용자 확인을 반영한다. M1의 후속 요청으로 ARM 구현이 선행됐으며, 해당 결과는 별도 `personal/apple-silicon`의 [검토 문서 (`17321f6`)](https://github.com/kimdongup/quickgui/blob/17321f6237134aa737d4d38f00ad81c1cc585048/docs/maintenance/M1_REVIEW_RESULT.ko.md)를 근거로 한다. ARM 코드는 이 `personal/preview`에 아직 통합하지 않았다.
+
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | OS 설치 후 QuickguiMac 자동 부팅 및 최초 설정의 국가·지역 선택 화면 도달 확인. 사용자 계정 설정·바탕화면·설정 완료 후 재부팅·SSH·SPICE는 대기 |
-| 2 | M1 맥미니 → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 QEMU/HVF·UEFI·설치 ISO·드라이버를 확인하고 설치·재부팅·SSH·SPICE를 각각 검증 | 대기. 주 검증 호스트로 M1 권장. 다운로드·VM 실행 미착수 |
-| 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
+| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | 설치·구동 완료: 2026-09-10 사용자 확인. 바탕화면의 구체적 상태·설정 완료 후 재부팅·SSH·SPICE·앱 재접속은 별도 검증 |
+| 2 | M1 맥미니 → Windows ARM64 실험 | 기존 VM의 OOBE → 바탕화면 → HTTPS 응답 → 정상 종료 → 설치 완료 표시 → 설치 ISO 없이 부팅·앱 재실행 확인. SSH·SPICE는 연결 경로의 구현과 실사용을 별도 검증 | QEMU/HVF·UEFI·TPM·ISO·NVMe 및 네트워크 드라이버 경로 구현. OOBE 진입·외부 TCP 통신 확인. 바탕화면·설치 후 재부팅은 미확인 |
+| 3 | Apple Silicon 호스트 → macOS ARM | Windows 실사용 검증을 마친 뒤 기존 Apple Virtualization/IPSW VM의 최초 설정·바탕화면·재부팅·네트워크·SSH 검증 | 별도 backend 구현·설치·최초 설정 화면·새 프로세스 재실행 확인. 바탕화면·SSH 등은 미확인 |
+
+아래 backend 설계 설명과 최초 실행 기록은 2026-09-08 당시 상태다. 이후 M1 구현·실행 범위는 위 표와 링크한 검토 문서를 우선한다.
 
 M1 보유 확인 후 Windows ARM64의 주 검증 호스트도 M1으로 조정하는 것을 권장한다. [QEMU의 가속기 문서](https://www.qemu.org/docs/master/system/introduction.html)에 따르면 macOS ARM 호스트에서 HVF를 사용할 수 있다. 현재 Quickemu 4.9.9 소스도 ARM 호스트의 ARM 게스트는 HVF를 선택하고 Intel 호스트의 ARM 게스트는 TCG로 전환한다. 따라서 M1은 Windows ARM64의 설치·재부팅·실사용 검토에 유리할 것으로 예상하며, 실제 속도를 측정한 결과는 아니다. Intel의 Windows ARM64 TCG 실행은 추가 호환성 실험으로 남기고 M1 검증의 선행 필수 조건으로 두지 않는다. OS별 순차 검증 원칙은 유지한다.
 
@@ -135,6 +139,14 @@ Quickemu 4.9.9의 `DISK_USED` 처리와 macOS 드라이브 연결 코드를 확�
 ![QuickguiMac 시스템 스냅샷 검증과 실제 시스템 부팅](screenshots/macos-intel-installed-system-boot.png)
 
 ![설치된 macOS의 최초 설정 국가·지역 선택 화면](screenshots/macos-intel-first-setup.png)
+
+## 2026-09-10 Intel macOS x64 사용자 확인
+
+현재 설치 단계를 확인하는 질문에 사용자가 **“설치하고 구동 확인함”**이라고 답했다. Intel macOS x64 게스트의 설치·구동은 **사용자 확인 완료**로 갱신한다. 이는 이전 최초 설정 화면의 직접 관찰 이후에 받은 후속 보고이며, 이번 문서 갱신에서 VM을 조작하거나 추가 화면·로그를 수집한 결과는 아니다.
+
+사용자가 바탕화면의 구체적 상태, 설정 완료 후 재부팅, SSH 로그인, SPICE 연결, Quickgui 재실행 후 재접속을 각각 확인한 것은 아니므로 해당 항목은 별도로 남긴다. 설치·구동 확인을 전체 실사용 수용 검증 완료로 확대하지 않는다.
+
+M1의 다음 단계는 기존 Windows ARM64 VM의 OOBE 완료·바탕화면·HTTPS 접속을 확인하고, 게스트 정상 종료 후 **Installation completed → Run**으로 설치 ISO 없이 부팅하는지 검증하는 것이다. 그다음 기존 macOS ARM VM의 최초 설정 이후 실사용을 확인한다. Intel의 남은 연결 검증은 후속으로 기록한다.
 
 ## upstream과 개인용 경계
 

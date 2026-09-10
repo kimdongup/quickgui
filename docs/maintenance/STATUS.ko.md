@@ -1,6 +1,8 @@
 # Fork 구현·검증 기록
 
-2026-09-08. 이전 세 설계 문서는 최초 계획의 보존본이다. 현재 실행 상태는 이 문서를 따른다.
+2026-09-10. Intel macOS x64 게스트의 설치·구동을 사용자가 확인했다. 재부팅·SSH·SPICE와 앱 재접속은 별도 검증 항목으로 남긴다. 상세 근거는 [게스트 검증 기록](GUEST_VALIDATION.ko.md#2026-09-10-intel-macos-x64-사용자-확인)을 따른다.
+
+M1 후속 구현·검증은 별도 `personal/apple-silicon`의 [검토 결과 (`17321f6`)](https://github.com/kimdongup/quickgui/blob/17321f6237134aa737d4d38f00ad81c1cc585048/docs/maintenance/M1_REVIEW_RESULT.ko.md)를 참조한다. 해당 ARM 앱 코드는 아직 이 `personal/preview`에 통합하지 않았다. 아래 2026-09-08 코드·테스트 결과는 당시 후보에 대한 기록이다. 이전 세 설계 문서는 최초 계획의 보존본이다.
 
 ## 운영 상태
 
@@ -13,8 +15,8 @@
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
 - 현재 개인 통합 후보의 앱 코드: `personal/preview` / `09fce12` (이후 검증 도구·문서 커밋은 별도). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 공통 삭제 보호와 SPICE Unix 소켓 재접속을 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
-- Intel macOS 게스트는 두 차례 Recovery 복귀를 조사한 뒤 외부 복구 매체를 제외한 실행에서 후속 설치를 마쳤다. QuickguiMac 자동 부팅과 최초 설정의 국가·지역 선택 화면까지 확인했다. 사용자 계정 설정·바탕화면·설정 완료 후 재부팅·SSH·SPICE는 아직 남아 있다.
-- Apple Silicon 검증 장비는 사용자 보유 M1 맥미니로 정했다. 소스 clone, M1 전용 작업 브랜치와 개발 환경 준비는 [M1_HANDOFF.ko.md](M1_HANDOFF.ko.md)를 따른다. Windows ARM64도 M1을 주 검증 호스트로 권장하며 Intel TCG는 추가 실험으로 남긴다. macOS x64 → Windows ARM64 → macOS ARM 순서는 유지하고 M1 실행 결과는 아직 없다.
+- Intel macOS 게스트는 두 차례 Recovery 복귀 후 QuickguiMac 자동 부팅과 최초 설정 화면까지 직접 확인했다. 2026-09-10 사용자가 설치·구동을 확인했으므로 설치 대기로 표시하지 않는다. 바탕화면의 구체적 상태, 설정 완료 후 재부팅·SSH·SPICE·앱 재접속은 별도 증거가 없어 완료로 확대하지 않는다.
+- M1 맥미니의 `personal/apple-silicon`에서는 Windows ARM64의 OOBE 진입·외부 TCP 통신, macOS ARM의 설치·최초 설정 화면과 새 프로세스 재실행을 확인했다. Windows 바탕화면·설치 후 재부팅·HTTPS 응답, macOS ARM 바탕화면·SSH 등은 남아 있다. 다음 M1 실사용 검증은 기존 Windows ARM64 VM을 마무리한 뒤 macOS ARM으로 이어간다. Intel의 남은 연결 검증도 유지한다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위
@@ -69,7 +71,7 @@ macOS 환경: macOS 15.7.9, x86_64, Flutter 3.47.2, Dart 3.13.2, QEMU 11.1.1. Ho
 
 - Q21의 실제 GUI 전체 흐름: 게스트 OS 설치 완료, 게스트 SSH 로그인, Linux SPICE 연결, 앱 재실행 후 재접속. 현재 실제 이미지 다운로드와 폐기 가능한 VM 수명 검증은 각각 통과했지만 이 전체 흐름을 대체하지 않는다.
 - Finder에서 시작한 배포 앱의 수동 조작, X11/Wayland 각각의 실사용, dark/light 전체 화면 비교, 실제 휠·트랙패드·키보드 조작. 위젯 렌더링 테스트가 모든 네이티브 동작을 증명하지 않는다.
-- Linux ARM64와 macOS ARM64의 실제 게스트 실행. CI의 macOS 빌드 성공과 가상화 검증은 구분한다.
+- Linux ARM64 게스트 실사용. M1 macOS ARM64의 설치·최초 설정 화면은 별도 개인 브랜치에서 확인했으며 바탕화면·SSH 등 실사용은 남아 있다. Windows ARM64도 OOBE 이후 설치 완료와 실사용 검증이 남아 있다. CI의 macOS 빌드 성공과 가상화 검증은 구분한다.
 - 최소 Quickemu 버전의 전체 실행 matrix. 중지는 4.9.6 이상을 요구하지만 주 검증 backend는 4.9.9이다.
 - 한국어는 기존 지원 locale 목록에 없다. 지원하지 않는 locale의 영어 fallback은 확인했으며 한국어 번역 완료를 주장하지 않는다.
 - 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다.
