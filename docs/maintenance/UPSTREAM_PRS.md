@@ -47,6 +47,12 @@ Long OS/version/option lists could not be reliably scrolled. Share a single List
 
 Validation: scrolling to the last entry, filtering to an empty list, retry after catalog failure, minimum desktop window and repeated navigation. Inspired by [#224](https://github.com/quickemu-project/quickgui/pull/224) by **peterax**, with additional lifecycle and error handling.
 
+## M1-discovered common follow-ups
+
+The PATH fix on `pr/macos-homebrew-path` (`dc51dd0`) and the file-picker entitlement fix on `pr/macos-file-picker-entitlements` (`c59d53b`) each branch from `ae57d7d`. Their [PATH CI](https://github.com/kimdongup/quickgui/actions/runs/34506027934) and [file-picker CI](https://github.com/kimdongup/quickgui/actions/runs/34506028056) pass analysis/tests and Linux/Nix/macOS builds; the fork-only PPA exclusion is skipped as expected.
+
+These are independent follow-ups against the common integration base, not yet isolated upstream PRs. Against upstream `74949e0`, they include 14 commits and 62/63 files respectively. Fold PATH precedence into topic B after its Toolchain service lands. Submit the two entitlement changes against the accepted macOS project base as a small separate patch. Recheck the final submitted diff and run validation on that exact base; do not include ARM VM services, drivers, installation media, or personal validation documents.
+
 ## Personal follow-up ideas
 
 - [#275](https://github.com/quickemu-project/quickgui/pull/275), **ivoheck**: tag newly installed VMs. The fork uses the exact config in successful Quickget output, validates it and distinguishes an existing config; it does not select a folder by modification time.

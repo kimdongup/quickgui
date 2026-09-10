@@ -13,7 +13,10 @@ class VersionSelection extends StatelessWidget {
   final OperatingSystem operatingSystem;
   @override
   Widget build(BuildContext context) => SelectionList<Version>(
-    title: context.t('Select version for {0}', args: [operatingSystem.name]),
+    title: context.t(
+      'Select version for {0}',
+      args: [operatingSystem.displayName],
+    ),
     searchHint: context.t('Search version'),
     items: operatingSystem.versions,
     label: (version) => version.version,

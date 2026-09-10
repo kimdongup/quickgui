@@ -9,6 +9,7 @@ import '../../model/operating_system.dart';
 import '../../model/option.dart';
 import '../../model/version.dart';
 import '../../pages/downloader.dart';
+import '../../pages/arm_media_download.dart';
 import '../../pages/operating_system_selection.dart';
 import '../../pages/version_selection.dart';
 import 'downloader_page_button.dart';
@@ -38,7 +39,7 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
       children: [
         DownloaderPageButton(
           label: context.t("Operating system"),
-          text: _selectedOperatingSystem?.name ?? context.t('Select...'),
+          text: _selectedOperatingSystem?.displayName ?? context.t('Select...'),
           onPressed: () {
             Navigator.of(context)
                 .push<OperatingSystem>(
@@ -109,12 +110,17 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                     if (!context.mounted) return;
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => Downloader(
-                          operatingSystem: os,
-                          version: version,
-                          option: option,
-                          directory: target,
-                        ),
+                        builder: (context) => os.armMedia != null
+                            ? ArmMediaDownload(
+                                kind: os.armMedia!,
+                                directory: target,
+                              )
+                            : Downloader(
+                                operatingSystem: os,
+                                version: version,
+                                option: option,
+                                directory: target,
+                              ),
                       ),
                     );
                   } catch (error) {

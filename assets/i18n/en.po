@@ -296,3 +296,267 @@ msgstr "Installation completed"
 
 msgid "Experimental profile from a Windows 11 x64 installation on an Intel Mac: Nehalem CPU, HVF with HPET, 2 cores, 4 GB RAM, SATA disk, Intel network, Cocoa display and no audio. The windows-server setting selects hardware; it does not change the installed Windows edition. TPM and Secure Boot are disabled, so this profile does not meet standard Windows 11 requirements. Setup may require a separate requirements workaround. Only config text is changed. No answer file, installer or disk is created. Do not reattach unattended installation media to an installed disk."
 msgstr "Experimental profile from a Windows 11 x64 installation on an Intel Mac: Nehalem CPU, HVF with HPET, 2 cores, 4 GB RAM, SATA disk, Intel network, Cocoa display and no audio. The windows-server setting selects hardware; it does not change the installed Windows edition. TPM and Secure Boot are disabled, so this profile does not meet standard Windows 11 requirements. Setup may require a separate requirements workaround. Only config text is changed. No answer file, installer or disk is created. Do not reattach unattended installation media to an installed disk."
+
+msgid "Installation image only; VM setup is separate."
+msgstr "Installation image only; VM setup is separate."
+
+msgid "Download installation image"
+msgstr "Download installation image"
+
+msgid "This saves an installation image. Creating and installing a virtual machine is a separate step."
+msgstr "This saves an installation image. Creating and installing a virtual machine is a separate step."
+
+msgid "Open Microsoft’s ARM64 download page, choose a language, then copy the ISO download link here. Links expire after 24 hours."
+msgstr "Open Microsoft’s ARM64 download page, choose a language, then copy the ISO download link here. Links expire after 24 hours."
+
+msgid "Open Microsoft ARM64 downloads"
+msgstr "Open Microsoft ARM64 downloads"
+
+msgid "ARM64 ISO download link"
+msgstr "ARM64 ISO download link"
+
+msgid "Apple provides the latest restore image compatible with this Mac."
+msgstr "Apple provides the latest restore image compatible with this Mac."
+
+msgid "Installation image saved. VM setup is still required."
+msgstr "Installation image saved. VM setup is still required."
+
+msgid "Open download folder"
+msgstr "Open download folder"
+
+msgid "Download ISO"
+msgstr "Download ISO"
+
+msgid "Download IPSW"
+msgstr "Download IPSW"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Keep downloading"
+msgstr "Keep downloading"
+
+msgid "Cancel download"
+msgstr "Cancel download"
+
+msgid "Could not find a compatible image. Use an Apple Silicon Mac with macOS 12 or later and check the connection."
+msgstr "Could not find a compatible image. Use an Apple Silicon Mac with macOS 12 or later and check the connection."
+
+msgid "Could not start the download."
+msgstr "Could not start the download."
+
+msgid "Could not open the link or folder."
+msgstr "Could not open the link or folder."
+
+msgid "Use an HTTPS download link from the official publisher."
+msgstr "Use an HTTPS download link from the official publisher."
+
+msgid "Paste the Windows 11 ARM64 ISO download link, not the web page or an x64 ISO."
+msgstr "Paste the Windows 11 ARM64 ISO download link, not the web page or an x64 ISO."
+
+msgid "The Apple download must be an IPSW restore image."
+msgstr "The Apple download must be an IPSW restore image."
+
+msgid "Download redirect has no location."
+msgstr "Download redirect has no location."
+
+msgid "Too many download redirects."
+msgstr "Too many download redirects."
+
+msgid "The selected workspace is no longer available."
+msgstr "The selected workspace is no longer available."
+
+msgid "The server returned a web page instead of installation media."
+msgstr "The server returned a web page instead of installation media."
+
+msgid "The image download is incomplete."
+msgstr "The image download is incomplete."
+
+msgid "The downloaded file is not an ISO/IPSW image."
+msgstr "The downloaded file is not an ISO/IPSW image."
+
+msgid "Could not download the image. Check the connection, free space, and link expiry, then retry."
+msgstr "Could not download the image. Check the connection, free space, and link expiry, then retry."
+
+msgid "Installing macOS"
+msgstr "Installing macOS"
+
+msgid "Cancelling installation"
+msgstr "Cancelling installation"
+
+msgid "Ready to run"
+msgstr "Ready to run"
+
+msgid "Starting"
+msgstr "Starting"
+
+msgid "Running"
+msgstr "Running"
+
+msgid "Waiting for guest shutdown"
+msgstr "Waiting for guest shutdown"
+
+msgid "Installation cancelled; create a new VM to try again."
+msgstr "Installation cancelled; create a new VM to try again."
+
+msgid "Installation failed; create a new VM to try again."
+msgstr "Installation failed; create a new VM to try again."
+
+msgid "Installation interrupted; create a new VM to try again."
+msgstr "Installation interrupted; create a new VM to try again."
+
+msgid "In use by another Quickgui process"
+msgstr "In use by another Quickgui process"
+
+msgid "VM unavailable"
+msgstr "VM unavailable"
+
+msgid "Confirm"
+msgstr "Confirm"
+
+msgid "Continue"
+msgstr "Continue"
+
+msgid "Open VM display"
+msgstr "Open VM display"
+
+msgid "Shut down"
+msgstr "Shut down"
+
+msgid "Force stop"
+msgstr "Force stop"
+
+msgid "Force stop this VM? Unsaved work in the guest may be lost."
+msgstr "Force stop this VM? Unsaved work in the guest may be lost."
+
+msgid "Cancel macOS installation? The unfinished VM will be kept. Create a new VM to try again."
+msgstr "Cancel macOS installation? The unfinished VM will be kept. Create a new VM to try again."
+
+msgid "Cancel installation"
+msgstr "Cancel installation"
+
+msgid "Create Apple Silicon VM"
+msgstr "Create Apple Silicon VM"
+
+msgid "Install macOS from a downloaded IPSW. The original image is kept."
+msgstr "Install macOS from a downloaded IPSW. The original image is kept."
+
+msgid "Choose IPSW"
+msgstr "Choose IPSW"
+
+msgid "VM name"
+msgstr "VM name"
+
+msgid "Enter a short VM name without slashes or colons."
+msgstr "Enter a short VM name without slashes or colons."
+
+msgid "CPU cores"
+msgstr "CPU cores"
+
+msgid "Memory (GiB)"
+msgstr "Memory (GiB)"
+
+msgid "Disk (GiB)"
+msgstr "Disk (GiB)"
+
+msgid "The disk grows as it is used. Keep at least 32 GiB free to begin installation and allow more space as the guest grows."
+msgstr "The disk grows as it is used. Keep at least 32 GiB free to begin installation and allow more space as the guest grows."
+
+msgid "Create and install"
+msgstr "Create and install"
+
+msgid "Installation continues while Quickgui is open. You can follow progress in Manager. After installation, use Run to finish macOS setup."
+msgstr "Installation continues while Quickgui is open. You can follow progress in Manager. After installation, use Run to finish macOS setup."
+
+msgid "Closing the VM display keeps the VM running. Shut down from the guest or Manager before quitting Quickgui."
+msgstr "Closing the VM display keeps the VM running. Shut down from the guest or Manager before quitting Quickgui."
+
+msgid "Download an IPSW, then create and install an Apple Silicon VM. You can also use an IPSW already on this Mac."
+msgstr "Download an IPSW, then create and install an Apple Silicon VM. You can also use an IPSW already on this Mac."
+
+msgid "Use an existing IPSW"
+msgstr "Use an existing IPSW"
+
+msgid "Download IPSW or install an Apple Silicon VM."
+msgstr "Download IPSW or install an Apple Silicon VM."
+
+msgid "Create Windows ARM64 VM"
+msgstr "Create Windows ARM64 VM"
+
+msgid "Windows installation pending"
+msgstr "Windows installation pending"
+
+msgid "Resume installation"
+msgstr "Resume installation"
+
+msgid "Confirm only after reaching the Windows desktop and shutting down the guest. Future runs will boot from the disk without the installation ISO."
+msgstr "Confirm only after reaching the Windows desktop and shutting down the guest. Future runs will boot from the disk without the installation ISO."
+
+msgid "Install Windows ARM64 from a downloaded ISO. The original image is kept."
+msgstr "Install Windows ARM64 from a downloaded ISO. The original image is kept."
+
+msgid "Choose ARM64 ISO"
+msgstr "Choose ARM64 ISO"
+
+msgid "Follow Windows setup in the VM display. If asked to boot from the installation media, press a key. After reaching the desktop and shutting down, choose Installation completed to boot from disk next time."
+msgstr "Follow Windows setup in the VM display. If asked to boot from the installation media, press a key. After reaching the desktop and shutting down, choose Installation completed to boot from disk next time."
+
+msgid "Shut down from Windows or Manager before quitting Quickgui. Closing the QEMU window stops the VM."
+msgstr "Shut down from Windows or Manager before quitting Quickgui. Closing the QEMU window stops the VM."
+
+msgid "Download a Windows ARM64 ISO, then create a VM. You can also use an ISO already on this Mac."
+msgstr "Download a Windows ARM64 ISO, then create a VM. You can also use an ISO already on this Mac."
+
+msgid "Use an existing ARM64 ISO"
+msgstr "Use an existing ARM64 ISO"
+
+msgid "Download ISO or install a Windows ARM64 VM."
+msgstr "Download ISO or install a Windows ARM64 VM."
+
+msgid "Add installation file"
+msgstr "Add installation file"
+
+msgid "Delete VM"
+msgstr "Delete VM"
+
+msgid "Delete installation file"
+msgstr "Delete installation file"
+
+msgid "Delete permanently"
+msgstr "Delete permanently"
+
+msgid "Installation files"
+msgstr "Installation files"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "No installation files found."
+msgstr "No installation files found."
+
+msgid "ISO and IPSW files from this workspace and files selected in Quickgui. Use Add installation file for Downloads or another folder."
+msgstr "ISO and IPSW files from this workspace and files selected in Quickgui. Use Add installation file for Downloads or another folder."
+
+msgid "Refresh"
+msgstr "Refresh"
+
+msgid "Size on disk"
+msgstr "Size on disk"
+
+msgid "The VM and all files inside its folder will be permanently deleted. Installation files outside the folder are kept."
+msgstr "The VM and all files inside its folder will be permanently deleted. Installation files outside the folder are kept."
+
+msgid "This installation file will be permanently deleted. Installed VMs are kept."
+msgstr "This installation file will be permanently deleted. Installed VMs are kept."
+
+msgid "Type the name to confirm deletion:"
+msgstr "Type the name to confirm deletion:"
+
+msgid "Network setup"
+msgstr "Network setup"
+
+msgid "Windows network setup"
+msgstr "Windows network setup"
+
+msgid "At the Windows network screen, choose Install driver. Browse to the QGNET CD, select the NetKVM folder, and install the ARM64 network driver. Windows will use Ethernet through this Mac.\n\nIf QGNET is missing, prepare the network driver CD on this Mac and restart the VM. On an installed Windows desktop, use Device Manager to update the Ethernet controller driver from the same folder."
+msgstr "At the Windows network screen, choose Install driver. Browse to the QGNET CD, select the NetKVM folder, and install the ARM64 network driver. Windows will use Ethernet through this Mac.\n\nIf QGNET is missing, prepare the network driver CD on this Mac and restart the VM. On an installed Windows desktop, use Device Manager to update the Ethernet controller driver from the same folder."

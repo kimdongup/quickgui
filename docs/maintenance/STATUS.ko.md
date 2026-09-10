@@ -1,8 +1,66 @@
 # Fork 구현·검증 기록
 
-2026-09-10. Intel macOS x64 게스트의 설치·구동을 사용자가 확인했다. 재부팅·SSH·SPICE와 앱 재접속은 별도 검증 항목으로 남긴다. 상세 근거는 [게스트 검증 기록](GUEST_VALIDATION.ko.md#2026-09-10-intel-macos-x64-사용자-확인)을 따른다.
+2026-09-10 통합 후속: 사용자가 M1 macOS ARM의 **바탕화면·재부팅·SSH 검증 완료**를 확인했다. Windows ARM64의 설치 후 실사용과 함께 [M1 검증 기록](M1_VALIDATION.ko.md)에 반영했다. 확인한 게스트 검증을 반복 설치하지 않고, `personal/preview`의 `64cfd59`와 `personal/apple-silicon`의 `f3f5c2b`를 별도 `personal/platform-integration` 후보에서 합친다. 이 후보의 검사 결과와 남은 승격 조건은 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
 
-M1 후속 구현·검증은 별도 `personal/apple-silicon`의 [검토 결과 (`17321f6`)](https://github.com/kimdongup/quickgui/blob/17321f6237134aa737d4d38f00ad81c1cc585048/docs/maintenance/M1_REVIEW_RESULT.ko.md)를 참조한다. 해당 ARM 앱 코드는 아직 이 `personal/preview`에 통합하지 않았다. 아래 2026-09-08 코드·테스트 결과는 당시 후보에 대한 기록이다. 이전 세 설계 문서는 최초 계획의 보존본이다.
+2026-09-10 Windows ARM64 실사용 후속: 사용자께서 초기 설정·바탕화면·입력·HTTPS 및
+정상 종료와 설치 완료 후 부팅(요청 1~3단계)을 직접 검토해 정상이라고 확인했다.
+이번 M1 검사에서는 기존 VM 정상 종료 → 설치 완료 표시 저장 → Quickgui 완전 종료·재실행 →
+동일 VM Run을 수행했다. 설치 ISO 없이 실행되고 외부 TCP 연결이 다시 성립했다.
+VM·원본 ISO·기존 미커밋 lockfile을 보존했으며 새 코드 오류는 재현되지 않았다.
+Intel macOS x64 설치·구동의 사용자 확인(`personal/preview` / `64cfd59`)도 반영했다.
+상세 근거와 사용자 확인/직접 검사 구분은 [M1 검증 기록](M1_VALIDATION.ko.md)의 마지막 절을 따른다.
+
+2026-09-10 검토 정리: 완료 범위, 커밋된 lockfile로 수행한 재현 검사, 공통/개인 브랜치와
+원격 반영 결과는 [M1 검토 완료 결과](M1_REVIEW_RESULT.ko.md)에 정리했다.
+아래 날짜별 기록은 당시 상태를 보존하며, 현재 완료·미확인 범위는 이 검토 결과를 우선한다.
+
+2026-09-10 Windows ARM64 네트워크 후속: 사용자가 OOBE의 네트워크 화면에서 어댑터가 없는 상태를 확인했다.
+기존 usb-net을 VirtIO Ethernet으로 변경하고 공식 UTM 배포본의 Windows 11 ARM64 NetKVM만
+담은 QGNET CD 준비·연결과 Network setup 안내를 추가했다. 위젯 9, 네이티브 22, 준비 도구 5,
+실제 QEMU 시작·중지/미디어 잠금, 분석·release 빌드를 통과했다. 기존 사용자 VM을 수정 앱으로
+다시 실행해 NIC와 CD 연결을 확인했다. 후속 NAT 조회에서 게스트 10.0.2.15의 외부 공인 주소로 향하는
+TCP 연결 36개(443 포트 25개)가 ESTABLISHED 상태여서 실제 네트워크 통신도 확인했다.
+OOBE 완료·바탕화면과 게스트 브라우저의 HTTPS 응답 내용은 아직 확인하지 않았다.
+절차는 [WINDOWS_ARM_VM.ko.md](WINDOWS_ARM_VM.ko.md), 증거는 M1 검증 기록을 따른다.
+
+2026-09-09 삭제 기능 후속: native macOS/Windows VM 삭제 및 ISO/IPSW 관리 화면을 개인 기능으로 추가했다.
+이름 입력 확인, 실행/설치 중 보호, 참조·잠금·변경 파일 검사를 적용했다.
+전체 Flutter 81 passed / 4 skipped, 네이티브 삭제 26 + 기존 38 checks, 실제 QEMU 잠금 수명 검사,
+분석·release 빌드와 실제 파일 목록·확인 창 검증을 완료했다.
+사용법은 [STORAGE_MANAGEMENT.ko.md](STORAGE_MANAGEMENT.ko.md), 세부 결과는 M1 검증 기록을 따른다.
+
+2026-09-09 파일 선택 후속: ISO 선택의 entitlement 오류를 공통 `pr/macos-file-picker-entitlements` /
+`c59d53b`, 개인 `1942c4e`에서 수정했다. Debug/Release 빌드·서명·분석과 실제 release 앱의
+Windows ISO 선택 및 자원 설정 화면 도달을 확인했다. 상세 결과는 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
+
+2026-09-09 Apple VM 후속: IPSW → 생성·설치 → Manager 실행을 개인 기능으로 연결했다.
+M1에서 macOS 26.6.2 설치와 최초 언어 선택 화면 부팅, 새 프로세스 재실행, 창 다시 열기를 확인했다.
+전체 테스트 73 passed / 4 skipped, 네이티브 저장 안전성 22 checks, 분석 0, release 빌드 PASS.
+사용법은 [APPLE_SILICON_VM.ko.md](APPLE_SILICON_VM.ko.md), 실제 결과는 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
+이 후속 기록은 아래의 Apple Virtualization backend 미구현 상태와 이전 게스트 검증 권장 순서를 갱신한다.
+Windows ARM64 생성·설치/실행 경로도 연결했다. M1에서 Secure Boot 활성화와 설치 요구 사항 검사 통과,
+64GB 디스크·UDF ISO 인식을 확인했다. 전체 테스트 76 passed / 4 skipped, 네이티브 22 + 16 checks,
+펌웨어 준비 3 tests, 분석 0, 최종 release 47.8MB를 확인했다.
+호스트 여유 공간이 32GiB 미만이므로 Windows 전체 설치·바탕화면은 아직 진행하지 않았다.
+WinPE 네트워크 어댑터가 표시되지 않아 게스트 드라이버/네트워크 검증도 남아 있다.
+사용법은 [WINDOWS_ARM_VM.ko.md](WINDOWS_ARM_VM.ko.md), 실제 성공·실패 범위는 M1 검증 기록을 따른다.
+
+2026-09-08. 이전 세 설계 문서는 최초 계획의 보존본이다. 현재 실행 상태는 이 문서를 따른다.
+
+2026-09-09 M1 후속: 시스템 PATH가 Homebrew보다 앞설 때 발생한 Bash 버전 오류를 공통 후보
+`pr/macos-homebrew-path` / `dc51dd0`에서 수정하고 `personal/apple-silicon` / `fb94a51`에 반영했다.
+M1에서 양쪽 분석·전체 테스트·release 빌드와 실제 backend/catalog 검사를 통과했다.
+기존 개인 lockfile 변경 보존, 실행 환경과 명령, 미검증 범위는 [M1 검증 기록](M1_VALIDATION.ko.md)을 따른다.
+아래 2026-09-08 기록의 M1 미실행 상태는 이 결과로 갱신한다. 이후 ARM 게스트 결과는 문서 상단의 후속 기록을 따른다.
+
+같은 날 개인 브랜치에 OS 아키텍처 구분과 [ARM 설치 이미지 다운로드](ARM_DOWNLOADS.ko.md)를 추가했다.
+Windows는 Microsoft 공식 ARM64 링크 입력, macOS는 Apple의 호환 IPSW 조회·저장 경로다.
+분석·66개 테스트·macOS release 빌드를 통과했고 Apple 이미지 메타데이터·범위 응답을 실검증했다.
+ARM 이미지 전체 실다운로드와 VM 생성·설치·부팅은 아직 검증/구현 완료로 표시하지 않는다.
+
+후속 다운로드 완료 확인: 사용자가 저장한 macOS 26.6.2 / 25G83 IPSW의 전체 크기와 SHA256이
+Apple 서버의 값과 일치했다. macOS ARM 이미지 파일 무결성 검증은 PASS로 갱신한다.
+Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 있다. 경로·체크섬은 M1 검증 기록에 추가했다.
 
 ## 운영 상태
 
@@ -14,9 +72,9 @@ M1 후속 구현·검증은 별도 `personal/apple-silicon`의 [검토 결과 (`
 - 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
-- 현재 개인 통합 후보의 앱 코드: `personal/preview` / `09fce12` (이후 검증 도구·문서 커밋은 별도). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 공통 삭제 보호와 SPICE Unix 소켓 재접속을 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
-- Intel macOS 게스트는 두 차례 Recovery 복귀 후 QuickguiMac 자동 부팅과 최초 설정 화면까지 직접 확인했다. 2026-09-10 사용자가 설치·구동을 확인했으므로 설치 대기로 표시하지 않는다. 바탕화면의 구체적 상태, 설정 완료 후 재부팅·SSH·SPICE·앱 재접속은 별도 증거가 없어 완료로 확대하지 않는다.
-- M1 맥미니의 `personal/apple-silicon`에서는 Windows ARM64의 OOBE 진입·외부 TCP 통신, macOS ARM의 설치·최초 설정 화면과 새 프로세스 재실행을 확인했다. Windows 바탕화면·설치 후 재부팅·HTTPS 응답, macOS ARM 바탕화면·SSH 등은 남아 있다. 다음 M1 실사용 검증은 기존 Windows ARM64 VM을 마무리한 뒤 macOS ARM으로 이어간다. Intel의 남은 연결 검증도 유지한다.
+- 개인 통합 후보: `personal/platform-integration`. Intel 기준 `personal/preview` / `64cfd59`와 M1 기준 `personal/apple-silicon` / `f3f5c2b`의 이력을 함께 보존한다. M1의 마지막 앱 코드 변경은 `0517cf2`이며 이후 두 호스트의 커밋은 검증 문서다. 이 후보의 Intel 검사·승격 결과는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
+- Intel macOS x64 설치·구동은 2026-09-10 사용자 확인 완료(`personal/preview` / `64cfd59`). 구체적 바탕화면 상태·재부팅·SSH·SPICE·앱 재접속은 별도 확인 항목이다.
+- M1의 Windows ARM64는 초기 설정·바탕화면·입력·HTTPS·정상 종료/부팅의 사용자 확인과 앱 재실행·설치 ISO 없는 실행·외부 TCP 검사를 완료했다. macOS ARM의 바탕화면·재부팅·SSH도 2026-09-10 사용자 확인 완료다. Windows SSH/SPICE·오디오·전체 게스트 도구, Intel의 남은 연결 검증과 Intel ARM64 TCG 추가 실험은 별도다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위
@@ -71,7 +129,7 @@ macOS 환경: macOS 15.7.9, x86_64, Flutter 3.47.2, Dart 3.13.2, QEMU 11.1.1. Ho
 
 - Q21의 실제 GUI 전체 흐름: 게스트 OS 설치 완료, 게스트 SSH 로그인, Linux SPICE 연결, 앱 재실행 후 재접속. 현재 실제 이미지 다운로드와 폐기 가능한 VM 수명 검증은 각각 통과했지만 이 전체 흐름을 대체하지 않는다.
 - Finder에서 시작한 배포 앱의 수동 조작, X11/Wayland 각각의 실사용, dark/light 전체 화면 비교, 실제 휠·트랙패드·키보드 조작. 위젯 렌더링 테스트가 모든 네이티브 동작을 증명하지 않는다.
-- Linux ARM64 게스트 실사용. M1 macOS ARM64의 설치·최초 설정 화면은 별도 개인 브랜치에서 확인했으며 바탕화면·SSH 등 실사용은 남아 있다. Windows ARM64도 OOBE 이후 설치 완료와 실사용 검증이 남아 있다. CI의 macOS 빌드 성공과 가상화 검증은 구분한다.
+- Linux ARM64 게스트 실사용. M1 macOS ARM의 바탕화면·재부팅·SSH와 Windows ARM64의 설치 후 기본 실사용은 사용자 확인 및 M1 실행 기록으로 완료했다. Windows ARM64 SSH/SPICE·오디오·전체 게스트 도구와 macOS ARM 오디오·클립보드·공유 폴더 등은 별도 검증 항목이다.
 - 최소 Quickemu 버전의 전체 실행 matrix. 중지는 4.9.6 이상을 요구하지만 주 검증 backend는 4.9.9이다.
 - 한국어는 기존 지원 locale 목록에 없다. 지원하지 않는 locale의 영어 fallback은 확인했으며 한국어 번역 완료를 주장하지 않는다.
 - 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다.

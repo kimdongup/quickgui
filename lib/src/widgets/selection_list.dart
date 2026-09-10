@@ -9,6 +9,7 @@ class SelectionList<T> extends StatefulWidget {
     required this.label,
     required this.onSelect,
     this.icon,
+    this.subtitle,
     this.searchHint,
     this.status,
     super.key,
@@ -18,6 +19,7 @@ class SelectionList<T> extends StatefulWidget {
   final String Function(T) label;
   final void Function(T) onSelect;
   final Widget Function(T)? icon;
+  final Widget? Function(T)? subtitle;
   final String? searchHint;
   final Widget? status;
   @override
@@ -92,6 +94,7 @@ class _SelectionListState<T> extends State<SelectionList<T>> {
                       child: ListTile(
                         title: Text(widget.label(items[index])),
                         leading: widget.icon?.call(items[index]),
+                        subtitle: widget.subtitle?.call(items[index]),
                         onTap: () => widget.onSelect(items[index]),
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
@@ -5,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../globals.dart';
 import 'backend_settings_page.dart';
+import 'manager.dart';
 
 class DebgetNotFoundPage extends StatefulWidget {
   const DebgetNotFoundPage({
@@ -57,6 +60,13 @@ class _DebgetNotFoundPageState extends State<DebgetNotFoundPage> {
                 onPressed: widget.onRetry,
                 child: Text(context.t('Retry')),
               ),
+              if (Platform.isMacOS && (gWorkspace?.available ?? false))
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const Manager()),
+                  ),
+                  child: Text(context.t('Manager')),
+                ),
               if (gWorkspace != null)
                 TextButton(
                   onPressed: () async {
