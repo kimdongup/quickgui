@@ -80,15 +80,19 @@ VM 디스크, ISO/IPSW, 호스트에 준비된 펌웨어·드라이버 CD, 앱 �
 
 ## 원격 반영
 
-대상은 사용자 fork `https://github.com/kimdongup/quickgui.git`의 다음 브랜치다.
-최초 `git push --atomic -u origin personal/apple-silicon pr/macos-homebrew-path
-pr/macos-file-picker-entitlements`는 로컬 HTTPS 인증 정보가 없어 exit 128로 실패했다.
-오류는 `could not read Username for 'https://github.com': Device not configured`다.
-SSH agent에도 등록된 키가 없어 GitHub 로그인 후 push와 원격 SHA 확인이 남아 있다.
-이 상태를 원격 반영 완료로 표시하지 않는다.
+완료: 사용자 fork `https://github.com/kimdongup/quickgui.git`에 아래 세 브랜치를 push했다.
+최초 시도는 로컬 HTTPS 인증 정보가 없어 실패했으나, 사용자 GitHub 인증 완료 후
+`git push --atomic -u origin personal/apple-silicon pr/macos-homebrew-path pr/macos-file-picker-entitlements`가
+정상 종료했다. 세 브랜치 모두 대응하는 `origin` 브랜치를 추적하도록 설정했다.
 
-| 브랜치 | 역할 | 원격 코드 기준 |
+아래는 최초 성공 push 직후 `git ls-remote --heads origin`과 로컬 SHA를 대조한 결과다.
+이 원격 반영 결과 문서는 개인 브랜치의 후속 문서 커밋으로 함께 전달한다.
+
+| 브랜치 | 역할 | 확인한 원격 SHA |
 | --- | --- | --- |
-| `personal/apple-silicon` | M1 개인 기능·검증 문서 통합 | `aecabf8` + 이번 검토 문서 |
-| `pr/macos-homebrew-path` | 공통 PATH 수정 | `dc51dd0` |
-| `pr/macos-file-picker-entitlements` | 공통 파일 선택 entitlement 수정 | `c59d53b` |
+| `personal/apple-silicon` | M1 개인 기능·검증 문서 통합 | `af14959ccd4d424ac7b0ff955c7c35ed9d3e72f5` |
+| `pr/macos-homebrew-path` | 공통 PATH 수정 | `dc51dd011750392854306feefacf4ae607d1d578` |
+| `pr/macos-file-picker-entitlements` | 공통 파일 선택 entitlement 수정 | `c59d53b2bc8e095c9ce77ce06b9d404a6828dc3c` |
+
+원격 SHA 세 건이 모두 로컬과 일치했다. 기존 미커밋 `pubspec.lock`은 보존했으며,
+`main`, `integration/stabilization` 및 `upstream` 저장소에는 push하지 않았다.
