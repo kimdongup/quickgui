@@ -102,4 +102,5 @@ Manager의 **Delete VM**, **Installation files**에서 VM과 설치 ISO를 각�
 [STORAGE_MANAGEMENT.ko.md](STORAGE_MANAGEMENT.ko.md)를 따른다.
 
 실제 통과한 범위와 실패 후 수정 내역은 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
-Windows 전체 설치·바탕화면·설치 후 재부팅·네트워크·오디오·게스트 드라이버는 아직 완료로 표시하지 않는다.
+2026-09-10 후속에서는 실제 사용자 VM의 외부 TCP 통신까지 확인했다.
+Windows 전체 설치·바탕화면·설치 완료 후 재부팅·오디오·전체 게스트 도구는 아직 완료로 표시하지 않는다.

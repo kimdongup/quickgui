@@ -561,7 +561,8 @@ CAT 인증서에 Microsoft Windows Hardware Compatibility Publisher가 포함됨
 | 기존 사용자 VM 재실행 | PASS: 사용자 VM이 중지된 것을 확인한 후 이전 앱 종료, 수정 `/Applications/quickgui.app`에서 Resume installation 실행 |
 | 실제 VM 네트워크 장치 | PASS: QMP query-pci의 Ethernet controller 1af4:1000, info network의 virtio-net-pci/user NAT 10.0.2.0. 기존 MAC 02:8d:f8:52:7a:7d 유지 |
 | 실제 VM CD 연결 | PASS: QMP query-block에서 netdrivers 921,600바이트, ro=true, removable=true, tray_open=false. 원본 Windows ISO도 별도 CD로 유지 |
-| Windows 드라이버 설치·인터넷 | 대기: 사용자가 OOBE의 드라이버 설치에서 QGNET/NetKVM을 선택한 뒤 결과 확인 필요 |
+| 실제 게스트 네트워크 통신 | PASS: 후속 QMP info usernet에서 10.0.2.15의 공인 목적지 TCP 36개가 ESTABLISHED, 그중 목적지 포트 443이 25개. `/tmp/quickgui-arm-validation/windows-network-live.json` |
+| 게스트 UI·전체 설치 | 미확인: 드라이버 설치 완료 창, OOBE 다음 버튼, 바탕화면, 브라우저의 HTTPS 응답 내용은 직접 확인하지 않음 |
 
 새 NIC를 실행 중 PCI 루트에 바로 추가하는 방법도 작은 별도 QEMU 인스턴스로 검사했으나
 `Bus 'pcie.0' does not support hotplugging`으로 거부됐다. 사용자 VM에 무리하게 hotplug하지 않고
@@ -575,3 +576,5 @@ CAT 인증서에 Microsoft Windows Hardware Compatibility Publisher가 포함됨
 Flutter 3.47.2 및 lockfile SHA256
 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a`를 보존했다.
 상세 로그는 `/tmp/quickgui-arm-validation/windows-network-{widgets,analyze,release,lifecycle}.log`에 있다.
+코드 커밋은 `0517cf2`다. NIC 및 CD 연결 후 사용자에게 OOBE의 드라이버 설치 경로를 안내했고,
+뒤이은 실제 네트워크 진단에서 위 외부 TCP 연결을 확인했다. 패킷 내용이나 계정 정보는 수집하지 않았다.
