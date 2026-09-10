@@ -1,5 +1,9 @@
 # Fork 구현·검증 기록
 
+2026-09-09 파일 선택 후속: ISO 선택의 entitlement 오류를 공통 `pr/macos-file-picker-entitlements` /
+`c59d53b`, 개인 `1942c4e`에서 수정했다. Debug/Release 빌드·서명·분석과 실제 release 앱의
+Windows ISO 선택 및 자원 설정 화면 도달을 확인했다. 상세 결과는 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
+
 2026-09-09 Apple VM 후속: IPSW → 생성·설치 → Manager 실행을 개인 기능으로 연결했다.
 M1에서 macOS 26.6.2 설치와 최초 언어 선택 화면 부팅, 새 프로세스 재실행, 창 다시 열기를 확인했다.
 전체 테스트 73 passed / 4 skipped, 네이티브 저장 안전성 22 checks, 분석 0, release 빌드 PASS.

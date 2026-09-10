@@ -8,6 +8,8 @@ Windows ARM64의 ISO 경로는 OS 선택 화면과 Manager에서 구분된다.
 최종 빌드는 `/Users/mac/quickemu/quickgui/dist/arm-vms/quickgui.app`이다.
 기존 Quickgui의 VM을 중지하고 앱을 종료한 뒤 이 빌드를 실행한다.
 네이티브 코드가 추가되어 기존 `flutter run`의 hot reload만으로는 반영되지 않는다.
+파일 선택 시 `Either the Read-Only or Read-Write entitlement is required for this action.`이
+표시되는 이전 빌드는 `1942c4e` 이상으로 다시 빌드하고 완전히 재실행한다. 위 최종 앱에는 수정이 포함되어 있다.
 
 1. Manager의 **Windows — ARM64 → Create Windows ARM64 VM**을 선택한다.
 2. **Choose ARM64 ISO**에서 `/Users/mac/Downloads/Win11_25H2_Korean_Arm64_v2.iso`를 선택한다.

@@ -438,3 +438,41 @@ python3 -m unittest discover -s tool -p 'test_windows_firmware.py'
 32GiB 시작 조건에 못 미쳐 영구 Windows VM 생성과 전체 설치는 진행하지 않았다.
 Windows 사용 조건 동의·디스크 선택/복사·OOBE·바탕화면·설치 후 재부팅·정상 종료·네트워크/게스트 드라이버·오디오는 남아 있다.
 앱 GUI의 설치 전체 조작과 동일 소스 네이티브 CLI 검증을 구분한다. 사용법은 [WINDOWS_ARM_VM.ko.md](WINDOWS_ARM_VM.ko.md)를 따른다.
+
+## macOS 파일 선택 entitlement 오류 수정 (2026-09-09)
+
+Windows ARM64 생성 화면의 **Choose ARM64 ISO**에서 다음 오류가 발생했다.
+
+```text
+Either the Read-Only or Read-Write entitlement is required for this action.
+```
+
+실행 중인 Debug 앱에서도 같은 오류 문구를 직접 확인했다. 고정 의존성
+`file_picker` 12.2.0 / `file_picker_darwin` 1.1.0의 `MacOSFilePickerHandler.checkEntitlement`
+검사는 sandbox 여부와 관계없이 사용자 선택 파일의 read-only 또는 read-write entitlement를 요구한다.
+기존 DebugProfile/Release 설정과 배포 앱 서명에는 둘 다 없었다.
+앞선 네이티브 CLI의 ISO 검사는 Flutter 파일 선택 플러그인을 통과하지 않아 이 오류를 발견하지 못했다.
+
+공통 기준 `ae57d7d`에서 `pr/macos-file-picker-entitlements` / `c59d53b`를 분리했다.
+공통 커밋은 entitlement 파일 2개만 변경하며, 개인 브랜치에는 `1942c4e`로 반영했다.
+사용자가 선택한 VM 작업 폴더에는 쓰기도 필요하므로 두 빌드 설정에
+`com.apple.security.files.user-selected.read-write = true`를 추가했다.
+개인의 virtualization 및 Debug JIT entitlement를 보존했고 App Sandbox 설정은 바꾸지 않았다.
+의존성·Flutter SDK·플러그인 소스·기존 UI는 변경하지 않았다.
+
+| 실제 검사 | 결과 |
+| --- | --- |
+| 두 entitlement plist 구문 | PASS: `plutil -lint` |
+| 격리 worktree release 빌드 | PASS: `flutter build macos --release --no-pub`, 47.8MB |
+| 격리 worktree debug 빌드 | PASS: `flutter build macos --debug --no-pub` |
+| Debug/Release 최종 서명 | PASS: `codesign --verify --deep --strict`; 실제 서명에서 파일 read-write, virtualization, Debug JIT 값 확인 |
+| 분석 | PASS: `flutter analyze --no-pub`, No issues found |
+| 실제 release 앱 파일 선택 | PASS: Manager → Create Windows ARM64 VM → Choose ARM64 ISO → macOS Open 창 표시 |
+| 실제 ISO 반환·검사 | PASS: `/Users/mac/Downloads/Win11_25H2_Korean_Arm64_v2.iso` 선택 후 Windows ARM64 정보와 CPU 2개/RAM 4GiB/64GiB 디스크 설정, Create and install 버튼 표시. entitlement 오류 재발 없음 |
+| lockfile 보존 | SHA256 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a` 유지 |
+
+수정 앱을 `dist/arm-vms/quickgui.app`에 갱신했다. 실행 중인 VM이 없음을 확인하고
+오류가 난 이전 Debug 앱을 정상 종료한 뒤 이 release 앱을 실행해 위 GUI 검사를 수행했다.
+검증 후 ISO가 선택된 생성 화면을 열어두었다. 새 Windows VM/디스크를 만들거나 설치를 시작하지 않았다.
+호스트 여유 공간은 약 23GiB로, 설치 시작의 32GiB 조건에 여전히 못 미친다.
+이번 변경은 앱 서명 설정이므로 기존 위젯 테스트를 추가·반복하지 않고 실제 서명과 네이티브 파일 선택을 검증했다.
