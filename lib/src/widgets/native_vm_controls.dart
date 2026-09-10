@@ -93,6 +93,28 @@ class _NativeVmControlsState extends State<NativeVmControls> {
         Wrap(
           spacing: 8,
           children: [
+            if (service.windows)
+              TextButton.icon(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(context.t('Windows network setup')),
+                    content: SelectableText(
+                      context.t(
+                        'At the Windows network screen, choose Install driver. Browse to the QGNET CD, select the NetKVM folder, and install the ARM64 network driver. Windows will use Ethernet through this Mac.\n\nIf QGNET is missing, prepare the network driver CD on this Mac and restart the VM. On an installed Windows desktop, use Device Manager to update the Ethernet controller driver from the same folder.',
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(context.t('OK')),
+                      ),
+                    ],
+                  ),
+                ),
+                icon: const Icon(Icons.network_check),
+                label: Text(context.t('Network setup')),
+              ),
             if (vm.canStart)
               FilledButton.icon(
                 onPressed: _busy

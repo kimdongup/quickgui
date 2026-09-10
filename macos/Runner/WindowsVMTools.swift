@@ -10,6 +10,27 @@ enum WindowsVMTools {
     .appendingPathComponent("Library/Application Support/Quickgui/Firmware/utm-b44153a4")
   static var firmware: String { firmwareDirectory.appendingPathComponent("uefi-code.fd").path }
   static var variables: String { firmwareDirectory.appendingPathComponent("uefi-vars.fd").path }
+  static let networkDirectory = FileManager.default.homeDirectoryForCurrentUser
+    .appendingPathComponent("Library/Application Support/Quickgui/Drivers/netkvm-0.1.271-arm64")
+
+  static func networkDrivers(in directory: URL = networkDirectory) throws -> URL? {
+    guard FileManager.default.fileExists(atPath: directory.path) else { return nil }
+    let values = try directory.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+    guard values.isDirectory == true, values.isSymbolicLink != true else { throw MacVMError("Invalid network driver folder.") }
+    let manifest = directory.appendingPathComponent("network.json")
+    let image = directory.appendingPathComponent("network-drivers.iso")
+    try MacVMStore.regularFile(manifest); try MacVMStore.regularFile(image)
+    guard (try manifest.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) < 64 * 1024,
+          (try image.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max) <= 16 * 1024 * 1024,
+          let record = try JSONSerialization.jsonObject(with: Data(contentsOf: manifest)) as? [String: Any],
+          record["schema"] as? Int == 1,
+          record["sourceSHA256"] as? String == "65b6a69b392ee01dd314c10f3dad9ebbf9c4160be43f5f0dd6bb715944d9095b",
+          let hash = record["imageSHA256"] as? String,
+          SHA256.hash(data: try Data(contentsOf: image)).map({ String(format: "%02x", $0) }).joined() == hash else {
+      throw MacVMError("Network driver media changed. Restore it with tool/prepare_windows_arm_network.py.")
+    }
+    return image
+  }
 
   static func check(needsFirmware: Bool = true) throws {
     for path in [qemu, imageTool, tpm] {
@@ -102,7 +123,7 @@ enum WindowsVMTools {
     return String(data: try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]), encoding: .utf8)!
   }
 
-  static func arguments(bundle: URL, runtime: URL, uuid: String, mac: String, cpus: Int, memoryGiB: Int, iso: String?, showWindow: Bool = true) throws -> [String] {
+  static func arguments(bundle: URL, runtime: URL, uuid: String, mac: String, cpus: Int, memoryGiB: Int, iso: String?, networkISO: String? = nil, showWindow: Bool = true) throws -> [String] {
     // This firmware needs a PCI display for discovery and a linear RAM
     // framebuffer for Windows boot. RAMFB stays console 0 for the Cocoa window.
     var args = ["-name", "Windows ARM64", "-uuid", uuid, "-machine", "virt-9.2,highmem=on,gic-version=3", "-accel", "hvf", "-cpu", "host",
@@ -113,7 +134,7 @@ enum WindowsVMTools {
                 "-machine", "pflash0=code,pflash1=vars",
                 "-blockdev", try block("disk", bundle.appendingPathComponent("disk.qcow2").path, format: "qcow2"),
                 "-device", "nvme,drive=disk,serial=\(uuid.replacingOccurrences(of: "-", with: "").prefix(20)),bootindex=2",
-                "-netdev", "user,id=net0", "-device", "usb-net,netdev=net0,mac=\(mac),bus=usb.0",
+                "-netdev", "user,id=net0", "-device", "virtio-net-pci,netdev=net0,mac=\(mac)",
                 "-chardev", "socket,id=chrtpm,path=\(runtime.appendingPathComponent("tpm.sock").path)",
                 "-tpmdev", "emulator,id=tpm0,chardev=chrtpm", "-device", "tpm-tis-device,tpmdev=tpm0",
                 "-qmp", "unix:\(runtime.appendingPathComponent("qmp.sock").path),server=on,wait=off"]
@@ -122,6 +143,13 @@ enum WindowsVMTools {
       args += ["-blockdev", try block("cd", iso, format: "raw", readOnly: true),
                "-device", "usb-bot,id=cdusb,bus=usb.0",
                "-device", "scsi-cd,drive=cd,bus=cdusb.0,bootindex=1"]
+    }
+    if let networkISO = networkISO {
+      // A separate non-bootable CD remains available during OOBE and normal
+      // boots. It contains only NetKVM, with no unattended setup or GPU driver.
+      args += ["-blockdev", try block("netdrivers", networkISO, format: "raw", readOnly: true),
+               "-device", "usb-bot,id=netdriverusb,bus=usb.0",
+               "-device", "scsi-cd,drive=netdrivers,bus=netdriverusb.0"]
     }
     return args
   }

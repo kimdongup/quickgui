@@ -530,3 +530,48 @@ inode별 잠금 파일로 분리했다. 이후 실제 QEMU 프로세스의 시�
 Installation files 화면을 열어두었다. 실제 사용자 파일의 영구 삭제 버튼은 누르지 않았다.
 검증 종료 시 기존 macOS VM, 19,772,231,540바이트 IPSW, 7,951,140,864바이트 Windows ISO를 확인했다.
 실제 제거 작업은 별도의 시험 파일로 수행했다. 실패한 실험의 임시 VM과 합성 미디어도 정리했다.
+
+## Windows ARM64 네트워크 복구 (2026-09-10)
+
+개인 기준 `f15e53b`에서 후속 수정했다. 현재 브랜치는 `personal/apple-silicon`이며
+기존 미커밋 `pubspec.lock`만 있는 상태에서 시작했다. 공통 PR 브랜치는 변경하지 않았다.
+
+사용자의 실제 `Windows 11 ARM64.quickgui-winarm`은 Windows 설치 후 OOBE의
+**네트워크에 연결** 화면에서 어댑터가 없고 다음 버튼이 비활성 상태였다. 사용자 스크린샷과
+실행 중 QEMU 인자에서 기존 `usb-net` 구성을 확인했다. 이 구성은 이전 WinPE 검사에서도
+어댑터가 나타나지 않았으나 당시 네트워크를 완료로 표시하지 않았던 항목이다.
+
+`virtio-net-pci`와 기존 user NAT, 기존 MAC 주소를 사용하도록 수정했다. 준비 도구는
+UTM의 `v10.0.2-utm` / `utm-guest-tools-0.1.271.iso`를 고정하고 GitHub 릴리스의 digest와
+다운로드 SHA256 `65b6a69b392ee01dd314c10f3dad9ebbf9c4160be43f5f0dd6bb715944d9095b` 일치를 확인했다.
+그 안의 `Drivers/NetKVM/w11/ARM64`에서 INF/CAT/SYS 및 INF가 요구하는 netkvmp.exe,
+라이선스만 추출해 QGNET CD를 만들었다. 자동 응답 XML·GPU·전체 SPICE 설치 프로그램은 제외했다.
+CAT 인증서에 Microsoft Windows Hardware Compatibility Publisher가 포함됨을 확인했다.
+이는 게스트에서 Windows의 드라이버 서명 검사가 실제 통과했다는 결과와 구분한다.
+
+| 실제 검사 | 결과 |
+| --- | --- |
+| 준비 도구 회귀 | PASS: 5 tests. 원본 checksum, 기존 파일 보존, 변경/다른 manifest/링크 거부 |
+| Windows 네이티브 회귀 | PASS: 22 checks. VirtIO/NAT/MAC, 설치 후에도 별도 읽기 전용 CD, checksum/링크 검사 포함 |
+| Windows·삭제 위젯 | PASS: 9 tests. 실행 중 Network setup 안내, VM 설치/완료 및 삭제 확인 회귀 |
+| 분석·포맷 | PASS: No issues found, 수정 Dart 파일 포맷 완료 |
+| 실제 드라이버 CD 검사 | PASS: 다시 마운트해 4개 payload checksum 및 SYS/EXE의 ARM64 PE 0xaa64 확인. 크기 921,600바이트 |
+| 실제 QEMU 수명 | PASS: 합성 미디어로 running → stopped. 원본 ISO 및 드라이버 CD 사용 중 삭제 거부, 종료 후 잠금 해제, 시험 VM 제거 |
+| 릴리스 | PASS: 격리 worktree `/tmp/quickgui-vm-release`, 48.1MB. 두 배포 경로 codesign verify, runner x86_64/arm64 확인 |
+| 기존 사용자 VM 재실행 | PASS: 사용자 VM이 중지된 것을 확인한 후 이전 앱 종료, 수정 `/Applications/quickgui.app`에서 Resume installation 실행 |
+| 실제 VM 네트워크 장치 | PASS: QMP query-pci의 Ethernet controller 1af4:1000, info network의 virtio-net-pci/user NAT 10.0.2.0. 기존 MAC 02:8d:f8:52:7a:7d 유지 |
+| 실제 VM CD 연결 | PASS: QMP query-block에서 netdrivers 921,600바이트, ro=true, removable=true, tray_open=false. 원본 Windows ISO도 별도 CD로 유지 |
+| Windows 드라이버 설치·인터넷 | 대기: 사용자가 OOBE의 드라이버 설치에서 QGNET/NetKVM을 선택한 뒤 결과 확인 필요 |
+
+새 NIC를 실행 중 PCI 루트에 바로 추가하는 방법도 작은 별도 QEMU 인스턴스로 검사했으나
+`Bus 'pcie.0' does not support hotplugging`으로 거부됐다. 사용자 VM에 무리하게 hotplug하지 않고
+중지된 기존 VM을 수정 구성으로 다시 실행했다. 사용자 디스크·NVRAM·TPM을 초기화하지 않았다.
+
+수정 앱은 `dist/arm-vms/quickgui.app`과 `/Applications/quickgui.app`에 반영했다.
+드라이버 CD는 `~/Library/Application Support/Quickgui/Drivers/netkvm-0.1.271-arm64/`에 두며,
+생성 manifest와 이미지 SHA256을 앱에서 검증한다. 설치 시 준비 여부를 확인하고 이미 설치된
+게스트는 CD가 없는 호스트에서도 실행할 수 있다. 네트워크 사용 중 CD의 삭제 잠금을 유지한다.
+
+Flutter 3.47.2 및 lockfile SHA256
+`c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a`를 보존했다.
+상세 로그는 `/tmp/quickgui-arm-validation/windows-network-{widgets,analyze,release,lifecycle}.log`에 있다.

@@ -57,6 +57,13 @@ enum CheckWindowsArmVM {
               lease.release()
               fail(MacVMError("Running VM did not protect its installation image."))
             } catch { emit(["activeImageDeletionBlocked": true]) }
+            if let networkImage = try WindowsVMTools.networkDrivers() {
+              do {
+                let lease = try MacVMFileLease(networkImage, exclusive: true)
+                lease.release()
+                fail(MacVMError("Running VM did not protect its network driver CD."))
+              } catch { emit(["activeNetworkMediaDeletionBlocked": true]) }
+            }
             backend.start(bundle.path, showWindow: false) { duplicate in
               if case .success = duplicate { fail(MacVMError("Duplicate start was accepted.")) }
               do {
@@ -98,6 +105,11 @@ enum CheckWindowsArmVM {
                           let lease = try MacVMFileLease(URL(fileURLWithPath: args[2]), exclusive: true)
                           lease.release()
                           emit(["imageReleasedAfterStop": true])
+                          if let networkImage = try WindowsVMTools.networkDrivers() {
+                            let lease = try MacVMFileLease(networkImage, exclusive: true)
+                            lease.release()
+                            emit(["networkMediaReleasedAfterStop": true])
+                          }
                           try FileManager.default.removeItem(at: parent)
                           if let syntheticImage = syntheticImage { try FileManager.default.removeItem(at: syntheticImage) }
                           emit(["probeRemoved": true]); exit(0)

@@ -1,5 +1,12 @@
 # Fork 구현·검증 기록
 
+2026-09-10 Windows ARM64 네트워크 후속: 사용자가 OOBE의 네트워크 화면에서 어댑터가 없는 상태를 확인했다.
+기존 usb-net을 VirtIO Ethernet으로 변경하고 공식 UTM 배포본의 Windows 11 ARM64 NetKVM만
+담은 QGNET CD 준비·연결과 Network setup 안내를 추가했다. 위젯 9, 네이티브 22, 준비 도구 5,
+실제 QEMU 시작·중지/미디어 잠금, 분석·release 빌드를 통과했다. 기존 사용자 VM을 수정 앱으로
+다시 실행해 NIC와 CD 연결까지 확인했다. 게스트의 드라이버 설치·인터넷 연결 확인은 별도로 기록한다.
+절차는 [WINDOWS_ARM_VM.ko.md](WINDOWS_ARM_VM.ko.md), 증거는 M1 검증 기록을 따른다.
+
 2026-09-09 삭제 기능 후속: native macOS/Windows VM 삭제 및 ISO/IPSW 관리 화면을 개인 기능으로 추가했다.
 이름 입력 확인, 실행/설치 중 보호, 참조·잠금·변경 파일 검사를 적용했다.
 전체 Flutter 81 passed / 4 skipped, 네이티브 삭제 26 + 기존 38 checks, 실제 QEMU 잠금 수명 검사,

@@ -551,3 +551,12 @@ msgstr "This installation file will be permanently deleted. Installed VMs are ke
 
 msgid "Type the name to confirm deletion:"
 msgstr "Type the name to confirm deletion:"
+
+msgid "Network setup"
+msgstr "Network setup"
+
+msgid "Windows network setup"
+msgstr "Windows network setup"
+
+msgid "At the Windows network screen, choose Install driver. Browse to the QGNET CD, select the NetKVM folder, and install the ARM64 network driver. Windows will use Ethernet through this Mac.\n\nIf QGNET is missing, prepare the network driver CD on this Mac and restart the VM. On an installed Windows desktop, use Device Manager to update the Ethernet controller driver from the same folder."
+msgstr "At the Windows network screen, choose Install driver. Browse to the QGNET CD, select the NetKVM folder, and install the ARM64 network driver. Windows will use Ethernet through this Mac.\n\nIf QGNET is missing, prepare the network driver CD on this Mac and restart the VM. On an installed Windows desktop, use Device Manager to update the Ethernet controller driver from the same folder."

@@ -1,5 +1,6 @@
 // Windows ARM64 configuration and lifecycle safeguards; no guest is launched.
 import Foundation
+import CryptoKit
 
 @main
 enum TestWindowsVM {
@@ -54,6 +55,33 @@ enum TestWindowsVM {
     try check(install.contains("scsi-cd,drive=cd,bus=cdusb.0,bootindex=1") && install.contains("usb-bot,id=cdusb,bus=usb.0"),
               "installer is an explicit optical device, never a RAW USB disk")
     try check(!boot.contains(where: { $0.contains("scsi-cd") || $0.contains("cdusb") }), "completed boot does not attach the installer")
+    try check(install.contains("user,id=net0") && install.contains("virtio-net-pci,netdev=net0,mac=\(metadata.mac)") && !install.contains(where: { $0.hasPrefix("usb-net,") }),
+              "ARM64 VirtIO NIC uses NAT and preserves the saved MAC")
+    let networkPath = "/Driver Media/네트워크, ARM64.iso"
+    let networkBoot = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, networkISO: networkPath)
+    let networkBlocks = try networkBoot.enumerated().filter { $0.element == "-blockdev" }.map { index, _ -> [String: Any] in
+      try JSONSerialization.jsonObject(with: Data(networkBoot[index+1].utf8)) as! [String: Any]
+    }
+    let networkCD = networkBlocks.first { $0["node-name"] as? String == "netdrivers" }!
+    try check(networkCD["read-only"] as? Bool == true && (networkCD["file"] as? [String: Any])?["filename"] as? String == networkPath && networkBoot.contains("scsi-cd,drive=netdrivers,bus=netdriverusb.0"),
+              "network-only CD stays read-only and available after installer removal")
+    let drivers = parent.appendingPathComponent("drivers")
+    let missingDrivers = try WindowsVMTools.networkDrivers(in: drivers)
+    try check(missingDrivers == nil, "installed guests can start without optional driver media")
+    try FileManager.default.createDirectory(at: drivers, withIntermediateDirectories: false)
+    let image = drivers.appendingPathComponent("network-drivers.iso")
+    let bytes = Data("fixture".utf8)
+    try bytes.write(to: image)
+    let manifest: [String: Any] = ["schema": 1, "sourceSHA256": "65b6a69b392ee01dd314c10f3dad9ebbf9c4160be43f5f0dd6bb715944d9095b",
+                                   "imageSHA256": SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()]
+    try JSONSerialization.data(withJSONObject: manifest).write(to: drivers.appendingPathComponent("network.json"))
+    let verifiedDrivers = try WindowsVMTools.networkDrivers(in: drivers)
+    try check(verifiedDrivers?.path == image.path, "prepared driver media hash verified")
+    try Data("changed".utf8).write(to: image)
+    try rejects("changed driver CD refused") { _ = try WindowsVMTools.networkDrivers(in: drivers) }
+    try FileManager.default.removeItem(at: image)
+    try FileManager.default.createSymbolicLink(at: image, withDestinationURL: file)
+    try rejects("driver CD symlink refused") { _ = try WindowsVMTools.networkDrivers(in: drivers) }
     metadata.schema = 99
     try JSONEncoder().encode(metadata).write(to: file)
     try rejects("unknown schema refused") { _ = try backend.status(bundle.path) }

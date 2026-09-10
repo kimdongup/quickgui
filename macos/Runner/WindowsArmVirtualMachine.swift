@@ -26,6 +26,7 @@ final class WindowsArmVirtualMachine {
     let tpm = Process()
     var phase = "starting"
     var imageLease: MacVMFileLease?
+    var networkImageLease: MacVMFileLease?
     init(_ bundle: URL, _ runtime: URL, _ lock: MacVMLock, _ log: FileHandle) {
       self.bundle = bundle; self.runtime = runtime; self.lock = lock; self.log = log
     }
@@ -40,6 +41,9 @@ final class WindowsArmVirtualMachine {
     DispatchQueue.global(qos: .userInitiated).async {
       let result = Result<[String: Any], Error> {
         try WindowsVMTools.check()
+        guard try WindowsVMTools.networkDrivers() != nil else {
+          throw MacVMError("Prepare Windows ARM64 network drivers first: run tool/prepare_windows_arm_network.py from the Quickgui source folder. See docs/maintenance/WINDOWS_ARM_VM.ko.md.")
+        }
         try WindowsVMTools.inspectISO(path)
         return ["version": "11 ARM64", "build": "Microsoft ISO", "minimumCPU": 2, "maximumCPU": Self.maxCPU,
                 "minimumMemoryGiB": 4, "maximumMemoryGiB": Self.maxMemory]
@@ -176,6 +180,7 @@ final class WindowsArmVirtualMachine {
       if metadata.installationPending {
         try MacVMStore.regularFile(URL(fileURLWithPath: metadata.iso))
       }
+      let networkISO = try WindowsVMTools.networkDrivers()
       let runtime = URL(fileURLWithPath: "/tmp/qg-win-\(UUID().uuidString.prefix(12))")
       guard mkdir(runtime.path, 0o700) == 0 else { throw MacVMError("Cannot create VM control directory.") }
       let logURL = target.appendingPathComponent("last-run.log")
@@ -185,6 +190,7 @@ final class WindowsArmVirtualMachine {
       try log.truncate(atOffset: 0)
       let active = Session(target, runtime, lock, log)
       if metadata.installationPending { active.imageLease = try MacVMFileLease(URL(fileURLWithPath: metadata.iso)) }
+      if let networkISO = networkISO { active.networkImageLease = try MacVMFileLease(networkISO) }
       session = active
       metadata.error = nil; try write(metadata, target)
       active.tpm.executableURL = URL(fileURLWithPath: WindowsVMTools.tpm)
@@ -194,7 +200,8 @@ final class WindowsArmVirtualMachine {
       active.qemu.executableURL = URL(fileURLWithPath: WindowsVMTools.qemu)
       active.qemu.currentDirectoryURL = target
       active.qemu.arguments = try WindowsVMTools.arguments(bundle: target, runtime: runtime, uuid: metadata.uuid, mac: metadata.mac,
-                                                          cpus: metadata.cpus, memoryGiB: metadata.memoryGiB, iso: metadata.installationPending ? metadata.iso : nil, showWindow: showWindow)
+                                                          cpus: metadata.cpus, memoryGiB: metadata.memoryGiB, iso: metadata.installationPending ? metadata.iso : nil,
+                                                          networkISO: networkISO?.path, showWindow: showWindow)
       active.qemu.standardInput = FileHandle.nullDevice
       active.qemu.standardOutput = log; active.qemu.standardError = log
       active.qemu.terminationHandler = { process in
@@ -307,6 +314,7 @@ final class WindowsArmVirtualMachine {
         guard self.session === active else { return }
         try? active.log.close()
         active.imageLease?.release()
+        active.networkImageLease?.release()
         try? FileManager.default.removeItem(at: active.bundle.appendingPathComponent("owner.json"))
         try? FileManager.default.removeItem(at: active.runtime)
         active.lock.release()

@@ -26,6 +26,37 @@ void main() {
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
   testWidgets(
+    'network help is available during OOBE without starting or completing the VM',
+    (tester) async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return null;
+      });
+      await tester.pumpWidget(
+        testApp(
+          Scaffold(
+            body: NativeVmControls(
+              vm: NativeVmRecord(vm(state: 'running')),
+              service: service,
+              onChanged: () async {},
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Network setup'));
+      await tester.pumpAndSettle();
+      expect(find.text('Windows network setup'), findsOneWidget);
+      expect(find.textContaining('QGNET'), findsOneWidget);
+      expect(find.textContaining('NetKVM'), findsOneWidget);
+      expect(calls, isEmpty);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text('Windows network setup'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'Windows creation uses its own channel and reports storage refusal without success',
     (tester) async {
       final calls = <MethodCall>[];

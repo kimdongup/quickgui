@@ -18,6 +18,7 @@ Windows ARM64의 ISO 경로는 OS 선택 화면과 Manager에서 구분된다.
    RAM 4GiB, 가상 디스크 64GiB다. 작업 폴더에 `<이름>.quickgui-winarm`이 생긴다.
 4. VM 창에서 설치 미디어 부팅을 위한 키 입력 요청이 나오면 키를 누르고 Windows 설치를 진행한다.
    제품 키·에디션·계정은 사용자가 선택한다. 원본 ISO는 읽기 전용으로 연결한다.
+   **네트워크에 연결** 화면에서 어댑터가 없으면 아래 네트워크 드라이버 설치 절차를 따른다.
 5. Windows 바탕화면까지 설치한 뒤 게스트를 종료한다. Manager의 **Installation completed**에서
    완료를 확인하면 다음 Run부터 ISO를 제외하고 디스크로 부팅한다. 설치 중에는 **Resume installation**을 쓴다.
 
@@ -37,6 +38,7 @@ Flutter 3.47.2와 기존 lockfile을 유지한다. VM 실행에는 ARM Homebrew�
 ```sh
 /opt/homebrew/bin/brew install qemu swtpm
 python3 tool/prepare_windows_arm_firmware.py
+python3 tool/prepare_windows_arm_network.py
 ```
 
 펌웨어 준비 도구는 [UTM의 QEMU 저장소](https://github.com/utmapp/qemu/tree/b44153a4b6aabf86edebf92199b14aec26e15d59/pc-bios)의
@@ -50,6 +52,39 @@ ARM64 Secure Boot 펌웨어를 고정 커밋과 SHA256으로 확인한다. UTM �
 변수 템플릿의 QCOW2 포맷을 raw로 변환하며 등록된 키와 내용을 유지한다.
 앱은 준비된 파일의 SHA256도 확인한다. 각 VM은 펌웨어·NVRAM·TPM을 독립적으로 복사하고
 이후 해당 복사본을 유지한다. 준비 도구를 다시 실행해도 기존 VM의 NVRAM이나 디스크를 바꾸지 않는다.
+
+## 네트워크 어댑터가 없을 때
+
+2026-09-10 후속에서 기존 `usb-net`을 ARM64 NetKVM 드라이버가 지원하는
+`virtio-net-pci`로 변경했다. 호스트의 연결을 이용하는 NAT 방식이며 기존 VM의 MAC 주소는 유지한다.
+Windows에서는 **Ethernet**으로 표시된다. Wi-Fi 목록에서 호스트의 공유기를 선택하는 방식이 아니다.
+
+1. 위 네트워크 준비 도구를 이 Mac에서 한 번 실행한다. 이 M1에는 이미 준비했다.
+2. 이전 앱으로 실행한 VM은 정상 종료하고 수정한 Quickgui를 실행한 뒤 **Resume installation**을 누른다.
+   기존 VM 폴더와 디스크를 그대로 사용한다. Windows 설치 미디어로 다시 부팅하라는 키 요청에는 입력하지 않는다.
+3. Windows **네트워크에 연결 → 드라이버 설치**를 누른다.
+4. **QGNET** CD의 **NetKVM** 폴더를 선택하고 드라이버를 설치한다.
+   드라이브 문자는 시스템마다 다르다. 설치 후 Ethernet 연결을 확인하고 다음으로 진행한다.
+5. 이미 바탕화면에 도달했다면 장치 관리자에서 Ethernet Controller의 드라이버 업데이트에 같은 폴더를 지정한다.
+
+명령줄이 필요한 경우 Windows의 관리자 명령 프롬프트에서 아래처럼 실행한다.
+`D:`는 실제 QGNET 드라이브 문자로 바꾼다. 드라이버 서명 검사나 Secure Boot를 끄지 않는다.
+
+```bat
+pnputil /add-driver D:\NetKVM\netkvm.inf /install
+```
+
+Manager와 VM 생성 화면의 **Network setup**에서도 설치 방법을 볼 수 있다.
+준비된 드라이버 CD는 설치 후 일반 부팅에도 별도 읽기 전용 광학 드라이브로 연결한다.
+이미 드라이버가 설치된 VM은 호스트의 드라이버 CD가 없어도 부팅할 수 있다.
+
+준비 도구는 [UTM 공식 Windows 게스트 지원 안내](https://docs.getutm.app/guest-support/windows/)가
+제공하는 [0.1.271 배포 ISO](https://github.com/utmapp/qemu/releases/tag/v10.0.2-utm)의 SHA256
+`65b6a69b392ee01dd314c10f3dad9ebbf9c4160be43f5f0dd6bb715944d9095b`를 확인한다.
+Windows 11 ARM64용 NetKVM의 INF/CAT/SYS 및 INF가 참조하는 실행 파일, 라이선스만 CD로 만든다.
+Windows 자동 설치 응답 파일이나 GPU/SPICE 설치 프로그램은 포함하지 않는다.
+저장 위치는 `~/Library/Application Support/Quickgui/Drivers/netkvm-0.1.271-arm64/`이며,
+앱은 생성 이미지의 manifest·체크섬을 검사하고 VM이 사용할 때 삭제 잠금을 유지한다.
 
 ## 구현·검증 범위
 
