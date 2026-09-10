@@ -1,5 +1,10 @@
 # M1 맥미니 소스 이전과 검토
 
+2026-09-10 후속: 아래는 이전 당시의 절차와 상태를 보존한 기록이다. 현재 M1의
+Apple Silicon/Windows ARM64 VM 구현과 Windows 네트워크 수정은 `personal/apple-silicon`에 있다.
+새로 이어받을 때는 [검토 완료 결과](M1_REVIEW_RESULT.ko.md), [현재 상태](STATUS.ko.md),
+[실제 검증 기록](M1_VALIDATION.ko.md)을 먼저 확인한다.
+
 2026-09-08. 사용자가 보유한 M1 맥미니를 Apple Silicon 검증 호스트로 사용한다. 이 문서는 이전 절차이며, M1에서 실행한 결과를 의미하지 않는다.
 
 ## 가져올 소스와 브랜치

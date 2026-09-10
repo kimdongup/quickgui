@@ -578,3 +578,23 @@ Flutter 3.47.2 및 lockfile SHA256
 상세 로그는 `/tmp/quickgui-arm-validation/windows-network-{widgets,analyze,release,lifecycle}.log`에 있다.
 코드 커밋은 `0517cf2`다. NIC 및 CD 연결 후 사용자에게 OOBE의 드라이버 설치 경로를 안내했고,
 뒤이은 실제 네트워크 진단에서 위 외부 TCP 연결을 확인했다. 패킷 내용이나 계정 정보는 수집하지 않았다.
+
+## 원격 반영 전 커밋된 의존성 재현 검사 (2026-09-10)
+
+검토 기준 `aecabf86770735d43392402ec1a1ebe892aba4fe`를 별도 worktree
+`/tmp/quickgui-push-review-20260910`에 체크아웃했다. 앞선 개인 작업 폴더의
+미커밋 lockfile 대신 커밋된 lockfile SHA256
+`57d412434d34228eb7cb1901e92e697621ba8329504fd2f1d2a01231d424aeb6`를 사용했다.
+
+Flutter 3.47.2 / Dart 3.13.2에서 `flutter pub get --enforce-lockfile`,
+`flutter analyze --no-pub`, `flutter test --no-pub --reporter expanded`,
+`flutter build macos --release --no-pub`를 순서대로 실행했다.
+의존성 준비 PASS, 분석 No issues found, 전체 회귀 82 passed / 4 external opt-in skipped,
+release 48.1MB PASS다. 최종 앱 `codesign --verify --deep --strict`와 실행 파일 및
+App.framework 각각의 x86_64/arm64 아키텍처를 확인했다. 빌드 후 별도 worktree는 추적 파일 변경이 없었다.
+
+기존 `window_size`의 Swift Package Manager 미지원 안내와 Run Script 출력 파일 경고는
+남아 있으나 CocoaPods를 사용한 이번 빌드는 정상 종료했다. 기존 앱이나 사용자 VM을
+교체·재시작하지 않았고, 원래 작업 폴더의 lockfile SHA256 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a`를 유지했다.
+로그는 `/tmp/quickgui-push-review-logs-20260910/{pub-get,analyze,test,build}.log`다.
+검토 정리와 원격 반영 상태는 [M1_REVIEW_RESULT.ko.md](M1_REVIEW_RESULT.ko.md)를 따른다.

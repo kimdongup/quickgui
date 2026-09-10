@@ -1,5 +1,9 @@
 # Fork 구현·검증 기록
 
+2026-09-10 검토 정리: 완료 범위, 커밋된 lockfile로 수행한 재현 검사, 공통/개인 브랜치와
+원격 반영 결과는 [M1 검토 완료 결과](M1_REVIEW_RESULT.ko.md)에 정리했다.
+아래 날짜별 기록은 당시 상태를 보존하며, 현재 완료·미확인 범위는 이 검토 결과를 우선한다.
+
 2026-09-10 Windows ARM64 네트워크 후속: 사용자가 OOBE의 네트워크 화면에서 어댑터가 없는 상태를 확인했다.
 기존 usb-net을 VirtIO Ethernet으로 변경하고 공식 UTM 배포본의 Windows 11 ARM64 NetKVM만
 담은 QGNET CD 준비·연결과 Network setup 안내를 추가했다. 위젯 9, 네이티브 22, 준비 도구 5,
