@@ -230,3 +230,27 @@ https://updates.cdn-apple.com/2026SummerFCS/fullrestores/140-75212/A2A24B94-1FC1
 
 이 확장은 개인 브랜치에만 포함하며 공통 후보 `pr/macos-homebrew-path`에는 넣지 않는다.
 Flutter 3.47.2/Dart 3.13.2 및 기존 의존성 버전을 유지했고 원격 push/PR 제출은 수행하지 않았다.
+
+### 최종 커밋과 격리 빌드
+
+최종 기능 커밋은 `bdd47d0bd64d03006a8dcdf02de8fd59388150d1`이다.
+사용자가 지정한 `/en-us/software-download/windows11arm64` 주소를 포함한다.
+원본 작업 폴더의 마지막 빌드 시도는 `build.db` 잠금으로 실패했다.
+프로세스 확인에서 같은 폴더의 `flutter run -d macos`가 발견되어 해당 실행을 종료하지 않고
+`/tmp/quickgui-arm-release`에 위 커밋의 detached worktree를 만들었다.
+기존 사용자 lockfile을 이 폴더에도 복사해 동일한 패키지 조합을 유지했다.
+
+이 격리 폴더에서 `flutter pub get --enforce-lockfile`, `flutter analyze --no-pub`,
+`flutter test --no-pub`, `flutter build macos --release --no-pub`를 다시 실행했다.
+모두 PASS: 분석 0, 66 passed / 4 skipped, 47.2 MB release 앱.
+검증 후 lockfile SHA256은 위 값과 동일하다. 따라서 DB 잠금 실패를 빌드 통과로 바꾸어 기록하지 않고,
+별도 폴더에서 성공한 최종 빌드와 구분한다.
+
+최종 앱은 실행 중인 앱의 빌드 폴더를 덮어쓰지 않고 다음 경로에 복사했다.
+
+```text
+/Users/mac/quickemu/quickgui/dist/arm-downloads-bdd47d0/quickgui.app
+```
+
+복사본의 runner와 App.framework에서 각각 `x86_64 arm64`를 확인했다.
+이 앱은 로컬 검토용 빌드이며 원격 배포·notarization은 수행하지 않았다.
