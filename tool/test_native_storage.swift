@@ -88,10 +88,66 @@ enum TestNativeStorage {
     try delete(windows, vm: true, token: preview(windows, vm: true))
 
     let protected = try vm("Protected")
+    let originalToken = try preview(original)
     let config = try file("shared.conf", "guest_os=\"linux\"\ndisk_img=\"\(protected.path)/disk.img\"\n")
     try rejects("Quickemu reference to a native disk protects its VM") { _ = try preview(protected, vm: true) }
     try Data("iso=\"\(original.path)\"\n".utf8).write(to: config)
     try rejects("Quickemu ISO reference protects media") { _ = try preview(original) }
+    try Data("guest_os=\"linux\"\ndisk_img=\"unrelated/disk.qcow2\"\nexport iso=\"\(original.path)\"\n".utf8).write(to: config)
+    try rejects("exported Quickemu ISO reference protects media") { _ = try preview(original) }
+    try rejects("a newly exported reference blocks deletion after preview") { try delete(original, token: originalToken) }
+    try check(try String(contentsOf: original, encoding: .utf8) == "fixture", "blocked deletion preserves referenced media bytes")
+    for prefix in ["export --", "export -n", "declare", "declare -x", "declare -r", "declare -gx --", "typeset -x", "readonly"] {
+      try Data("\(prefix) iso='\(original.path)' # installation media\n".utf8).write(to: config)
+      try rejects("\(prefix) storage reference protects media") { _ = try preview(original) }
+    }
+    try Data("declare -r disk_img='\(protected.path)/disk.img'\n".utf8).write(to: config)
+    try rejects("declared Quickemu disk reference protects its VM") { _ = try preview(protected, vm: true) }
+
+    let marker = root.appendingPathComponent("must-not-be-executed")
+    let included = try file("included.sh", "iso='\(original.path)'\ntouch '\(marker.path)'\n")
+    let ambiguous: [(String, String)] = [
+      ("source includes", "source '\(included.path)'"),
+      ("dot includes", ". '\(included.path)'"),
+      ("declaration namerefs", "declare -n alias=iso\nalias='\(original.path)'"),
+      ("declaration transformations", "declare -u iso='\(original.path)'"),
+      ("multiple declaration assignments", "declare -x label=example iso='\(original.path)'"),
+      ("additional assignments", "label=example iso='\(original.path)'"),
+      ("inline commands", "label=example; iso='\(original.path)'"),
+      ("commands after quoted semicolons", "label='example; value'; iso='\(original.path)'"),
+      ("command substitutions in unrelated values", "label=\"$(touch '\(marker.path)')\""),
+      ("backtick substitutions", "label=\"`touch '\(marker.path)'`\""),
+      ("eval", "eval \"iso='\(original.path)'\""),
+      ("whitespace before equals", "iso ='\(original.path)'"),
+      ("whitespace after equals", "iso= '\(original.path)'"),
+      ("source disguised by equals", "source = /some/file"),
+      ("quoted hash suffixes", "iso='\(original.path)'#suffix"),
+      ("opaque QEMU storage arguments", "extra_args='-drive file=\(original.path)'"),
+    ]
+    for (label, content) in ambiguous {
+      try Data((content + "\n").utf8).write(to: config)
+      try rejects("\(label) fail closed") { _ = try preview(original) }
+    }
+    try check(!FileManager.default.fileExists(atPath: marker.path), "configuration inspection never executes shell code")
+    try Data("""
+      #!/usr/bin/env quickemu
+      # source and export in comments have no effect.
+      guest_os="linux"
+      disk_img="unrelated/disk.qcow2"
+      ram="4G"
+      cpu_cores=2
+      public_dir=""
+      extra_args=''
+      export -- label='literal; $(text) # value'
+      declare -rx -- iso='unrelated/image.iso' # unused by this selection
+      readonly fixed_iso="unrelated/drivers.iso"
+      \n
+      """.utf8).write(to: config)
+    _ = try preview(original)
+    try check(true, "literal configurations and quoted shell punctuation permit unrelated media deletion")
+    let punctuation = try file("quoted;# image.iso")
+    try Data("export iso='\(punctuation.path)'\n".utf8).write(to: config)
+    try rejects("quoted semicolons and hashes stay part of the referenced filename") { _ = try preview(punctuation) }
     try Data("iso=\"$UNKNOWN/image.iso\"\n".utf8).write(to: config)
     try rejects("computed Quickemu paths fail closed") { _ = try preview(original) }
     try FileManager.default.removeItem(at: config)

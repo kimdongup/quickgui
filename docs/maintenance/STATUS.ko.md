@@ -1,6 +1,6 @@
 # Fork 구현·검증 기록
 
-2026-09-10 통합 후속: 사용자가 M1 macOS ARM의 **바탕화면·재부팅·SSH 검증 완료**를 확인했다. Windows ARM64의 설치 후 실사용과 함께 [M1 검증 기록](M1_VALIDATION.ko.md)에 반영했다. 확인한 게스트 검증을 반복 설치하지 않고, `personal/preview`의 `64cfd59`와 `personal/apple-silicon`의 `f3f5c2b`를 별도 `personal/platform-integration` 후보에서 합친다. 이 후보의 검사 결과와 남은 승격 조건은 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
+2026-09-10 통합 후속: 사용자가 M1 macOS ARM의 **바탕화면·재부팅·SSH 검증 완료**를 확인했다. Windows ARM64의 설치 후 실사용과 함께 [M1 검증 기록](M1_VALIDATION.ko.md)에 반영했다. `personal/preview`의 `64cfd59`와 `personal/apple-silicon`의 `f3f5c2b`를 별도 `personal/platform-integration` 후보에서 merge했다. 추가로 발견한 선언형 ISO 경로의 삭제 보호 오류를 수정했다. Intel 분석·82개 Flutter 테스트·12개 실제 도구/catalog 검사·57개 네이티브 검사·release 빌드가 통과했다. 상세 결과와 남은 범위는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
 
 2026-09-10 Windows ARM64 실사용 후속: 사용자께서 초기 설정·바탕화면·입력·HTTPS 및
 정상 종료와 설치 완료 후 부팅(요청 1~3단계)을 직접 검토해 정상이라고 확인했다.

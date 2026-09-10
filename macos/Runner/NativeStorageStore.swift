@@ -163,20 +163,7 @@ final class NativeStorageStore {
             throw MacVMError("Cannot safely inspect the VM configuration: \(item.path)")
           }
           let content = try String(contentsOf: item, encoding: .utf8)
-          for line in content.components(separatedBy: .newlines) {
-            let assignment = try NSRegularExpression(pattern: #"^\s*(disk_img|iso|fixed_iso|floppy|img|bootloader|firmware)\s*=\s*(.*?)\s*$"#)
-            let ns = line as NSString
-            guard let match = assignment.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) else { continue }
-            let raw = ns.substring(with: match.range(at: 2))
-            let value: String?
-            if raw.hasPrefix("'") { value = literal(raw, pattern: #"^'([^']*)'\s*(?:#.*)?$"#) }
-            else if raw.hasPrefix("\"") {
-              let text = literal(raw, pattern: #"^"([^"\\]*)"\s*(?:#.*)?$"#)
-              value = text?.contains("$") == true || text?.contains(String(UnicodeScalar(96))) == true ? nil : text
-            } else { value = literal(raw, pattern: #"^([a-zA-Z0-9_./:+-]*)\s*(?:#.*)?$"#) }
-            guard let value = value else {
-              throw MacVMError("Cannot verify a computed storage path in \(item.lastPathComponent). Review it before deleting.")
-            }
+          for value in try configurationStoragePaths(content, fileName: item.lastPathComponent) {
             if !value.isEmpty && refers(value, relativeTo: workspace) {
               throw MacVMError("Storage is referenced by \(item.lastPathComponent). Remove that reference first.")
             }
@@ -184,6 +171,39 @@ final class NativeStorageStore {
         }
       }
     }
+  }
+
+  /// Quickemu sources Bash configs, but deletion must never execute them. Accept
+  /// only independent literal assignments; unknown statements may introduce or
+  /// change a storage reference even when they do not mention its variable name.
+  private func configurationStoragePaths(_ content: String, fileName: String) throws -> [String] {
+    let assignment = try NSRegularExpression(pattern: #"^(?:(?:export(?:\s+-n)?|(?:declare|typeset)(?:\s+-[grx]+)*|readonly)(?:\s+--)?\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*?)$"#)
+    let keys = ["disk_img", "iso", "fixed_iso", "floppy", "img", "bootloader", "firmware"]
+    var paths: [String] = []
+    func ambiguous() -> MacVMError {
+      MacVMError("Cannot verify storage references in \(fileName). Use literal assignments or review this configuration before deleting.")
+    }
+    for rawLine in content.components(separatedBy: .newlines) {
+      let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+      if line.isEmpty || line.hasPrefix("#") { continue }
+      let ns = line as NSString
+      guard let match = assignment.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) else {
+        throw ambiguous()
+      }
+      let key = ns.substring(with: match.range(at: 1))
+      let raw = ns.substring(with: match.range(at: 2))
+      let value: String?
+      if raw.hasPrefix("'") { value = literal(raw, pattern: #"^'([^']*)'(?:\s+#.*)?$"#) }
+      else if raw.hasPrefix("\"") {
+        let text = literal(raw, pattern: #"^"([^"\\]*)"(?:\s+#.*)?$"#)
+        value = text?.contains("$") == true || text?.contains(String(UnicodeScalar(96))) == true ? nil : text
+      } else { value = literal(raw, pattern: #"^([a-zA-Z0-9_./:+-]*)(?:\s+#.*)?$"#) }
+      guard let value = value else { throw ambiguous() }
+      // Arbitrary QEMU arguments can attach additional disks or installation media.
+      if key == "extra_args" && !value.isEmpty { throw ambiguous() }
+      if keys.contains(key) { paths.append(value) }
+    }
+    return paths
   }
 
   private func literal(_ raw: String, pattern: String) -> String? {

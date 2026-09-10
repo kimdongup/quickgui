@@ -37,6 +37,10 @@ jobs:
           channel: stable
           flutter-version-file: pubspec.yaml
       - run: flutter pub get --enforce-lockfile
+      - name: Check native storage deletion guards
+        run: |
+          xcrun swiftc macos/Runner/MacVMStore.swift macos/Runner/NativeStorageStore.swift tool/test_native_storage.swift -o "$RUNNER_TEMP/quickgui-native-storage-tests"
+          "$RUNNER_TEMP/quickgui-native-storage-tests"
       - run: flutter build macos --release
       - uses: actions/upload-artifact@v7
         with:
