@@ -479,3 +479,36 @@ msgstr "Use an existing IPSW"
 
 msgid "Download IPSW or install an Apple Silicon VM."
 msgstr "Download IPSW or install an Apple Silicon VM."
+
+msgid "Create Windows ARM64 VM"
+msgstr "Create Windows ARM64 VM"
+
+msgid "Windows installation pending"
+msgstr "Windows installation pending"
+
+msgid "Resume installation"
+msgstr "Resume installation"
+
+msgid "Confirm only after reaching the Windows desktop and shutting down the guest. Future runs will boot from the disk without the installation ISO."
+msgstr "Confirm only after reaching the Windows desktop and shutting down the guest. Future runs will boot from the disk without the installation ISO."
+
+msgid "Install Windows ARM64 from a downloaded ISO. The original image is kept."
+msgstr "Install Windows ARM64 from a downloaded ISO. The original image is kept."
+
+msgid "Choose ARM64 ISO"
+msgstr "Choose ARM64 ISO"
+
+msgid "Follow Windows setup in the VM display. If asked to boot from the installation media, press a key. After reaching the desktop and shutting down, choose Installation completed to boot from disk next time."
+msgstr "Follow Windows setup in the VM display. If asked to boot from the installation media, press a key. After reaching the desktop and shutting down, choose Installation completed to boot from disk next time."
+
+msgid "Shut down from Windows or Manager before quitting Quickgui. Closing the QEMU window stops the VM."
+msgstr "Shut down from Windows or Manager before quitting Quickgui. Closing the QEMU window stops the VM."
+
+msgid "Download a Windows ARM64 ISO, then create a VM. You can also use an ISO already on this Mac."
+msgstr "Download a Windows ARM64 ISO, then create a VM. You can also use an ISO already on this Mac."
+
+msgid "Use an existing ARM64 ISO"
+msgstr "Use an existing ARM64 ISO"
+
+msgid "Download ISO or install a Windows ARM64 VM."
+msgstr "Download ISO or install a Windows ARM64 VM."

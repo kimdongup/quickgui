@@ -36,11 +36,14 @@ final class AppleVMChannel {
           switch result { case .success(let value): reply(value); case .failure(let error): fail(error) }
         }
         do {
+          if ["create", "start"].contains(call.method) && WindowsVMChannel.hasActiveVM {
+            throw MacVMError("Shut down the Windows ARM VM before starting an Apple VM.")
+          }
           switch call.method {
           case "supported": reply(VZVirtualMachine.isSupported)
           case "inspectImage": backend.inspectImage(try string("path"), completion: map)
           case "create":
-            backend.create(directory: try string("directory"), name: try string("name"), ipsw: try string("ipsw"),
+            backend.create(directory: try string("directory"), name: try string("name"), ipsw: try string("image"),
                            cpus: try number("cpus"), memoryGiB: try number("memoryGiB"), diskGiB: try number("diskGiB"), completion: map)
           case "list": reply(try backend.list(string("directory")))
           case "status": reply(try backend.status(string("path")))

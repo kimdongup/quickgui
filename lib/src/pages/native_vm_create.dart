@@ -5,37 +5,39 @@ import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 import 'package:path/path.dart' as p;
 
-import '../services/apple_vm.dart';
-import '../widgets/apple_vm_controls.dart';
+import '../services/native_vm.dart';
+import '../widgets/native_vm_controls.dart';
 
-class AppleVmCreate extends StatefulWidget {
-  const AppleVmCreate({
+class NativeVmCreate extends StatefulWidget {
+  const NativeVmCreate({
     required this.directory,
-    this.ipsw,
-    this.service = const AppleVmService(),
+    this.imagePath,
+    this.service = const NativeVmService(),
     super.key,
   });
   final String directory;
-  final String? ipsw;
-  final AppleVmService service;
+  final String? imagePath;
+  final NativeVmService service;
   @override
-  State<AppleVmCreate> createState() => _AppleVmCreateState();
+  State<NativeVmCreate> createState() => _NativeVmCreateState();
 }
 
-class _AppleVmCreateState extends State<AppleVmCreate> {
+class _NativeVmCreateState extends State<NativeVmCreate> {
   final _name = TextEditingController(text: 'macOS Apple Silicon');
   final _form = GlobalKey<FormState>();
-  String? _ipsw, _error;
-  AppleRestoreImage? _image;
-  AppleVmRecord? _vm;
+  String? _imagePath, _error;
+  NativeInstallationImage? _image;
+  NativeVmRecord? _vm;
   int _cpus = 2, _memory = 4, _disk = 64;
   bool _loading = false, _refreshing = false;
   Timer? _timer;
+  bool get _windows => widget.service.windows;
 
   @override
   void initState() {
     super.initState();
-    if (widget.ipsw != null) unawaited(_inspect(widget.ipsw!));
+    if (_windows) _name.text = 'Windows 11 ARM64';
+    if (widget.imagePath != null) unawaited(_inspect(widget.imagePath!));
   }
 
   Future<void> _inspect(String path) async {
@@ -43,14 +45,14 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
       _loading = true;
       _error = null;
       _image = null;
-      _ipsw = path;
+      _imagePath = path;
     });
     try {
       final image = await widget.service.inspectImage(path);
       if (image.minimumCPU > image.maximumCPU ||
           image.minimumMemoryGiB > image.maximumMemoryGiB) {
         throw StateError(
-          'This Mac does not have enough resources for this IPSW.',
+          'This Mac does not have enough resources for this installation image.',
         );
       }
       if (mounted) {
@@ -61,7 +63,7 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = appleVmError(e));
+      if (mounted) setState(() => _error = nativeVmError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -71,13 +73,13 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
     try {
       final files = await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['ipsw'],
+        allowedExtensions: [_windows ? 'iso' : 'ipsw'],
         initialDirectory: p.join(widget.directory, 'Install Media'),
       );
       final path = files.isEmpty ? null : files.single.path;
       if (path != null && mounted) await _inspect(path);
     } catch (e) {
-      if (mounted) setState(() => _error = appleVmError(e));
+      if (mounted) setState(() => _error = nativeVmError(e));
     }
   }
 
@@ -96,7 +98,7 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
       final vm = await widget.service.create(
         directory: widget.directory,
         name: _name.text.trim(),
-        ipsw: _ipsw!,
+        imagePath: _imagePath!,
         cpus: _cpus,
         memoryGiB: _memory,
         diskGiB: _disk,
@@ -109,7 +111,7 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
         );
       }
     } catch (e) {
-      if (mounted) setState(() => _error = appleVmError(e));
+      if (mounted) setState(() => _error = nativeVmError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -127,7 +129,7 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = appleVmError(e));
+      if (mounted) setState(() => _error = nativeVmError(e));
     } finally {
       _refreshing = false;
     }
@@ -163,7 +165,7 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
   Widget build(BuildContext context) {
     final image = _image, vm = _vm;
     return Scaffold(
-      appBar: AppBar(title: Text(context.t('Create Apple Silicon VM'))),
+      appBar: AppBar(title: Text(context.t(widget.service.createLabel))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -174,20 +176,24 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
               if (vm == null) ...[
                 Text(
                   context.t(
-                    'Install macOS from a downloaded IPSW. The original image is kept.',
+                    _windows
+                        ? 'Install Windows ARM64 from a downloaded ISO. The original image is kept.'
+                        : 'Install macOS from a downloaded IPSW. The original image is kept.',
                   ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: _loading ? null : _pick,
                   icon: const Icon(Icons.file_open),
-                  label: Text(context.t('Choose IPSW')),
+                  label: Text(
+                    context.t(_windows ? 'Choose ARM64 ISO' : 'Choose IPSW'),
+                  ),
                 ),
-                if (_ipsw != null) SelectableText(_ipsw!),
+                if (_imagePath != null) SelectableText(_imagePath!),
                 if (image != null) ...[
                   const SizedBox(height: 16),
                   Text(
-                    'macOS ${image.version} (${image.build}) — Apple Silicon',
+                    '${widget.service.title} ${image.version} (${image.build})',
                   ),
                   TextFormField(
                     controller: _name,
@@ -255,7 +261,7 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
                 Text(vm.name, style: Theme.of(context).textTheme.titleLarge),
                 SelectableText(vm.path),
                 const SizedBox(height: 16),
-                AppleVmControls(
+                NativeVmControls(
                   vm: vm,
                   service: widget.service,
                   onChanged: _refresh,
@@ -263,12 +269,16 @@ class _AppleVmCreateState extends State<AppleVmCreate> {
                 const SizedBox(height: 16),
                 Text(
                   context.t(
-                    'Installation continues while Quickgui is open. You can follow progress in Manager. After installation, use Run to finish macOS setup.',
+                    _windows
+                        ? 'Follow Windows setup in the VM display. If asked to boot from the installation media, press a key. After reaching the desktop and shutting down, choose Installation completed to boot from disk next time.'
+                        : 'Installation continues while Quickgui is open. You can follow progress in Manager. After installation, use Run to finish macOS setup.',
                   ),
                 ),
                 Text(
                   context.t(
-                    'Closing the VM display keeps the VM running. Shut down from the guest or Manager before quitting Quickgui.',
+                    _windows
+                        ? 'Shut down from Windows or Manager before quitting Quickgui. Closing the QEMU window stops the VM.'
+                        : 'Closing the VM display keeps the VM running. Shut down from the guest or Manager before quitting Quickgui.',
                   ),
                 ),
               ],

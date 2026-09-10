@@ -61,7 +61,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Open Microsoft ARM64 downloads'), findsOneWidget);
     expect(
-      find.textContaining('virtual machine is a separate step'),
+      find.textContaining('Download a Windows ARM64 ISO, then create a VM.'),
       findsOneWidget,
     );
     await tester.enterText(

@@ -24,7 +24,7 @@ struct MacVMMetadata: Codable {
 final class MacVMLock {
   private var descriptor: Int32
   init(bundle: URL) throws {
-    descriptor = open(bundle.appendingPathComponent("vm.lock").path, O_RDWR | O_NOFOLLOW)
+    descriptor = open(bundle.appendingPathComponent("vm.lock").path, O_RDWR | O_NOFOLLOW | O_CLOEXEC)
     guard descriptor >= 0 else { throw MacVMError("Cannot open the VM lock.") }
     var info = stat()
     guard fstat(descriptor, &info) == 0, info.st_mode & S_IFMT == S_IFREG,
@@ -52,9 +52,9 @@ enum MacVMStore {
     }
   }
 
-  static func bundle(at path: String) throws -> URL {
+  static func bundle(at path: String, extensionName: String = bundleExtension) throws -> URL {
     let url = URL(fileURLWithPath: path).standardizedFileURL
-    guard url.pathExtension == bundleExtension else { throw MacVMError("Select a Quickgui Apple VM bundle.") }
+    guard url.pathExtension == extensionName else { throw MacVMError("Select a Quickgui VM bundle.") }
     let values = try url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
     guard values.isDirectory == true, values.isSymbolicLink != true else {
       throw MacVMError("The VM bundle must be a directory, not a symbolic link.")

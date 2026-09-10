@@ -40,7 +40,7 @@ class _OperatingSystemSelectionState extends State<OperatingSystemSelection> {
               context.t(
                 os.armMedia == ArmMedia.macos
                     ? 'Download IPSW or install an Apple Silicon VM.'
-                    : 'Installation image only; VM setup is separate.',
+                    : 'Download ISO or install a Windows ARM64 VM.',
               ),
             ),
       onSelect: (os) => Navigator.of(context).pop(os),

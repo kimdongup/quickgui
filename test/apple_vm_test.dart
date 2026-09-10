@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:quickgui/src/pages/apple_vm_create.dart';
-import 'package:quickgui/src/services/apple_vm.dart';
-import 'package:quickgui/src/widgets/apple_vm_controls.dart';
-import 'package:quickgui/src/widgets/apple_vm_panel.dart';
+import 'package:quickgui/src/pages/native_vm_create.dart';
+import 'package:quickgui/src/services/native_vm.dart';
+import 'package:quickgui/src/widgets/native_vm_controls.dart';
+import 'package:quickgui/src/widgets/native_vm_panel.dart';
 
 import 'test_app.dart';
 
@@ -45,11 +45,11 @@ void main() {
       'error',
       'new-future-state',
     ]) {
-      expect(AppleVmRecord(record(state)).canStart, isFalse, reason: state);
+      expect(NativeVmRecord(record(state)).canStart, isFalse, reason: state);
     }
-    expect(AppleVmRecord(record('stopped')).canStart, isTrue);
-    expect(AppleVmRecord(record('installing')).canStop, isFalse);
-    expect(AppleVmRecord(record('running')).canShow, isTrue);
+    expect(NativeVmRecord(record('stopped')).canStart, isTrue);
+    expect(NativeVmRecord(record('installing')).canStop, isFalse);
+    expect(NativeVmRecord(record('running')).canShow, isTrue);
   });
 
   testWidgets('incompatible IPSW cannot create a VM', (tester) async {
@@ -58,7 +58,9 @@ void main() {
       throw PlatformException(code: 'apple_vm', message: 'Incompatible IPSW');
     });
     await tester.pumpWidget(
-      testApp(const AppleVmCreate(directory: '/VM folder', ipsw: '/bad.ipsw')),
+      testApp(
+        const NativeVmCreate(directory: '/VM folder', imagePath: '/bad.ipsw'),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Incompatible IPSW'), findsOneWidget);
@@ -91,9 +93,9 @@ void main() {
       });
       await tester.pumpWidget(
         testApp(
-          const AppleVmCreate(
+          const NativeVmCreate(
             directory: '/VM folder',
-            ipsw: '/Install Media/macOS image.ipsw',
+            imagePath: '/Install Media/macOS image.ipsw',
           ),
         ),
       );
@@ -114,7 +116,7 @@ void main() {
       expect(calls.singleWhere((e) => e.method == 'create').arguments, {
         'directory': '/VM folder',
         'name': 'My Mac',
-        'ipsw': '/Install Media/macOS image.ipsw',
+        'image': '/Install Media/macOS image.ipsw',
         'cpus': 2,
         'memoryGiB': 4,
         'diskGiB': 64,
@@ -151,9 +153,9 @@ void main() {
     await tester.pumpWidget(
       testApp(
         Scaffold(
-          body: AppleVmControls(
-            vm: AppleVmRecord(record('installing')),
-            service: const AppleVmService(),
+          body: NativeVmControls(
+            vm: NativeVmRecord(record('installing')),
+            service: const NativeVmService(),
             onChanged: () async {},
           ),
         ),
@@ -186,9 +188,9 @@ void main() {
       await tester.pumpWidget(
         testApp(
           Scaffold(
-            body: AppleVmControls(
-              vm: AppleVmRecord(record('running')),
-              service: const AppleVmService(),
+            body: NativeVmControls(
+              vm: NativeVmRecord(record('running')),
+              service: const NativeVmService(),
               onChanged: () async {},
             ),
           ),
@@ -221,9 +223,9 @@ void main() {
         }
         throw StateError(call.method);
       });
-      await tester.pumpWidget(testApp(const AppleVmPanel(directory: '/old')));
+      await tester.pumpWidget(testApp(const NativeVmPanel(directory: '/old')));
       await tester.pump();
-      await tester.pumpWidget(testApp(const AppleVmPanel(directory: '/new')));
+      await tester.pumpWidget(testApp(const NativeVmPanel(directory: '/new')));
       first.complete([
         record('interrupted', path: '/old/My Mac.quickgui-macvm'),
       ]);
@@ -244,7 +246,7 @@ void main() {
       expect(call.method, 'supported');
       return false;
     });
-    await tester.pumpWidget(testApp(const AppleVmPanel(directory: '/test')));
+    await tester.pumpWidget(testApp(const NativeVmPanel(directory: '/test')));
     await tester.pumpAndSettle();
     expect(find.text('Create Apple Silicon VM'), findsNothing);
   });

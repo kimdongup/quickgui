@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
 
-class AppleRestoreImage {
-  AppleRestoreImage(Map<Object?, Object?> data)
+enum NativeVmKind { macos, windows }
+
+class NativeInstallationImage {
+  NativeInstallationImage(Map<Object?, Object?> data)
     : version = data['version'] as String,
       build = data['build'] as String,
       minimumCPU = data['minimumCPU'] as int,
@@ -12,17 +14,19 @@ class AppleRestoreImage {
   final int minimumCPU, maximumCPU, minimumMemoryGiB, maximumMemoryGiB;
 }
 
-class AppleVmRecord {
-  AppleVmRecord(Map<Object?, Object?> data)
+class NativeVmRecord {
+  NativeVmRecord(Map<Object?, Object?> data)
     : path = data['path'] as String,
       name = data['name'] as String,
       state = data['state'] as String,
       error = data['error'] as String?,
       version = data['version'] as String? ?? '',
+      installationPending = data['installationPending'] as bool? ?? false,
       progress = (data['progress'] as num?)?.toDouble().clamp(0, 1);
   final String path, name, state, version;
   final String? error;
   final double? progress;
+  final bool installationPending;
   bool get canStart => state == 'stopped';
   bool get canShow => state == 'running' || state == 'stopping';
   bool get canCancel => state == 'installing';
@@ -31,7 +35,8 @@ class AppleVmRecord {
   String get label => switch (state) {
     'installing' => 'Installing macOS',
     'cancelling' => 'Cancelling installation',
-    'stopped' => 'Ready to run',
+    'stopped' =>
+      installationPending ? 'Windows installation pending' : 'Ready to run',
     'starting' => 'Starting',
     'running' => 'Running',
     'stopping' => 'Waiting for guest shutdown',
@@ -43,11 +48,17 @@ class AppleVmRecord {
   };
 }
 
-class AppleVmService {
-  const AppleVmService({
-    this.channel = const MethodChannel('quickgui/apple-vm'),
-  });
-  final MethodChannel channel;
+class NativeVmService {
+  const NativeVmService({this.kind = NativeVmKind.macos, this.overrideChannel});
+  final NativeVmKind kind;
+  final MethodChannel? overrideChannel;
+  bool get windows => kind == NativeVmKind.windows;
+  String get createLabel =>
+      windows ? 'Create Windows ARM64 VM' : 'Create Apple Silicon VM';
+  String get title => windows ? 'Windows — ARM64' : 'macOS — Apple Silicon';
+  MethodChannel get channel =>
+      overrideChannel ??
+      MethodChannel(windows ? 'quickgui/windows-arm-vm' : 'quickgui/apple-vm');
 
   Future<bool> supported() async {
     try {
@@ -57,38 +68,38 @@ class AppleVmService {
     }
   }
 
-  Future<AppleRestoreImage> inspectImage(String path) async =>
-      AppleRestoreImage(
+  Future<NativeInstallationImage> inspectImage(String path) async =>
+      NativeInstallationImage(
         (await channel.invokeMapMethod<Object?, Object?>('inspectImage', {
           'path': path,
         }))!,
       );
 
-  Future<AppleVmRecord> create({
+  Future<NativeVmRecord> create({
     required String directory,
     required String name,
-    required String ipsw,
+    required String imagePath,
     required int cpus,
     required int memoryGiB,
     required int diskGiB,
-  }) async => AppleVmRecord(
+  }) async => NativeVmRecord(
     (await channel.invokeMapMethod<Object?, Object?>('create', {
       'directory': directory,
       'name': name,
-      'ipsw': ipsw,
+      'image': imagePath,
       'cpus': cpus,
       'memoryGiB': memoryGiB,
       'diskGiB': diskGiB,
     }))!,
   );
 
-  Future<List<AppleVmRecord>> list(String directory) async => [
+  Future<List<NativeVmRecord>> list(String directory) async => [
     for (final row in (await channel.invokeListMethod<Object?>('list', {
       'directory': directory,
     }))!)
-      AppleVmRecord(row as Map<Object?, Object?>),
+      NativeVmRecord(row as Map<Object?, Object?>),
   ];
-  Future<AppleVmRecord> status(String path) async => AppleVmRecord(
+  Future<NativeVmRecord> status(String path) async => NativeVmRecord(
     (await channel.invokeMapMethod<Object?, Object?>('status', {
       'path': path,
     }))!,
@@ -101,7 +112,9 @@ class AppleVmService {
       channel.invokeMethod<void>('cancelInstall', {'path': path});
   Future<void> stop(String path, {bool force = false}) =>
       channel.invokeMethod<void>('stop', {'path': path, 'force': force});
+  Future<void> completeInstallation(String path) =>
+      channel.invokeMethod<void>('completeInstallation', {'path': path});
 }
 
-String appleVmError(Object error) =>
+String nativeVmError(Object error) =>
     error is PlatformException ? error.message ?? error.code : '$error';

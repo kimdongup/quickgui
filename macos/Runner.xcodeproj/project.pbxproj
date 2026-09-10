@@ -21,6 +21,9 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		A10A00070000000000000001 /* WindowsVMChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00070000000000000002 /* WindowsVMChannel.swift */; };
+		A10A00060000000000000001 /* WindowsArmVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00060000000000000002 /* WindowsArmVirtualMachine.swift */; };
+		A10A00050000000000000001 /* WindowsVMTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00050000000000000002 /* WindowsVMTools.swift */; };
 		A10A00040000000000000001 /* AppleVMChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00040000000000000002 /* AppleVMChannel.swift */; };
 		A10A00030000000000000001 /* AppleVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00030000000000000002 /* AppleVirtualMachine.swift */; };
 		A10A00020000000000000001 /* MacVMStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00020000000000000002 /* MacVMStore.swift */; };
@@ -67,6 +70,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A10A00070000000000000002 /* WindowsVMChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsVMChannel.swift; sourceTree = "<group>"; };
+		A10A00060000000000000002 /* WindowsArmVirtualMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsArmVirtualMachine.swift; sourceTree = "<group>"; };
+		A10A00050000000000000002 /* WindowsVMTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsVMTools.swift; sourceTree = "<group>"; };
 		A10A00040000000000000002 /* AppleVMChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleVMChannel.swift; sourceTree = "<group>"; };
 		A10A00030000000000000002 /* AppleVirtualMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleVirtualMachine.swift; sourceTree = "<group>"; };
 		A10A00020000000000000002 /* MacVMStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVMStore.swift; sourceTree = "<group>"; };
@@ -190,6 +196,9 @@
 				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				A10A00010000000000000002 /* RestoreImageSource.swift */,
+				A10A00070000000000000002 /* WindowsVMChannel.swift */,
+				A10A00060000000000000002 /* WindowsArmVirtualMachine.swift */,
+				A10A00050000000000000002 /* WindowsVMTools.swift */,
 				A10A00040000000000000002 /* AppleVMChannel.swift */,
 				A10A00030000000000000002 /* AppleVirtualMachine.swift */,
 				A10A00020000000000000002 /* MacVMStore.swift */,
@@ -460,6 +469,9 @@
 			files = (
 				33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
 				A10A00010000000000000001 /* RestoreImageSource.swift in Sources */,
+				A10A00070000000000000001 /* WindowsVMChannel.swift in Sources */,
+				A10A00060000000000000001 /* WindowsArmVirtualMachine.swift in Sources */,
+				A10A00050000000000000001 /* WindowsVMTools.swift in Sources */,
 				A10A00040000000000000001 /* AppleVMChannel.swift in Sources */,
 				A10A00030000000000000001 /* AppleVirtualMachine.swift in Sources */,
 				A10A00020000000000000001 /* MacVMStore.swift in Sources */,

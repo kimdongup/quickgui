@@ -12,7 +12,8 @@ import '../services/vm_service.dart';
 import '../services/download_result.dart';
 import 'config_editor.dart';
 import '../widgets/workspace_picker.dart';
-import '../widgets/apple_vm_panel.dart';
+import '../widgets/native_vm_panel.dart';
+import '../services/native_vm.dart';
 
 class Manager extends StatefulWidget {
   const Manager({this.operations, this.highlight, super.key});
@@ -454,7 +455,12 @@ class _ManagerState extends State<Manager> {
       children: [
         const WorkspacePicker(),
         const Divider(thickness: 2),
-        if (Platform.isMacOS) AppleVmPanel(directory: workingDirectory),
+        if (Platform.isMacOS) NativeVmPanel(directory: workingDirectory),
+        if (Platform.isMacOS)
+          NativeVmPanel(
+            directory: workingDirectory,
+            service: const NativeVmService(kind: NativeVmKind.windows),
+          ),
         if (_error != null) ...[
           SelectableText(_error!),
           TextButton(onPressed: _refresh, child: Text(context.t('Retry'))),

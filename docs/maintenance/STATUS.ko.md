@@ -5,7 +5,12 @@ M1에서 macOS 26.6.2 설치와 최초 언어 선택 화면 부팅, 새 프로�
 전체 테스트 73 passed / 4 skipped, 네이티브 저장 안전성 22 checks, 분석 0, release 빌드 PASS.
 사용법은 [APPLE_SILICON_VM.ko.md](APPLE_SILICON_VM.ko.md), 실제 결과는 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
 이 후속 기록은 아래의 Apple Virtualization backend 미구현 상태와 이전 게스트 검증 권장 순서를 갱신한다.
-사용자가 Windows ARM64 연결도 추가 요청하여 별도 개인 구현을 진행 중이다.
+Windows ARM64 생성·설치/실행 경로도 연결했다. M1에서 Secure Boot 활성화와 설치 요구 사항 검사 통과,
+64GB 디스크·UDF ISO 인식을 확인했다. 전체 테스트 76 passed / 4 skipped, 네이티브 22 + 16 checks,
+펌웨어 준비 3 tests, 분석 0, 최종 release 47.8MB를 확인했다.
+호스트 여유 공간이 32GiB 미만이므로 Windows 전체 설치·바탕화면은 아직 진행하지 않았다.
+WinPE 네트워크 어댑터가 표시되지 않아 게스트 드라이버/네트워크 검증도 남아 있다.
+사용법은 [WINDOWS_ARM_VM.ko.md](WINDOWS_ARM_VM.ko.md), 실제 성공·실패 범위는 M1 검증 기록을 따른다.
 
 2026-09-08. 이전 세 설계 문서는 최초 계획의 보존본이다. 현재 실행 상태는 이 문서를 따른다.
 
@@ -13,7 +18,7 @@ M1에서 macOS 26.6.2 설치와 최초 언어 선택 화면 부팅, 새 프로�
 `pr/macos-homebrew-path` / `dc51dd0`에서 수정하고 `personal/apple-silicon` / `fb94a51`에 반영했다.
 M1에서 양쪽 분석·전체 테스트·release 빌드와 실제 backend/catalog 검사를 통과했다.
 기존 개인 lockfile 변경 보존, 실행 환경과 명령, 미검증 범위는 [M1 검증 기록](M1_VALIDATION.ko.md)을 따른다.
-아래 2026-09-08 기록의 M1 미실행 상태는 이 결과로 갱신하며, ARM 게스트 실행은 여전히 미검증이다.
+아래 2026-09-08 기록의 M1 미실행 상태는 이 결과로 갱신한다. 이후 ARM 게스트 결과는 문서 상단의 후속 기록을 따른다.
 
 같은 날 개인 브랜치에 OS 아키텍처 구분과 [ARM 설치 이미지 다운로드](ARM_DOWNLOADS.ko.md)를 추가했다.
 Windows는 Microsoft 공식 ARM64 링크 입력, macOS는 Apple의 호환 IPSW 조회·저장 경로다.
@@ -91,7 +96,7 @@ macOS 환경: macOS 15.7.9, x86_64, Flutter 3.47.2, Dart 3.13.2, QEMU 11.1.1. Ho
 
 - Q21의 실제 GUI 전체 흐름: 게스트 OS 설치 완료, 게스트 SSH 로그인, Linux SPICE 연결, 앱 재실행 후 재접속. 현재 실제 이미지 다운로드와 폐기 가능한 VM 수명 검증은 각각 통과했지만 이 전체 흐름을 대체하지 않는다.
 - Finder에서 시작한 배포 앱의 수동 조작, X11/Wayland 각각의 실사용, dark/light 전체 화면 비교, 실제 휠·트랙패드·키보드 조작. 위젯 렌더링 테스트가 모든 네이티브 동작을 증명하지 않는다.
-- Linux ARM64와 macOS ARM64의 실제 게스트 실행. CI의 macOS 빌드 성공과 가상화 검증은 구분한다.
+- Linux ARM64 게스트 실사용. M1 macOS ARM64는 설치·최초 설정 화면까지 확인했으며 바탕화면·SSH·네트워크 실사용은 남아 있다. Windows ARM64는 설치 환경 부팅까지 확인했으며 전체 설치는 남아 있다.
 - 최소 Quickemu 버전의 전체 실행 matrix. 중지는 4.9.6 이상을 요구하지만 주 검증 backend는 4.9.9이다.
 - 한국어는 기존 지원 locale 목록에 없다. 지원하지 않는 locale의 영어 fallback은 확인했으며 한국어 번역 완료를 주장하지 않는다.
 - 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다.

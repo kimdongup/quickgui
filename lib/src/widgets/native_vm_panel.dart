@@ -3,26 +3,26 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 
-import '../pages/apple_vm_create.dart';
-import '../services/apple_vm.dart';
-import 'apple_vm_controls.dart';
+import '../pages/native_vm_create.dart';
+import '../services/native_vm.dart';
+import 'native_vm_controls.dart';
 
 /// Independent of Quickemu availability and its .conf repository.
-class AppleVmPanel extends StatefulWidget {
-  const AppleVmPanel({
+class NativeVmPanel extends StatefulWidget {
+  const NativeVmPanel({
     required this.directory,
-    this.service = const AppleVmService(),
+    this.service = const NativeVmService(),
     super.key,
   });
   final String directory;
-  final AppleVmService service;
+  final NativeVmService service;
   @override
-  State<AppleVmPanel> createState() => _AppleVmPanelState();
+  State<NativeVmPanel> createState() => _NativeVmPanelState();
 }
 
-class _AppleVmPanelState extends State<AppleVmPanel> {
+class _NativeVmPanelState extends State<NativeVmPanel> {
   bool _supported = false, _refreshing = false;
-  List<AppleVmRecord> _vms = [];
+  List<NativeVmRecord> _vms = [];
   String? _error;
   Timer? _timer;
   @override
@@ -46,7 +46,7 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
         }
       }
     } catch (e) {
-      if (mounted) setState(() => _error = appleVmError(e));
+      if (mounted) setState(() => _error = nativeVmError(e));
     }
   }
 
@@ -66,7 +66,7 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
       if (mounted && directory == widget.directory) {
         setState(() {
           _vms = [];
-          _error = appleVmError(e);
+          _error = nativeVmError(e);
         });
       }
     } finally {
@@ -76,7 +76,7 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
   }
 
   @override
-  void didUpdateWidget(covariant AppleVmPanel oldWidget) {
+  void didUpdateWidget(covariant NativeVmPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.directory != widget.directory) {
       _vms = [];
@@ -99,7 +99,7 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
       children: [
         if (_supported) ...[
           Text(
-            'macOS — Apple Silicon',
+            widget.service.title,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Align(
@@ -108,7 +108,7 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
               onPressed: () async {
                 await Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => AppleVmCreate(
+                    builder: (_) => NativeVmCreate(
                       directory: widget.directory,
                       service: widget.service,
                     ),
@@ -117,7 +117,7 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
                 if (mounted) await _refresh();
               },
               icon: const Icon(Icons.add),
-              label: Text(context.t('Create Apple Silicon VM')),
+              label: Text(context.t(widget.service.createLabel)),
             ),
           ),
         ],
@@ -136,12 +136,12 @@ class _AppleVmPanelState extends State<AppleVmPanel> {
               children: [
                 Text(vm.name, style: Theme.of(context).textTheme.titleMedium),
                 if (vm.version.isNotEmpty)
-                  Text('macOS ${vm.version} — Apple Silicon'),
+                  Text('${widget.service.title} ${vm.version}'),
                 SelectableText(
                   vm.path,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                AppleVmControls(
+                NativeVmControls(
                   key: ValueKey(vm.path),
                   vm: vm,
                   service: widget.service,

@@ -331,3 +331,110 @@ xcrun swiftc macos/Runner/MacVMStore.swift tool/test_mac_vm_store.swift \
 계정 생성·바탕화면·게스트 내 정상 종료·SSH·오디오/네트워크 실사용과 앱 GUI의 설치 전체 조작은 미검증이다.
 네이티브 취소의 실제 설치 중 재현은 아직 없으며, 취소 요청/실행 차단은 Flutter 테스트로 검증했다.
 앱 전체 검증과 동일 소스 CLI 검증을 구분한다. 빌드의 기존 `window_size` SPM 및 Run Script 경고는 남아 있다.
+
+## Windows ARM64 생성·설치 연결 (2026-09-09)
+
+사용자의 추가 요청으로 `6abf33b`의 Apple VM 기능에 Windows ARM64 경로를 연결했다.
+개인 브랜치는 `personal/apple-silicon`이며 공통 PATH 수정 worktree는 clean 상태로 유지했다.
+기존 Apple 전용 Flutter 생성/제어 화면을 `native_vm_*`로 공유하고, 네이티브 실행 채널과 VM 저장소는
+macOS/Windows별로 분리했다. Windows는 `.quickgui-winarm`과 QEMU/HVF를 사용한다.
+
+### 실제 ISO와 실행 구성
+
+```text
+/Users/mac/Downloads/Win11_25H2_Korean_Arm64_v2.iso
+7,951,140,864 bytes
+SHA256: 723fdcb737b39a5ec1f4b0eadacf288f1a2c4c4c8c845eb1f6a433cc264bd426
+```
+
+전체 로컬 SHA256, ARM64 EFI PE machine `0xaa64`, `boot.wim`/`install.wim`을 확인했다.
+위 Windows ISO SHA256은 로컬 계산값이며 Microsoft 게시 체크섬과 대조한 것으로 표시하지 않는다.
+원본 ISO와 기존 IPSW는 수정하지 않았다. Windows PE 표시 버전은 `10.0.26100.8037`이었다.
+
+Homebrew QEMU 11.1.1, swtpm 0.10.2, `virt-9.2,highmem=on,gic-version=3`, HVF/host CPU,
+CPU 2개·RAM 4GiB·64GiB QCOW2, NVMe, TPM 2.0, RAMFB + VirtIO PCI display,
+USB BOT의 명시적 SCSI CD-ROM, user-mode NAT/USB network를 구성했다.
+Homebrew 기본 ARM 펌웨어에는 필요한 Secure Boot 지원이 없어 별도 검증 펌웨어를 준비했다.
+
+펌웨어 출처는 [UTM QEMU 고정 커밋](https://github.com/utmapp/qemu/tree/b44153a4b6aabf86edebf92199b14aec26e15d59/pc-bios)이다.
+준비 도구는 고정 파일의 다운로드 SHA256과 최종 파일 SHA256을 확인한다. UTM 앱은 설치하지 않았다.
+
+| 파일 | SHA256 |
+| --- | --- |
+| `edk2-aarch64-secure-code.fd.bz2` 다운로드 | `89206fa3bce0a43161e6d8dc143c6246ac03f095ce9873a1243cdb99efe4ee63` |
+| `edk2-arm-secure-vars.fd.bz2` 다운로드 | `4dba10d7c7169b52a7b7bb8e0cef1c0b630312ff13725eff10d4711f21d9f373` |
+| VM에 복사할 `uefi-code.fd` | `c85a57de1ac39e550a6529bd66a4214eb1d8c14dcda7e22dedf72566a769fbc7` |
+| QCOW2 템플릿을 raw로 변환한 `uefi-vars.fd` | `8203a22c79a52ec6c34320e58bae8a63b890a76bf62167b2e7551e88b974dc77` |
+
+준비 위치: `~/Library/Application Support/Quickgui/Firmware/utm-b44153a4/`.
+등록된 키를 수정하지 않으며, 각 VM은 독립 NVRAM·TPM·UUID·MAC을 유지한다.
+동일 파일임을 추가 확인하기 위해 공식 UTM 4.7.5 DMG도 읽기 전용으로 검사했다.
+DMG SHA256 `a8435c93cfb5f8bbfeea4b134cfad1ac66b67632b75e438c63b1a8ae043bef0e`는
+GitHub release asset digest와 일치했고, 내부 ARM 펌웨어는 위 소스 파일과 동일했다. 검사 후 DMG를 분리했다.
+
+### 실제 관찰과 회귀 검증
+
+| 항목 | 결과 |
+| --- | --- |
+| 폐기 가능한 Windows VM 시작 | PASS: 네이티브 backend, QEMU/HVF/TPM 시작과 QMP `running` 확인 |
+| 중복 실행 회귀 | PASS: 두 번째 start 거부 후 원래 VM의 backend 상태와 QMP `running` 유지 |
+| 설치 화면 | PASS: Windows 11 한국어 언어/키보드/설치 옵션/제품 키/에디션 선택 화면 |
+| Windows 요구 사항 검사 | PASS: Home 선택 후 PC 검사를 통과하여 사용 조건 화면 도달. 요구 사항 우회 레지스트리는 사용하지 않음 |
+| 실제 Secure Boot 상태 | PASS: WinPE의 `UEFISecureBootEnabled` 값 `0x1` |
+| 실제 디스크/ISO 인식 | PASS: DiskPart에 온라인 64GB 디스크와 UDF CD-ROM 7582MB. 원본 ISO는 읽기 전용 |
+| 중지와 정리 | PASS: QMP quit → `stopped`, 잠금/소켓/TPM 정리, 해당 폐기용 VM 폴더 제거 |
+| Windows 설치 환경 네트워크 | 미완료: `ipconfig`에 어댑터가 표시되지 않음. 전체 Windows의 드라이버/네트워크 동작으로 확대 해석하지 않음 |
+| Flutter 전체 테스트 | PASS: 76 passed / 4 external opt-in skipped. Windows 생성 채널·공간 부족 오류·설치 완료 확인·재발견/실행 회귀 포함 |
+| Flutter 분석 | PASS: `flutter analyze --no-pub`, No issues found |
+| macOS 저장소 회귀 | PASS: `tool/test_mac_vm_store.swift`, 22 checks |
+| Windows 네이티브 회귀 | PASS: `tool/test_windows_vm.swift`, 16 checks. 동시 잠금/잔여 소유 프로세스/메타데이터/설치 완료·원본 경로/광학 장치/두 화면 장치 순서 포함 |
+| 펌웨어 준비 회귀 | PASS: Python 3 tests. 변조 다운로드, 변조 기존 파일, symbolic link 거부; 실제 준비와 재실행 시 기존 파일 검증도 성공 |
+| 최종 macOS release 빌드 | PASS: 격리 worktree `/tmp/quickgui-vm-release`, 47.8MB. runner/App.framework `x86_64 arm64`, codesign verify 통과 |
+| 의존성 보존 | 기존 lockfile SHA256 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a` 유지. Flutter 3.47.2/Dart 3.13.2 유지 |
+
+증거: [Windows 설치 화면](evidence/windows-arm64-setup.png),
+[Secure Boot와 저장 장치 인식](evidence/windows-arm64-secureboot-storage.png).
+최종 소스에서도 중복 start 거부 후 한국어 설치 화면을 다시 확인했다.
+빌드와 병행한 90초 검사는 WinPE 배경만 표시된 시점에 종료됐으므로 설치 화면 도달로 세지 않았다.
+빌드 완료 후 180초 예산으로 재검사해 설치 화면을 확인했다.
+최종 앱은 `/Users/mac/quickemu/quickgui/dist/arm-vms/quickgui.app`에 복사했다.
+사용자의 실행 중 Flutter 빌드 폴더를 덮어쓰지 않았다. 원격 배포/notarization은 하지 않았다.
+
+### 실패에서 확인한 수정
+
+- ISO를 `usb-storage`의 raw 디스크로 연결했을 때 WinPE에서 RAW 이동식 디스크로 인식되어
+  미디어 드라이버 요구 화면이 나타났다. NVMe 자체는 이미 정상 인식했다.
+  명시적 `usb-bot` + `scsi-cd`, 충분한 xHCI 포트로 바꾸어 실제 UDF CD-ROM 인식을 확인했다.
+- Homebrew 기본 펌웨어에서는 Windows PC 검사에 Secure Boot 미지원이 표시됐다.
+  Debian Secure Boot 펌웨어 2025/2026 및 콘솔 템플릿 초기화 실험은 이 호스트에서 부팅이 멈췄다.
+  해당 다운로드/템플릿 변경 실험은 최종 코드에서 제거했다.
+- UTM Secure Boot 펌웨어에서 RAMFB 단독은 화면이 초기화되지 않았고 VirtIO GPU 단독은
+  Windows 부팅이 진행되지 않았다. RAMFB를 첫 화면으로 두고 VirtIO PCI display를 함께 연결한
+  구성에서 설치 화면, 요구 사항 검사, Secure Boot 활성화까지 확인했다.
+- `highmem=off` 실험은 4GiB RAM의 주소 범위 때문에 QEMU 시작 단계에서 거부됐다. 최종 구성은 `highmem=on`이다.
+- 최종 검토에서 중복 start의 오류 처리가 기존 세션까지 정리할 수 있는 경로를 발견했다.
+  중복 요청을 정리 경로 진입 전에 거부하도록 수정했고 실제 실행 중 VM에 두 번째 start를 보내
+  요청 거부와 원래 VM의 `running` 유지를 확인했다. 이 변경을 포함해 release 앱을 다시 빌드했다.
+
+재현 명령은 다음과 같다. `probe`는 별도 빈 디스크의 부팅 검사이며 Windows를 설치하지 않는다.
+생산 생성 경로의 호스트 여유 공간 32GiB 검사를 대신하는 도구가 아니다.
+
+```sh
+python3 tool/prepare_windows_arm_firmware.py
+xcrun swiftc macos/Runner/MacVMStore.swift macos/Runner/WindowsVMTools.swift \
+  macos/Runner/WindowsArmVirtualMachine.swift tool/check_windows_arm_vm.swift \
+  -o /tmp/quickgui-arm-validation/check-windows-arm-vm
+/tmp/quickgui-arm-validation/check-windows-arm-vm probe \
+  /Users/mac/Downloads/Win11_25H2_Korean_Arm64_v2.iso \
+  /tmp/quickgui-arm-validation/windows-production.png 180
+xcrun swiftc macos/Runner/MacVMStore.swift macos/Runner/WindowsVMTools.swift \
+  macos/Runner/WindowsArmVirtualMachine.swift tool/test_windows_vm.swift \
+  -o /tmp/quickgui-arm-validation/test-windows-vm
+/tmp/quickgui-arm-validation/test-windows-vm
+python3 -m unittest discover -s tool -p 'test_windows_firmware.py'
+```
+
+현재 호스트 여유 공간은 실행 시점에 약 22–26GiB였다. 새 Windows 전체 설치에 필요한 앱의
+32GiB 시작 조건에 못 미쳐 영구 Windows VM 생성과 전체 설치는 진행하지 않았다.
+Windows 사용 조건 동의·디스크 선택/복사·OOBE·바탕화면·설치 후 재부팅·정상 종료·네트워크/게스트 드라이버·오디오는 남아 있다.
+앱 GUI의 설치 전체 조작과 동일 소스 네이티브 CLI 검증을 구분한다. 사용법은 [WINDOWS_ARM_VM.ko.md](WINDOWS_ARM_VM.ko.md)를 따른다.

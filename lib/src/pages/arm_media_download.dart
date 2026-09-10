@@ -9,7 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../model/operating_system.dart';
 import '../services/arm_media.dart';
 import '../services/download_session.dart' show DownloadStatus;
-import 'apple_vm_create.dart';
+import 'native_vm_create.dart';
+import '../services/native_vm.dart';
 
 class ArmMediaDownload extends StatefulWidget {
   const ArmMediaDownload({
@@ -179,7 +180,7 @@ class _ArmMediaDownloadState extends State<ArmMediaDownload>
               Text(
                 context.t(
                   _windows
-                      ? 'This saves an installation image. Creating and installing a virtual machine is a separate step.'
+                      ? 'Download a Windows ARM64 ISO, then create a VM. You can also use an ISO already on this Mac.'
                       : 'Download an IPSW, then create and install an Apple Silicon VM. You can also use an IPSW already on this Mac.',
                 ),
               ),
@@ -222,22 +223,31 @@ class _ArmMediaDownloadState extends State<ArmMediaDownload>
                 ),
               ],
               const SizedBox(height: 16),
-              if (!_windows && !_active)
+              if (!_active)
                 OutlinedButton.icon(
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => AppleVmCreate(
+                      builder: (_) => NativeVmCreate(
                         directory: widget.directory,
-                        ipsw: saved,
+                        imagePath: saved,
+                        service: NativeVmService(
+                          kind: _windows
+                              ? NativeVmKind.windows
+                              : NativeVmKind.macos,
+                        ),
                       ),
                     ),
                   ),
                   icon: const Icon(Icons.computer),
                   label: Text(
                     context.t(
-                      saved == null
-                          ? 'Use an existing IPSW'
-                          : 'Create Apple Silicon VM',
+                      _windows
+                          ? (saved == null
+                                ? 'Use an existing ARM64 ISO'
+                                : 'Create Windows ARM64 VM')
+                          : (saved == null
+                                ? 'Use an existing IPSW'
+                                : 'Create Apple Silicon VM'),
                     ),
                   ),
                 ),

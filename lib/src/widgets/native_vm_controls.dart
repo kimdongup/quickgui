@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
 
-import '../services/apple_vm.dart';
+import '../services/native_vm.dart';
 
-class AppleVmControls extends StatefulWidget {
-  const AppleVmControls({
+class NativeVmControls extends StatefulWidget {
+  const NativeVmControls({
     required this.vm,
     required this.service,
     required this.onChanged,
     super.key,
   });
-  final AppleVmRecord vm;
-  final AppleVmService service;
+  final NativeVmRecord vm;
+  final NativeVmService service;
   final Future<void> Function() onChanged;
   @override
-  State<AppleVmControls> createState() => _AppleVmControlsState();
+  State<NativeVmControls> createState() => _NativeVmControlsState();
 }
 
-class _AppleVmControlsState extends State<AppleVmControls> {
+class _NativeVmControlsState extends State<NativeVmControls> {
   bool _busy = false;
   Future<void> _action(
     Future<void> Function() action, {
@@ -54,7 +54,7 @@ class _AppleVmControlsState extends State<AppleVmControls> {
           context: context,
           builder: (context) => AlertDialog(
             title: Text(context.t('Error')),
-            content: SelectableText(appleVmError(error)),
+            content: SelectableText(nativeVmError(error)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -92,7 +92,21 @@ class _AppleVmControlsState extends State<AppleVmControls> {
                     ? null
                     : () => _action(() => service.start(vm.path)),
                 icon: const Icon(Icons.play_arrow),
-                label: Text(context.t('Run')),
+                label: Text(
+                  context.t(
+                    vm.installationPending ? 'Resume installation' : 'Run',
+                  ),
+                ),
+              ),
+            if (vm.canStart && vm.installationPending)
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : () => _action(
+                        () => service.completeInstallation(vm.path),
+                        confirmation: 'Confirm only after reaching the Windows desktop and shutting down the guest. Future runs will boot from the disk without the installation ISO.',
+                      ),
+                child: Text(context.t('Installation completed')),
               ),
             if (vm.canShow)
               TextButton.icon(

@@ -1,5 +1,10 @@
 # ARM 설치 이미지 다운로드
 
+2026-09-09 후속: macOS IPSW와 Windows ARM64 ISO 모두 다운로드 완료/기존 파일 선택에서 VM 생성으로 연결했다.
+실행 방법은 [Apple Silicon VM](APPLE_SILICON_VM.ko.md), [Windows ARM64 VM](WINDOWS_ARM_VM.ko.md)을 따른다.
+Windows는 실제 설치 요구 사항 검사 통과까지 확인했으며 전체 설치와 게스트 네트워크는 남아 있다.
+
+
 후속 갱신: macOS Apple Silicon은 다운로드 완료 후 또는 기존 IPSW 선택으로 VM 생성·설치와
 Manager 실행까지 연결했다. 아래 최초 다운로드 전용 설명보다 [Apple VM 안내](APPLE_SILICON_VM.ko.md)를 우선한다.
 
