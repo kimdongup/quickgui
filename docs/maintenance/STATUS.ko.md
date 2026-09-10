@@ -1,5 +1,13 @@
 # Fork 구현·검증 기록
 
+2026-09-10 Windows ARM64 실사용 후속: 사용자께서 초기 설정·바탕화면·입력·HTTPS 및
+정상 종료와 설치 완료 후 부팅(요청 1~3단계)을 직접 검토해 정상이라고 확인했다.
+이번 M1 검사에서는 기존 VM 정상 종료 → 설치 완료 표시 저장 → Quickgui 완전 종료·재실행 →
+동일 VM Run을 수행했다. 설치 ISO 없이 실행되고 외부 TCP 연결이 다시 성립했다.
+VM·원본 ISO·기존 미커밋 lockfile을 보존했으며 새 코드 오류는 재현되지 않았다.
+Intel macOS x64 설치·구동의 사용자 확인(`personal/preview` / `64cfd59`)도 반영했다.
+상세 근거와 사용자 확인/직접 검사 구분은 [M1 검증 기록](M1_VALIDATION.ko.md)의 마지막 절을 따른다.
+
 2026-09-10 검토 정리: 완료 범위, 커밋된 lockfile로 수행한 재현 검사, 공통/개인 브랜치와
 원격 반영 결과는 [M1 검토 완료 결과](M1_REVIEW_RESULT.ko.md)에 정리했다.
 아래 날짜별 기록은 당시 상태를 보존하며, 현재 완료·미확인 범위는 이 검토 결과를 우선한다.
@@ -63,8 +71,8 @@ Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
 - 현재 개인 통합 후보의 앱 코드: `personal/preview` / `09fce12` (이후 검증 도구·문서 커밋은 별도). Windows 설치 경험은 `personal/windows-installation` / `3f85b3d`에서 통합했으며, 공통 삭제 보호와 SPICE Unix 소켓 재접속을 추가했다. 상세 내역과 순차 검증은 [GUEST_VALIDATION.ko.md](GUEST_VALIDATION.ko.md)를 따른다.
-- Intel macOS 게스트는 두 차례 Recovery 복귀를 조사한 뒤 외부 복구 매체를 제외한 실행에서 후속 설치를 마쳤다. QuickguiMac 자동 부팅과 최초 설정의 국가·지역 선택 화면까지 확인했다. 사용자 계정 설정·바탕화면·설정 완료 후 재부팅·SSH·SPICE는 아직 남아 있다.
-- Apple Silicon 검증 장비는 사용자 보유 M1 맥미니로 정했다. 소스 clone, M1 전용 작업 브랜치와 개발 환경 준비는 [M1_HANDOFF.ko.md](M1_HANDOFF.ko.md)를 따른다. Windows ARM64도 M1을 주 검증 호스트로 권장하며 Intel TCG는 추가 실험으로 남긴다. macOS x64 → Windows ARM64 → macOS ARM 순서는 유지하고 M1 실행 결과는 아직 없다.
+- Intel macOS x64 설치·구동은 2026-09-10 사용자 확인 완료(`personal/preview` / `64cfd59`). 구체적 바탕화면 상태·재부팅·SSH·SPICE·앱 재접속은 별도 확인 항목이다.
+- M1의 `personal/apple-silicon`에서 Windows ARM64는 사용자 확인 1~3단계와 이번 앱 재실행·설치 ISO 없는 실행·외부 TCP 검사를 완료했다. macOS ARM은 설치·최초 설정 화면·새 프로세스 재실행까지 확인했고, 바탕화면·SSH 등은 남아 있다. Intel ARM64 TCG는 추가 실험으로 남긴다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
 ## 구현한 범위

@@ -1,5 +1,12 @@
 # M1 Quickgui 검토 완료 결과
 
+2026-09-10 후속 검증: Windows ARM64 요청의 1~3단계(초기 설정·바탕화면·입력·HTTPS·정상 종료와
+설치 완료 후 부팅)는 사용자 확인 완료다. 이번에 기존 VM을 정상 종료하고 설치 완료 표시를
+저장한 뒤 Quickgui를 완전히 종료·재실행했다. 동일 VM의 설치 ISO 없는 실행과 외부 TCP 통신을 확인했다.
+상세 관찰·확인 주체와 남은 범위는 [M1 검증 기록](M1_VALIDATION.ko.md)의 마지막 절을 따른다.
+Intel macOS x64 설치·구동도 `personal/preview`의 `64cfd59`에 있는 사용자 확인을 반영했다.
+아래 최초 검토·push 기록은 당시 결과를 보존한다.
+
 검토일: 2026-09-10 (Pacific/Honolulu). 작업 브랜치: `personal/apple-silicon`.
 검토 기준은 `aecabf86770735d43392402ec1a1ebe892aba4fe`이며, 마지막 앱 코드 변경은
 Windows 네트워크 수정 `0517cf2`다. 이 문서와 함께 반영하는 변경은 검토·상태 문서 정리다.
@@ -73,7 +80,7 @@ VM 디스크, ISO/IPSW, 호스트에 준비된 펌웨어·드라이버 CD, 앱 �
 
 ## 남아 있는 확인
 
-- Windows: OOBE 완료, 바탕화면, 설치 완료 후 재부팅·종료, 게스트 브라우저의 HTTPS 응답, 오디오·전체 게스트 도구.
+- Windows: 오디오·전체 게스트 도구·SSH/SPICE. 초기 설정·바탕화면·입력·HTTPS·정상 종료/설치 후 부팅은 사용자 확인 완료이며, 앱 재실행·설치 ISO 없는 실행·외부 TCP는 이번 직접 검사 완료다.
 - macOS ARM: 사용자 계정 설정 후 바탕화면과 설치 완료 후 실사용·SSH 등.
 - Intel MacBook으로 M1 원격 화면 연결을 실제 사용한 결과는 미검증이다. ARM VM 실행 호스트는 M1이다.
 - `main` 승격, upstream PR 제출, 공개 릴리스·notarization은 이번 범위에 포함하지 않는다.

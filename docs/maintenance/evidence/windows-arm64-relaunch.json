@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "codeCommit": "0517cf2cae149eccae9fe7effe3e426c25e08ed8",
+  "reviewStartCommit": "17321f6237134aa737d4d38f00ad81c1cc585048",
+  "timeZone": "Pacific/Honolulu",
+  "normalShutdownObservedAt": "2026-09-10T09:15:29.454305-10:00",
+  "appExitObservedAt": "2026-09-10T09:15:57.754375-10:00",
+  "networkObservedAt": "2026-09-10T09:17:11.422057-10:00",
+  "userConfirmedSteps": [
+    1,
+    2,
+    3
+  ],
+  "userConfirmedScope": [
+    "initial setup",
+    "desktop",
+    "keyboard and mouse",
+    "browser HTTPS",
+    "normal shutdown and installed-disk boot"
+  ],
+  "localChecks": {
+    "previousQuickguiAndVMProcessesExited": true,
+    "newQuickguiProcess": true,
+    "newQEMUProcess": true,
+    "sameVMUUID": true,
+    "sameMACAddress": true,
+    "sameDiskAndFirmwareInodes": true,
+    "installationPendingBefore": true,
+    "installationPendingAfter": false,
+    "installationISOAttachedAfter": false,
+    "originalISOFilePreserved": true,
+    "driverCDReadOnly": true,
+    "qemuRunningAfterRelaunch": true,
+    "establishedTCPConnections": 7,
+    "publicDestinationTCPConnections": 6,
+    "destinationPort443Connections": 7
+  },
+  "worktreeLockfileSHA256": "c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a",
+  "limits": [
+    "TCP connection state is not a browser HTTPS response check.",
+    "Guest UI and browser results in steps 1-3 were confirmed by the user, not re-observed by this check."
+  ]
+}

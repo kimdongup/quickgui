@@ -1,5 +1,11 @@
 # 게스트 설치 경험과 순차 검증
 
+2026-09-10 후속: Intel macOS x64 설치·구동의 사용자 확인은 `personal/preview`의
+[`64cfd59`](https://github.com/kimdongup/quickgui/commit/64cfd5991b889d7ff268a41362bed498229ccc7c)를 근거로 반영했다.
+M1 Windows ARM64의 초기 설정·바탕화면·입력·HTTPS 및 설치 완료 후 부팅은 이번 요청에서
+사용자가 1~3단계를 직접 검토해 이상 없다고 확인했다. Quickgui 재실행 검사는
+[M1 검증 기록](M1_VALIDATION.ko.md)의 후속 결과를 따른다. 아래 최초 설계·실행 기록은 당시 상태다.
+
 2026-09-08. 코드는 개인 후보 `personal/windows-installation`에서 구현하고, 통합 후의 실사용 검증 기록은 `personal/preview`에서 이어서 관리한다. 기존 Windows 디스크·설정·설치 중 표시 파일은 읽기만 했으며, 이 작업에서 재설치하거나 표시를 해제하지 않았다.
 
 ## Windows 11 x64 경험을 앱에 반영
@@ -26,9 +32,9 @@
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | Apple 이미지 검증 → 복구 부팅 → 전용 가상 디스크 설치 → 바탕화면 → 재부팅 → Remote Login/SSH → 앱 재접속 | OS 설치 후 QuickguiMac 자동 부팅 및 최초 설정의 국가·지역 선택 화면 도달 확인. 사용자 계정 설정·바탕화면·설정 완료 후 재부팅·SSH·SPICE는 대기 |
-| 2 | M1 맥미니 → Windows ARM64 실험 | 1단계 결과를 확정한 뒤 진행. ARM64 QEMU/HVF·UEFI·설치 ISO·드라이버를 확인하고 설치·재부팅·SSH·SPICE를 각각 검증 | 대기. 주 검증 호스트로 M1 권장. 다운로드·VM 실행 미착수 |
-| 3 | Apple Silicon 호스트 → macOS ARM | 2단계 결과 확정 후 사용자 보유 M1 맥미니에서 진행. Apple Virtualization/IPSW backend로 설치·재부팅·SSH 검증 | 대기. M1 장비 확인, 별도 backend 미구현. 소스·환경 이전은 [인수인계 문서](M1_HANDOFF.ko.md) 참고 |
+| 1 | Intel macOS → macOS Intel x64 | 설치·구동 후 재부팅·SSH·SPICE·앱 재접속을 각각 검증 | 설치·구동 완료: 2026-09-10 사용자 확인, `personal/preview`의 `64cfd59`. 구체적 바탕화면 상태·재부팅·SSH·SPICE·앱 재접속은 별도 확인 |
+| 2 | M1 맥미니 → Windows ARM64 | 기존 VM의 초기 설정·바탕화면·입력·HTTPS → 정상 종료·설치 완료 표시·ISO 없이 부팅 → Quickgui 재실행 | 사용자 요청의 1~3단계 정상 확인. 이번 앱 재실행과 저장 상태·네트워크 검사 결과는 M1 검증 기록 참조. SSH·SPICE·오디오는 별도 검증 |
+| 3 | Apple Silicon 호스트 → macOS ARM | Windows 검증 이후 기존 Apple Virtualization/IPSW VM의 최초 설정·바탕화면·재부팅·네트워크·SSH 검증 | backend 구현·설치·최초 설정 화면·새 프로세스 재실행 확인. 바탕화면·SSH 등은 미확인 |
 
 M1 보유 확인 후 Windows ARM64의 주 검증 호스트도 M1으로 조정하는 것을 권장한다. [QEMU의 가속기 문서](https://www.qemu.org/docs/master/system/introduction.html)에 따르면 macOS ARM 호스트에서 HVF를 사용할 수 있다. 현재 Quickemu 4.9.9 소스도 ARM 호스트의 ARM 게스트는 HVF를 선택하고 Intel 호스트의 ARM 게스트는 TCG로 전환한다. 따라서 M1은 Windows ARM64의 설치·재부팅·실사용 검토에 유리할 것으로 예상하며, 실제 속도를 측정한 결과는 아니다. Intel의 Windows ARM64 TCG 실행은 추가 호환성 실험으로 남기고 M1 검증의 선행 필수 조건으로 두지 않는다. OS별 순차 검증 원칙은 유지한다.
 

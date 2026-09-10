@@ -598,3 +598,50 @@ App.framework 각각의 x86_64/arm64 아키텍처를 확인했다. 빌드 후 �
 교체·재시작하지 않았고, 원래 작업 폴더의 lockfile SHA256 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a`를 유지했다.
 로그는 `/tmp/quickgui-push-review-logs-20260910/{pub-get,analyze,test,build}.log`다.
 검토 정리와 원격 반영 상태는 [M1_REVIEW_RESULT.ko.md](M1_REVIEW_RESULT.ko.md)를 따른다.
+
+## Windows ARM64 설치 완료·Quickgui 재실행 검증 (2026-09-10)
+
+시작 브랜치 `personal/apple-silicon`, HEAD `17321f6`, 앱 코드 `0517cf2`.
+사용자는 이번 요청의 **1~3단계를 직접 검토해 이상 없다고 확인**했다.
+초기 설정 완료, 바탕화면, 키보드·마우스, 브라우저 HTTPS 접속, 정상 종료와 설치 디스크
+부팅은 사용자 확인 결과로 기록한다. 이번에 같은 게스트 화면을 다시 직접 관찰한 결과와 구분한다.
+
+사용한 VM은 기존 `/Users/mac/quickemu/Windows 11 ARM64.quickgui-winarm`이며,
+설치 앱 `/Applications/quickgui.app`으로 검사했다. 시작 시 Manager는 Running이었고
+`vm.json`에는 `installationPending=true`, QMP에는 Windows 설치 ISO가 연결되어 있었다.
+이 표시는 Windows 설치 완료 여부의 자동 판정이 아니다. 사용자 확인을 근거로
+정상 종료 후 앱의 명시적 완료 절차를 적용하고, 저장 결과까지 다시 확인했다.
+
+| 단계 | 실제 결과와 근거 |
+| --- | --- |
+| 기존 게스트 정상 종료 | PASS: Manager의 Shut down → Waiting for guest shutdown. 09:15:29 HST에 QEMU·TPM 프로세스 종료와 owner.json 제거 확인. 강제 중지하지 않음 |
+| 설치 완료 표시 저장 | PASS: Installation completed 확인 창의 Continue → Ready to run / Run. `installationPending=false` 저장 확인 |
+| Quickgui 완전 종료 | PASS: Cmd+Q 이후 09:15:57 HST에 이전 Quickgui 73214, QEMU 73225, TPM 73224가 모두 종료된 상태 확인 |
+| 앱 재실행·기존 VM 발견 | PASS: `/Applications/quickgui.app` 새 프로세스 78112 → Manage existing machines. 기존 경로·이름과 Run 표시 유지 |
+| 같은 VM 실행 | PASS: Run 후 QEMU 78126 / TPM 78125 시작. Manager Running 및 QMP query-status의 running=true |
+| 설치 ISO 없이 실행 | PASS: query-block에는 code / vars / disk / netdrivers만 존재. Windows 설치 ISO의 cd 노드 없음. 원본 ISO 파일은 유지 |
+| 네트워크 재연결 | PASS: 09:17:11 HST에 TCP ESTABLISHED 7개, 그중 공인 목적지 연결 6개. 7개 모두 목적지 포트 443. VirtIO NIC·user NAT 유지 |
+| 기존 VM 보존 | PASS: UUID `77FA7841-1DF9-4D85-97AE-F882187044A7`, MAC `02:8d:f8:52:7a:7d`, disk.qcow2 inode 4924680 및 두 펌웨어 파일 inode 동일. 디스크·NVRAM·TPM을 재생성하거나 초기화하지 않음 |
+| 미커밋 변경 보존 | PASS: `pubspec.lock` SHA256 `c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a` 유지, 커밋에서 제외 |
+
+읽기 전용 `QGNET` 드라이버 CD는 설치 ISO와 별도로 유지했다. Windows의 정상 쓰기와
+종료·부팅으로 디스크 내용·크기가 바뀌는 것은 예상 동작이며, 디스크 전체 내용이 이전과
+동일하다는 검사는 하지 않는다. 이번 검사 끝에는 같은 VM을 실행 상태로 두었다.
+
+재실행 후 TCP 확인은 네트워크 통신의 근거이며 HTTPS 응답 본문이나 인증서 검사의
+직접 확인을 대신하지 않는다. 브라우저 HTTPS·바탕화면·입력은 위 사용자 확인에 근거한다.
+QEMU Cocoa 창은 이 호스트의 UI 도구 앱 목록에 독립 앱으로 노출되지 않아 이번 게스트
+화면을 직접 캡처·조작하지 않았다. Quickgui 자체의 화면·종료·재실행은 UI 도구로 수행했고,
+프로세스·설정·저장소·네트워크는 읽기 전용 검사로 확인했다.
+
+새 코드 오류는 재현되지 않았다. 남아 있던 설치 중 표시는 기존 완료 기능으로 정상 저장됐고
+앱 재실행 후에도 유지됐다. 따라서 앱 코드·의존성 변경이나 재빌드 없이 실제 수명 검사를
+완료하고 문서만 갱신했다. 코드 `0517cf2`에 대한 앞선 전체 회귀 82 passed / 4 skipped,
+분석·release 빌드 결과는 그대로이며, 이번에 이를 다시 실행했다고 표시하지 않는다.
+
+집계 증거는 [windows-arm64-relaunch.json](evidence/windows-arm64-relaunch.json)에 보존했다.
+호스트의 상세 진단은 `/tmp/quickgui-relaunch-validation/`에 있다. 계정 정보·패킷 내용은 수집하지 않았다.
+
+Intel macOS x64는 사용자의 설치·구동 확인과 `personal/preview`의
+[`64cfd59`](https://github.com/kimdongup/quickgui/commit/64cfd5991b889d7ff268a41362bed498229ccc7c)를 읽어 반영했다.
+Intel VM을 이번 M1 검증에서 조작하거나 Intel SSH·SPICE까지 완료로 확대하지 않았다.
