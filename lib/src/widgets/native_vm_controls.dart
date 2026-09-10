@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:gettext_i18n/gettext_i18n.dart';
+import 'package:path/path.dart' as p;
 
 import '../services/native_vm.dart';
+import '../services/native_storage.dart';
+import 'storage_delete_dialog.dart';
 
 class NativeVmControls extends StatefulWidget {
   const NativeVmControls({
     required this.vm,
     required this.service,
     required this.onChanged,
+    this.allowDelete = false,
+    this.storage = const NativeStorageService(),
     super.key,
   });
   final NativeVmRecord vm;
   final NativeVmService service;
   final Future<void> Function() onChanged;
+  final bool allowDelete;
+  final NativeStorageService storage;
   @override
   State<NativeVmControls> createState() => _NativeVmControlsState();
 }
@@ -142,6 +149,29 @@ class _NativeVmControlsState extends State<NativeVmControls> {
                         confirmation: 'Cancel macOS installation? The unfinished VM will be kept. Create a new VM to try again.',
                       ),
                 child: Text(context.t('Cancel installation')),
+              ),
+            if (widget.allowDelete && vm.canDelete)
+              TextButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => _action(() async {
+                        final directory = p.dirname(vm.path);
+                        final preview = await widget.storage.preview(
+                          path: vm.path,
+                          directory: directory,
+                          isVM: true,
+                        );
+                        if (!context.mounted) return;
+                        if (!await confirmStorageDeletion(context, preview)) {
+                          return;
+                        }
+                        await widget.storage.delete(
+                          preview,
+                          directory: directory,
+                        );
+                      }),
+                icon: const Icon(Icons.delete_outline),
+                label: Text(context.t('Delete VM')),
               ),
             if (_busy)
               const Padding(

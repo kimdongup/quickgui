@@ -63,6 +63,8 @@ enum WindowsVMTools {
 
   static func inspectISO(_ path: String) throws {
     let iso = URL(fileURLWithPath: path).standardizedFileURL
+    let lease = try MacVMFileLease(iso)
+    defer { lease.release() }
     guard iso.pathExtension.lowercased() == "iso" else { throw MacVMError("Choose a Windows ARM64 ISO file.") }
     try MacVMStore.regularFile(iso)
     let mount = FileManager.default.temporaryDirectory.appendingPathComponent("quickgui-iso-\(UUID().uuidString)")

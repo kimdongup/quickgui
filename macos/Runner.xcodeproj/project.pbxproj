@@ -21,6 +21,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		A10A00090000000000000001 /* NativeStorageChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00090000000000000002 /* NativeStorageChannel.swift */; };
+		A10A00080000000000000001 /* NativeStorageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00080000000000000002 /* NativeStorageStore.swift */; };
 		A10A00070000000000000001 /* WindowsVMChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00070000000000000002 /* WindowsVMChannel.swift */; };
 		A10A00060000000000000001 /* WindowsArmVirtualMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00060000000000000002 /* WindowsArmVirtualMachine.swift */; };
 		A10A00050000000000000001 /* WindowsVMTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10A00050000000000000002 /* WindowsVMTools.swift */; };
@@ -70,6 +72,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A10A00090000000000000002 /* NativeStorageChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeStorageChannel.swift; sourceTree = "<group>"; };
+		A10A00080000000000000002 /* NativeStorageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeStorageStore.swift; sourceTree = "<group>"; };
 		A10A00070000000000000002 /* WindowsVMChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsVMChannel.swift; sourceTree = "<group>"; };
 		A10A00060000000000000002 /* WindowsArmVirtualMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsArmVirtualMachine.swift; sourceTree = "<group>"; };
 		A10A00050000000000000002 /* WindowsVMTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowsVMTools.swift; sourceTree = "<group>"; };
@@ -196,6 +200,8 @@
 				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				A10A00010000000000000002 /* RestoreImageSource.swift */,
+				A10A00080000000000000002 /* NativeStorageStore.swift */,
+				A10A00090000000000000002 /* NativeStorageChannel.swift */,
 				A10A00070000000000000002 /* WindowsVMChannel.swift */,
 				A10A00060000000000000002 /* WindowsArmVirtualMachine.swift */,
 				A10A00050000000000000002 /* WindowsVMTools.swift */,
@@ -469,6 +475,8 @@
 			files = (
 				33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
 				A10A00010000000000000001 /* RestoreImageSource.swift in Sources */,
+				A10A00080000000000000001 /* NativeStorageStore.swift in Sources */,
+				A10A00090000000000000001 /* NativeStorageChannel.swift in Sources */,
 				A10A00070000000000000001 /* WindowsVMChannel.swift in Sources */,
 				A10A00060000000000000001 /* WindowsArmVirtualMachine.swift in Sources */,
 				A10A00050000000000000001 /* WindowsVMTools.swift in Sources */,

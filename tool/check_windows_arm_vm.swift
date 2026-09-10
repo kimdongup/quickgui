@@ -13,11 +13,23 @@ enum CheckWindowsArmVM {
   static func fail(_ error: Error) -> Never { fputs("\(error.localizedDescription)\n", stderr); exit(1) }
   static func main() {
     #if arch(arm64)
-    let args = CommandLine.arguments
-    guard args.count >= 3 else { fail(MacVMError("inspect ISO | probe ISO SCREENSHOT")) }
+    var args = CommandLine.arguments
+    guard args.count >= 3 else { fail(MacVMError("inspect ISO | probe ISO SCREENSHOT | lifecycle OUTPUT_LABEL")) }
+    let lifecycle = args[1] == "lifecycle"
+    var syntheticImage: URL?
     do {
-      try WindowsVMTools.check(); try WindowsVMTools.inspectISO(args[2])
-      emit(["iso": args[2], "architecture": "ARM64", "windowsFiles": true])
+      try WindowsVMTools.check()
+      if lifecycle {
+        let fixture = FileManager.default.temporaryDirectory.appendingPathComponent("quickgui-lease-fixture-\(UUID().uuidString).iso")
+        try MacVMStore.createFile(fixture, size: 8 * 1024 * 1024)
+        syntheticImage = fixture
+        args.insert(fixture.path, at: 2)
+        args[1] = "probe"
+        emit(["syntheticMedia": true, "purpose": "QEMU and media-lock lifecycle only; no Windows installation"])
+      } else {
+        try WindowsVMTools.inspectISO(args[2])
+        emit(["iso": args[2], "architecture": "ARM64", "windowsFiles": true])
+      }
       if args[1] == "inspect" { return }
       guard args[1] == "probe", args.count >= 4 else { fail(MacVMError("probe ISO SCREENSHOT [SECONDS]")) }
       let parent = FileManager.default.temporaryDirectory.appendingPathComponent("quickgui-windows-probe-\(UUID().uuidString)")
@@ -40,6 +52,11 @@ enum CheckWindowsArmVM {
             try result.get(); emit(try backend.status(bundle.path))
             let control = try backend.controlSocket(for: bundle.path)
             emit(["controlSocket": control])
+            do {
+              let lease = try MacVMFileLease(URL(fileURLWithPath: args[2]), exclusive: true)
+              lease.release()
+              fail(MacVMError("Running VM did not protect its installation image."))
+            } catch { emit(["activeImageDeletionBlocked": true]) }
             backend.start(bundle.path, showWindow: false) { duplicate in
               if case .success = duplicate { fail(MacVMError("Duplicate start was accepted.")) }
               do {
@@ -50,6 +67,7 @@ enum CheckWindowsArmVM {
                 emit(["duplicateStartRejected": true, "originalStillRunning": true])
               } catch { fail(error) }
             }
+            if !lifecycle {
             var bootKeys = 0
             timers.append(Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
               bootKeys += 1
@@ -61,11 +79,14 @@ enum CheckWindowsArmVM {
               do { _ = try WindowsQMP.command(socket: control, execute: "screendump", arguments: ["filename": args[3] + ".early.png", "format": "png"]); emit(["earlyScreenshot": args[3] + ".early.png"]) }
               catch { emit(["captureError": error.localizedDescription]) }
             })
-            timers.append(Timer.scheduledTimer(withTimeInterval: args.count > 4 ? Double(args[4]) ?? 90 : 90, repeats: false) { _ in
+            }
+            timers.append(Timer.scheduledTimer(withTimeInterval: lifecycle ? 3 : (args.count > 4 ? Double(args[4]) ?? 90 : 90), repeats: false) { _ in
               do {
                 emit(try WindowsQMP.command(socket: control, execute: "query-status"))
-                _ = try WindowsQMP.command(socket: control, execute: "screendump", arguments: ["filename": args[3], "format": "png"])
-                emit(["screenshot": args[3]])
+                if !lifecycle {
+                  _ = try WindowsQMP.command(socket: control, execute: "screendump", arguments: ["filename": args[3], "format": "png"])
+                  emit(["screenshot": args[3]])
+                }
                 backend.stop(bundle.path, force: true) { result in
                   do {
                     try result.get()
@@ -74,7 +95,11 @@ enum CheckWindowsArmVM {
                         timer.invalidate()
                         do {
                           emit(try backend.status(bundle.path))
+                          let lease = try MacVMFileLease(URL(fileURLWithPath: args[2]), exclusive: true)
+                          lease.release()
+                          emit(["imageReleasedAfterStop": true])
                           try FileManager.default.removeItem(at: parent)
+                          if let syntheticImage = syntheticImage { try FileManager.default.removeItem(at: syntheticImage) }
                           emit(["probeRemoved": true]); exit(0)
                         } catch { fail(error) }
                       }

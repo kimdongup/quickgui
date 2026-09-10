@@ -146,6 +146,7 @@ class _NativeVmPanelState extends State<NativeVmPanel> {
                   vm: vm,
                   service: widget.service,
                   onChanged: _refresh,
+                  allowDelete: true,
                 ),
               ],
             ),

@@ -28,6 +28,8 @@ class NativeVmRecord {
   final double? progress;
   final bool installationPending;
   bool get canStart => state == 'stopped';
+  bool get canDelete =>
+      const ['stopped', 'failed', 'cancelled', 'interrupted'].contains(state);
   bool get canShow => state == 'running' || state == 'stopping';
   bool get canCancel => state == 'installing';
   bool get canStop => state == 'running';

@@ -27,7 +27,9 @@ sparse 파일이다. 설치 시작에는 실제 여유 공간 32GiB 이상이 �
 
 기존 폴더는 비어 있어도 덮어쓰지 않는다. 다른 프로세스의 같은 VM 실행을 파일 잠금으로 막는다.
 실패·취소·앱 비정상 종료로 중단된 설치는 Run을 허용하지 않는다. 해당 폴더를 보존하고 새 이름으로
-VM을 만들어 다시 설치한다. 기존 VM 재설치·삭제·스냅샷·저장 상태 복원은 이번 기능에 포함하지 않는다.
+VM을 만들어 다시 설치한다. 실패·취소·중단된 VM은 Manager에서 삭제할 수 있다.
+VM과 설치 파일 삭제 방법은 [STORAGE_MANAGEMENT.ko.md](STORAGE_MANAGEMENT.ko.md)를 따른다.
+기존 VM 재설치·스냅샷·저장 상태 복원은 이번 기능에 포함하지 않는다.
 한 Quickgui 프로세스에서 Apple VM은 한 대씩 실행한다.
 
 참조: [Apple macOS VM 예제](https://developer.apple.com/documentation/virtualization/running-macos-in-a-virtual-machine-on-apple-silicon),

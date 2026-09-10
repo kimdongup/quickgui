@@ -14,6 +14,7 @@ final class AppleVirtualMachine: NSObject, VZVirtualMachineDelegate {
     var window: NSWindow?
     var phase: String
     var error: String?
+    var imageLease: MacVMFileLease?
     init(_ bundle: URL, _ metadata: MacVMMetadata, _ lock: MacVMLock, _ vm: VZVirtualMachine, _ phase: String) {
       self.bundle = bundle; self.metadata = metadata; self.lock = lock; self.vm = vm; self.phase = phase
     }
@@ -43,8 +44,11 @@ final class AppleVirtualMachine: NSObject, VZVirtualMachineDelegate {
       let url = URL(fileURLWithPath: path).standardizedFileURL
       guard url.pathExtension.lowercased() == "ipsw" else { throw MacVMError("Select a macOS IPSW restore image.") }
       try MacVMStore.regularFile(url)
+      let lease = try MacVMFileLease(url)
       VZMacOSRestoreImage.load(from: url) { result in
-        DispatchQueue.main.async { completion(result) }
+        DispatchQueue.main.async {
+          withExtendedLifetime(lease) { completion(result) }
+        }
       }
     } catch { completion(.failure(error)) }
   }
@@ -63,6 +67,9 @@ final class AppleVirtualMachine: NSObject, VZVirtualMachineDelegate {
   func create(directory: String, name: String, ipsw: String, cpus: Int, memoryGiB: Int, diskGiB: Int,
               completion: @escaping (Result<[String: Any], Error>) -> Void) {
     guard !hasActiveVM else { completion(.failure(MacVMError("Shut down the active Apple VM before creating another one."))); return }
+    let imageLease: MacVMFileLease
+    do { imageLease = try MacVMFileLease(URL(fileURLWithPath: ipsw)) }
+    catch { completion(.failure(error)); return }
     preparing = true
     loadImage(ipsw) { result in
       defer { self.preparing = false }
@@ -85,7 +92,8 @@ final class AppleVirtualMachine: NSObject, VZVirtualMachineDelegate {
         }
         let metadata = MacVMMetadata(name: name, version: info["version"] as! String, build: image.buildVersion,
                                      cpuCount: cpus, memoryBytes: memory, diskBytes: UInt64(diskGiB) * MacVMStore.gib,
-                                     macAddress: VZMACAddress.randomLocallyAdministered().string, installation: "installing")
+                                     macAddress: VZMACAddress.randomLocallyAdministered().string, installation: "installing",
+                                     restoreImage: URL(fileURLWithPath: ipsw).standardizedFileURL.path)
         let bundle = try MacVMStore.create(in: directory, metadata: metadata)
         created = bundle
         let lock = try MacVMLock(bundle: bundle)
@@ -95,6 +103,7 @@ final class AppleVirtualMachine: NSObject, VZVirtualMachineDelegate {
         try MacVMStore.createFile(bundle.appendingPathComponent("disk.img"), size: metadata.diskBytes)
         let vm = try self.makeVM(bundle: bundle, metadata: metadata)
         let active = Session(bundle, metadata, lock, vm, "installing")
+        active.imageLease = imageLease
         let installer = VZMacOSInstaller(virtualMachine: vm, restoringFromImageAt: image.url)
         active.installer = installer
         self.session = active
@@ -300,6 +309,7 @@ final class AppleVirtualMachine: NSObject, VZVirtualMachineDelegate {
     }
     (active.window?.contentView as? VZVirtualMachineView)?.virtualMachine = nil
     active.window?.close()
+    active.imageLease?.release()
     active.lock.release()
     session = nil
   }

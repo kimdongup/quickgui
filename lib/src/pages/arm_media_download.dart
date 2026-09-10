@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../services/arm_media.dart';
 import '../services/download_session.dart' show DownloadStatus;
 import 'native_vm_create.dart';
 import '../services/native_vm.dart';
+import 'installation_media.dart';
 
 class ArmMediaDownload extends StatefulWidget {
   const ArmMediaDownload({
@@ -104,6 +106,20 @@ class _ArmMediaDownloadState extends State<ArmMediaDownload>
       if (mounted) {
         setState(() => _error = 'Could not open the link or folder.');
       }
+    }
+  }
+
+  Future<void> _manageFiles() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => InstallationMedia(directory: widget.directory),
+      ),
+    );
+    final saved = _session?.savedPath;
+    if (saved != null && !await File(saved).exists() && mounted) {
+      _session?.removeListener(_changed);
+      _session?.dispose();
+      setState(() => _session = null);
     }
   }
 
@@ -223,6 +239,12 @@ class _ArmMediaDownloadState extends State<ArmMediaDownload>
                 ),
               ],
               const SizedBox(height: 16),
+              if (Platform.isMacOS && !_active)
+                TextButton.icon(
+                  onPressed: _manageFiles,
+                  icon: const Icon(Icons.folder_delete_outlined),
+                  label: Text(context.t('Installation files')),
+                ),
               if (!_active)
                 OutlinedButton.icon(
                   onPressed: () => Navigator.of(context).push(

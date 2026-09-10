@@ -1,5 +1,11 @@
 # Fork 구현·검증 기록
 
+2026-09-09 삭제 기능 후속: native macOS/Windows VM 삭제 및 ISO/IPSW 관리 화면을 개인 기능으로 추가했다.
+이름 입력 확인, 실행/설치 중 보호, 참조·잠금·변경 파일 검사를 적용했다.
+전체 Flutter 81 passed / 4 skipped, 네이티브 삭제 26 + 기존 38 checks, 실제 QEMU 잠금 수명 검사,
+분석·release 빌드와 실제 파일 목록·확인 창 검증을 완료했다.
+사용법은 [STORAGE_MANAGEMENT.ko.md](STORAGE_MANAGEMENT.ko.md), 세부 결과는 M1 검증 기록을 따른다.
+
 2026-09-09 파일 선택 후속: ISO 선택의 entitlement 오류를 공통 `pr/macos-file-picker-entitlements` /
 `c59d53b`, 개인 `1942c4e`에서 수정했다. Debug/Release 빌드·서명·분석과 실제 release 앱의
 Windows ISO 선택 및 자원 설정 화면 도달을 확인했다. 상세 결과는 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.

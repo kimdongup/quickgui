@@ -476,3 +476,57 @@ Either the Read-Only or Read-Write entitlement is required for this action.
 검증 후 ISO가 선택된 생성 화면을 열어두었다. 새 Windows VM/디스크를 만들거나 설치를 시작하지 않았다.
 호스트 여유 공간은 약 23GiB로, 설치 시작의 32GiB 조건에 여전히 못 미친다.
 이번 변경은 앱 서명 설정이므로 기존 위젯 테스트를 추가·반복하지 않고 실제 서명과 네이티브 파일 선택을 검증했다.
+
+## VM·설치 파일 삭제 기능 (2026-09-09)
+
+개인 기준 0e7565a에서 후속 구현했다. 공통 PATH 및 file-picker entitlement 후보는 변경하지 않았다.
+Manager에 native VM별 Delete VM과 Installation files 화면을 추가했다.
+다운로더에서도 설치 파일 관리로 이동할 수 있다. 확인 창에는 실제 경로·디스크 할당 크기를 표시하며,
+이름을 정확히 입력해야 영구 삭제를 실행한다. VM 폴더 밖의 원본 설치 이미지는 별도 삭제 대상이다.
+사용법과 검사 범위는 [STORAGE_MANAGEMENT.ko.md](STORAGE_MANAGEMENT.ko.md)에 정리했다.
+
+파일 잠금/소유 프로세스, 알려진 작업 폴더의 native VM 및 Quickemu 리터럴 참조를 확인한다.
+설치 미디어는 inode에 대응하는 앱 전용 공유 잠금으로 사용 중 삭제를 막는다.
+확인 시 파일 목록과 식별 정보·수정 시각·크기의 토큰을 만들고 삭제 직전 다시 검사한다.
+같은 부모 폴더의 임시 이름으로 옮긴 뒤 디렉터리 핸들을 사용해 삭제하며 symbolic link를 따라가지 않는다.
+목록·미리보기·삭제 I/O는 별도 직렬 큐에서 처리한다. 삭제 검사/실행 중 새 ARM VM 시작,
+실제 삭제 중 앱 정상 종료를 막는다.
+
+| 실제 검사 | 결과 |
+| --- | --- |
+| Flutter 전체 회귀 | PASS: 81 passed / 4 external opt-in skipped |
+| 최종 삭제·다운로더 위젯 재검사 | PASS: 8 tests. 취소, 다른 이름 입력, 정확한 토큰 전달, 목록 갱신, 사용 중/변경된 파일 오류, 비활성 VM에만 삭제 노출 포함 |
+| macOS 저장소 기존 회귀 | PASS: 22 checks |
+| Windows 기존 회귀 | PASS: 16 checks |
+| 실제 파일시스템 삭제 회귀 | PASS: 26 checks. 시험 VM/ISO 실제 제거, 원본·무관 파일 유지, 잠금/잔여 PID/참조/심볼릭 링크/하드링크/변경된 파일/이전 작업 폴더 보호, 파일 목록 재발견 |
+| 실제 QEMU/HVF/TPM 수명 검사 | PASS: 합성 시험 미디어로 running → 사용 중 삭제 잠금 거부 → 중복 start 거부 → stopped → 미디어 잠금 해제 → 시험 폴더 제거 |
+| 분석·포맷 | PASS: 분석 0, 수정 Dart 파일 포맷 검사 통과 |
+| 최종 release 빌드 | PASS: 격리 worktree /tmp/quickgui-vm-release, 48.1MB |
+| 최종 앱 검증 | PASS: codesign verify, runner/App.framework의 x86_64 arm64 |
+| 실제 VM 확인 창 | PASS: 설치된 macOS VM의 경로·22.9GiB·이름 입력란 표시. Cancel 후 기존 VM 유지 |
+| 실제 설치 파일 화면 | PASS: IPSW 18.4GiB 표시, Add installation file 선택 창을 통해 Windows ISO 추가 후 7.4GiB 항목 표시 |
+| 의존성 | Flutter 3.47.2 및 기존 lockfile SHA256 c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a 유지 |
+
+초기 실제 GUI 검사에서 Downloads 자동 열람이 macOS 접근 대기에 걸렸고,
+동기 파일 열람 때문에 UI도 멈췄다. 프로세스 sample에서 목록 열람의 open 대기를 확인했다.
+파일 I/O를 화면 스레드에서 분리하고, Downloads 등 외부 파일은 파일 선택 창을 통해 등록하도록 수정했다.
+최종 앱에서는 목록 표시와 파일 추가가 멈춤 없이 완료됐다.
+
+첫 미디어 보호 구현은 이미지 자체에 flock을 걸어 QEMU의 consistent read 잠금과 충돌했다.
+실제 VM 시작 실패 로그에서 이를 확인했다. QEMU의 잠금을 끄지 않고, 별도의 사용자 전용
+inode별 잠금 파일로 분리했다. 이후 실제 QEMU 프로세스의 시작·중지와 앱 잠금 해제를 재검증했다.
+최종 수명 검사의 ISO는 별도로 만든 합성 파일이며 Windows 설치·부팅 성공 검사로 표시하지 않는다.
+이전 실제 Windows 설치 화면 검증과 이번 삭제 보호 회귀 검사를 구분한다.
+
+다음 명령은 시험 파일만 생성·삭제한다.
+
+    xcrun swiftc macos/Runner/MacVMStore.swift macos/Runner/NativeStorageStore.swift tool/test_native_storage.swift -o /tmp/quickgui-arm-validation/test-native-storage
+    /tmp/quickgui-arm-validation/test-native-storage
+    xcrun swiftc macos/Runner/MacVMStore.swift macos/Runner/WindowsVMTools.swift macos/Runner/WindowsArmVirtualMachine.swift tool/check_windows_arm_vm.swift -o /tmp/quickgui-arm-validation/check-windows-arm-vm
+    /tmp/quickgui-arm-validation/check-windows-arm-vm lifecycle /tmp/quickgui-arm-validation/storage-lease
+    flutter test --no-pub test/native_storage_widget_test.dart test/arm_media_widget_test.dart
+
+최종 앱은 /Users/mac/quickemu/quickgui/dist/arm-vms/quickgui.app에 갱신하고
+Installation files 화면을 열어두었다. 실제 사용자 파일의 영구 삭제 버튼은 누르지 않았다.
+검증 종료 시 기존 macOS VM, 19,772,231,540바이트 IPSW, 7,951,140,864바이트 Windows ISO를 확인했다.
+실제 제거 작업은 별도의 시험 파일로 수행했다. 실패한 실험의 임시 VM과 합성 미디어도 정리했다.

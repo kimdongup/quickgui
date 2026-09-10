@@ -512,3 +512,42 @@ msgstr "Use an existing ARM64 ISO"
 
 msgid "Download ISO or install a Windows ARM64 VM."
 msgstr "Download ISO or install a Windows ARM64 VM."
+
+msgid "Add installation file"
+msgstr "Add installation file"
+
+msgid "Delete VM"
+msgstr "Delete VM"
+
+msgid "Delete installation file"
+msgstr "Delete installation file"
+
+msgid "Delete permanently"
+msgstr "Delete permanently"
+
+msgid "Installation files"
+msgstr "Installation files"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "No installation files found."
+msgstr "No installation files found."
+
+msgid "ISO and IPSW files from this workspace and files selected in Quickgui. Use Add installation file for Downloads or another folder."
+msgstr "ISO and IPSW files from this workspace and files selected in Quickgui. Use Add installation file for Downloads or another folder."
+
+msgid "Refresh"
+msgstr "Refresh"
+
+msgid "Size on disk"
+msgstr "Size on disk"
+
+msgid "The VM and all files inside its folder will be permanently deleted. Installation files outside the folder are kept."
+msgstr "The VM and all files inside its folder will be permanently deleted. Installation files outside the folder are kept."
+
+msgid "This installation file will be permanently deleted. Installed VMs are kept."
+msgstr "This installation file will be permanently deleted. Installed VMs are kept."
+
+msgid "Type the name to confirm deletion:"
+msgstr "Type the name to confirm deletion:"

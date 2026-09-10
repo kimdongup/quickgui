@@ -31,16 +31,27 @@ final class WindowsVMChannel {
         switch result { case .success(let value): reply(value); case .failure(let error): fail(error) }
       }
       do {
+        if ["create", "start"].contains(call.method) && NativeStorageChannel.hasActiveOperation {
+          throw MacVMError("Wait for the storage operation before starting a VM.")
+        }
         if ["create", "start"].contains(call.method) && AppleVMChannel.hasActiveVM {
           throw MacVMError("Shut down the Apple VM before starting a Windows ARM VM.")
         }
         switch call.method {
         case "supported": reply(true)
-        case "inspectImage": backend.inspectImage(try string("path"), completion: map)
+        case "inspectImage":
+          let path = try string("path")
+          backend.inspectImage(path) { result in
+            if case .success = result { try? NativeStorageStore.shared.rememberMedia(path) }
+            map(result)
+          }
         case "create":
+          try NativeStorageStore.shared.rememberWorkspace(string("directory"))
           backend.create(directory: try string("directory"), name: try string("name"), iso: try string("image"),
                          cpus: try number("cpus"), memoryGiB: try number("memoryGiB"), diskGiB: try number("diskGiB"), completion: map)
-        case "list": reply(try backend.list(string("directory")))
+        case "list":
+          try NativeStorageStore.shared.rememberWorkspace(string("directory"))
+          reply(try backend.list(string("directory")))
         case "status": reply(try backend.status(string("path")))
         case "start": backend.start(try string("path"), completion: done)
         case "show": try backend.show(string("path")); reply(nil)

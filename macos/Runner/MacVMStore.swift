@@ -19,6 +19,44 @@ struct MacVMMetadata: Codable {
   let macAddress: String
   var installation: String // installing, ready, failed, cancelled
   var error: String?
+  var restoreImage: String? = nil
+}
+
+/// Shared leases keep installation media from being deleted while inspected or used.
+final class MacVMFileLease {
+  private var descriptor: Int32 = -1
+  init(_ url: URL, exclusive: Bool = false) throws {
+    var info = stat()
+    guard lstat(url.path, &info) == 0, info.st_mode & S_IFMT == S_IFREG, info.st_nlink == 1 else {
+      throw MacVMError("The installation file is missing or is not a safe regular file.")
+    }
+    // Do not flock the image itself: QEMU has its own consistent-read locks.
+    // A private, stable inode-keyed sidecar coordinates Quickgui processes.
+    let directory = "/tmp/quickgui-media-locks-\(getuid())"
+    guard mkdir(directory, 0o700) == 0 || errno == EEXIST else { throw MacVMError("Cannot create installation file locks.") }
+    let parent = open(directory, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC)
+    guard parent >= 0 else { throw MacVMError("Cannot open installation file locks.") }
+    defer { close(parent) }
+    var parentInfo = stat()
+    guard fstat(parent, &parentInfo) == 0, parentInfo.st_uid == getuid(), parentInfo.st_mode & 0o077 == 0 else {
+      throw MacVMError("The installation file lock directory is not private.")
+    }
+    descriptor = openat(parent, "\(info.st_dev)-\(info.st_ino).lock", O_RDWR | O_CREAT | O_NOFOLLOW | O_CLOEXEC, 0o600)
+    var lockInfo = stat(), current = stat()
+    guard descriptor >= 0, fstat(descriptor, &lockInfo) == 0,
+          lockInfo.st_mode & S_IFMT == S_IFREG, lockInfo.st_nlink == 1, lockInfo.st_uid == getuid(),
+          flock(descriptor, (exclusive ? LOCK_EX : LOCK_SH) | LOCK_NB) == 0 else {
+      if descriptor >= 0 { close(descriptor); descriptor = -1 }
+      throw MacVMError("The installation file is in use or is not a safe regular file.")
+    }
+    guard lstat(url.path, &current) == 0, current.st_dev == info.st_dev, current.st_ino == info.st_ino else {
+      release(); throw MacVMError("The installation file changed while opening it.")
+    }
+  }
+  func release() {
+    if descriptor >= 0 { flock(descriptor, LOCK_UN); close(descriptor); descriptor = -1 }
+  }
+  deinit { release() }
 }
 
 final class MacVMLock {

@@ -25,6 +25,7 @@ final class WindowsArmVirtualMachine {
     let qemu = Process()
     let tpm = Process()
     var phase = "starting"
+    var imageLease: MacVMFileLease?
     init(_ bundle: URL, _ runtime: URL, _ lock: MacVMLock, _ log: FileHandle) {
       self.bundle = bundle; self.runtime = runtime; self.lock = lock; self.log = log
     }
@@ -183,6 +184,7 @@ final class WindowsArmVirtualMachine {
       let log = try FileHandle(forWritingTo: logURL)
       try log.truncate(atOffset: 0)
       let active = Session(target, runtime, lock, log)
+      if metadata.installationPending { active.imageLease = try MacVMFileLease(URL(fileURLWithPath: metadata.iso)) }
       session = active
       metadata.error = nil; try write(metadata, target)
       active.tpm.executableURL = URL(fileURLWithPath: WindowsVMTools.tpm)
@@ -304,6 +306,7 @@ final class WindowsArmVirtualMachine {
       DispatchQueue.main.async {
         guard self.session === active else { return }
         try? active.log.close()
+        active.imageLease?.release()
         try? FileManager.default.removeItem(at: active.bundle.appendingPathComponent("owner.json"))
         try? FileManager.default.removeItem(at: active.runtime)
         active.lock.release()

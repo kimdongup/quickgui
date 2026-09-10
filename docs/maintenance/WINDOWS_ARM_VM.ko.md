@@ -62,5 +62,9 @@ Cocoa 화면을 사용한다. 이 호스트의 검증에서 RAMFB 단독과 Virt
 중복 실행은 파일 잠금과 실행 중 프로세스 기록으로 방지한다. 앱이 직접 시작한 프로세스만 종료한다.
 VM 폴더의 `last-run.log`에 QEMU/TPM 오류와 펌웨어 콘솔을 기록한다.
 
+Manager의 **Delete VM**, **Installation files**에서 VM과 설치 ISO를 각각 삭제할 수 있다.
+설치 중이거나 다른 VM이 필요한 파일은 보호한다. 확인 절차와 범위는
+[STORAGE_MANAGEMENT.ko.md](STORAGE_MANAGEMENT.ko.md)를 따른다.
+
 실제 통과한 범위와 실패 후 수정 내역은 [M1_VALIDATION.ko.md](M1_VALIDATION.ko.md)를 따른다.
 Windows 전체 설치·바탕화면·설치 후 재부팅·네트워크·오디오·게스트 드라이버는 아직 완료로 표시하지 않는다.
