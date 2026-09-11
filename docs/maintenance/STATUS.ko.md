@@ -1,5 +1,7 @@
 # Fork 구현·검증 기록
 
+2026-09-10 PR 제출: 첫 공통 수정 [Draft PR #325](https://github.com/quickemu-project/quickgui/pull/325)를 `pr/upstream-desktop-compatibility` / `448e7e4`에서 제출했다. upstream 기준 단일 커밋이며 Flutter 빌드·자산 목록 API·macOS 파일 선택 권한을 포함한다. macOS 최소 버전 12.0 상향을 명시했다. 개인 ARM·VM 서비스와 운영 문서는 포함하지 않았다. 로컬 분석·2개 공통 테스트·Release 빌드·서명 검사는 통과했고, 제출 커밋의 CI 및 다음 순서는 [첫 PR 기록](UPSTREAM_DESKTOP_PR.ko.md)을 따른다.
+
 2026-09-10 HST / 2026-09-11 UTC 연결 검증 후속: 설치된 Intel macOS의 실제 SSH 인증·명령·재접속, 정상 종료 후 같은 디스크의 SPICE 부팅·바탕화면·키 입력·포인터 클릭을 확인했다. 앱 서비스의 실제 VM 조회·SSH 감지·SPICE 인자 검사 1개도 통과했다. 실제 spicy 창의 결과와 일반 Run 연동의 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. Windows ARM64는 접속 구성·실사용 검증이 남아 있으며 [맥미니의 기존 Codex 세션으로 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다. M1 macOS ARM SSH의 사용자 확인 완료는 유지한다.
 
 2026-09-10 통합 후속: 사용자가 M1 macOS ARM의 **바탕화면·재부팅·SSH 검증 완료**를 확인했다. Windows ARM64의 설치 후 실사용과 함께 [M1 검증 기록](M1_VALIDATION.ko.md)에 반영했다. `personal/preview`의 `64cfd59`와 `personal/apple-silicon`의 `f3f5c2b`를 별도 `personal/platform-integration` 후보에서 merge했다. 추가로 발견한 선언형 ISO 경로의 삭제 보호 오류를 수정했다. Intel 분석·82개 Flutter 테스트·12개 실제 도구/catalog 검사·57개 네이티브 검사·release 빌드가 통과했다. 상세 결과와 남은 범위는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
@@ -14,7 +16,7 @@ Intel macOS x64 설치·구동의 사용자 확인(`personal/preview` / `64cfd59
 
 2026-09-10 검토 정리: 완료 범위, 커밋된 lockfile로 수행한 재현 검사, 공통/개인 브랜치와
 원격 반영 결과는 [M1 검토 완료 결과](M1_REVIEW_RESULT.ko.md)에 정리했다.
-아래 날짜별 기록은 당시 상태를 보존하며, 현재 완료·미확인 범위는 이 검토 결과를 우선한다.
+아래 날짜별 기록은 당시 상태를 보존하며, 현재 완료·미확인 범위는 위의 최신 후속 기록을 우선한다.
 
 2026-09-10 Windows ARM64 네트워크 후속: 사용자가 OOBE의 네트워크 화면에서 어댑터가 없는 상태를 확인했다.
 기존 usb-net을 VirtIO Ethernet으로 변경하고 공식 UTM 배포본의 Windows 11 ARM64 NetKVM만
@@ -77,7 +79,7 @@ Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 
 - 개인 통합 후보: `personal/platform-integration`을 `personal/preview`에 반영했다. Intel 기준 `64cfd59`와 M1 기준 `personal/apple-silicon` / `f3f5c2b`의 이력을 함께 보존한다. M1 원래 브랜치의 마지막 앱 코드 변경은 `0517cf2`이고 그 브랜치의 후속은 검증 문서였다. 통합 후 `f48009b`에서 Swift 삭제 보호 코드와 CI를 수정했다. Intel 검사·승격 결과는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
 - Intel macOS x64 설치·구동은 사용자 확인 완료(`64cfd59`)이며, 후속에서 설치 게스트의 SSH 인증·재접속과 실제 SPICE 화면·키 입력·포인터 클릭을 확인했다. 별도 SPICE 검사 VM의 과거 성공과 구분한다. 세부 접속 결과와 앱 연동 범위는 [게스트 검증](GUEST_VALIDATION.ko.md)을 따른다.
 - M1의 Windows ARM64는 초기 설정·바탕화면·입력·HTTPS·정상 종료/부팅의 사용자 확인과 앱 재실행·설치 ISO 없는 실행·외부 TCP 검사를 완료했다. macOS ARM의 바탕화면·재부팅·SSH도 2026-09-10 사용자 확인 완료다. Windows SSH/SPICE는 접속 구성·검증이 필요하며, 오디오·전체 게스트 도구와 Intel ARM64 TCG 추가 실험은 별도로 관리한다.
-- `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
+- `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스는 아직 없으며, 첫 upstream 제출은 공통 빌드 호환성 Draft PR #325다.
 
 ## 구현한 범위
 
@@ -135,7 +137,7 @@ macOS 환경: macOS 15.7.9, x86_64, Flutter 3.47.2, Dart 3.13.2, QEMU 11.1.1. Ho
 - Linux ARM64 게스트 실사용. M1 macOS ARM의 바탕화면·재부팅·SSH와 Windows ARM64의 설치 후 기본 실사용은 사용자 확인 및 M1 실행 기록으로 완료했다. Windows ARM64 SSH/SPICE·오디오·전체 게스트 도구와 macOS ARM 오디오·클립보드·공유 폴더 등은 별도 검증 항목이다.
 - 최소 Quickemu 버전의 전체 실행 matrix. 중지는 4.9.6 이상을 요구하지만 주 검증 backend는 4.9.9이다.
 - 한국어는 기존 지원 locale 목록에 없다. 지원하지 않는 locale의 영어 fallback은 확인했으며 한국어 번역 완료를 주장하지 않는다.
-- 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다.
+- 배포용 Developer ID 서명/notarization, 설치 프로그램, AppImage/deb/rpm, 동시에 설치하는 별도 앱 ID/설정 migration. 이번 개인 패키지는 압축된 앱 번들이며 현재 앱 ID와 기존 설정을 유지한다. 로컬 ad-hoc 서명 검사는 배포 인증과 구분한다.
 - 외부 프로그램이 마지막 검증 직후 config/PID/파일을 변경하는 모든 경쟁을 원자적으로 방지하지 않는다. GUI 내부 작업은 직렬화하며 읽을 수 없는 상태는 거부한다.
 - 공유 저장소 삭제 검사는 현재 작업 폴더에서 읽을 수 있는 리터럴 `disk_img` 설정을 대상으로 한다. 다른 작업 폴더의 설정이나 임의 Bash 로직이 참조하는 모든 디스크를 자동 발견하는 것은 아니다.
 

@@ -1,12 +1,12 @@
 # Upstream submission queue
 
-Upstream base: `74949e086154f3f2d555f9268778545c78ff2b51`. No upstream PR has been submitted by this implementation run.
+Upstream base: `74949e086154f3f2d555f9268778545c78ff2b51`. First submission: [Draft PR #325](https://github.com/quickemu-project/quickgui/pull/325), head `448e7e4922ec804578908f41ef07778deacf4dd2`, on `pr/upstream-desktop-compatibility`. It contains one commit and 40 files. The existing dependent topic branches remain preserved.
 
 These topics share dependent commits. Submit the build foundation first, then rebuild each remaining topic against the accepted upstream base. Do not submit the personal branch as one large upstream PR. If upstream uses squash/rebase merge, compare the remaining tree/patches before replaying commits.
 
 | Order | Fork branch | Proposed title | Dependency |
 | --- | --- | --- | --- |
-| A | `pr/desktop-build` | `build: align the Flutter desktop toolchain and CI` | upstream base |
+| A | `pr/upstream-desktop-compatibility` | `build!: update Flutter desktop compatibility` — [Draft #325](https://github.com/quickemu-project/quickgui/pull/325) | upstream base |
 | B | `pr/recoverable-startup` | `fix: recover startup and preserve the selected workspace` | A |
 | C | `pr/download-lifecycle` | `fix: track download failures and terminate cancelled commands` | B runner/workspace |
 | D | `pr/vm-actions` | `fix: serialize VM actions and verify backend state` | B/C services |
@@ -15,13 +15,17 @@ These topics share dependent commits. Submit the build foundation first, then re
 
 ## A — build foundation
 
-The configured Flutter SDK could not resolve the desktop dependencies, and generated macOS project settings were out of sync. Pin Flutter 3.47.2 and compatible locks, retain CocoaPods fallback, and run analysis/tests plus Linux/macOS builds on fork branches and PRs. Use a separate Nix input for Flutter so compiler updates do not force an unrelated QEMU runtime update.
+The configured Flutter SDK and desktop dependencies/native project settings were out of sync. Use Flutter 3.47.2 / Dart 3.13 and compatible locks, retain CocoaPods fallback, and run analysis/tests plus Linux/macOS builds. Use a separate Nix input for Flutter so compiler updates do not force an unrelated QEMU runtime update. The submitted workflow targets main for push/PR events and supports workflow_dispatch; private branch patterns are excluded.
 
-Validation: analysis/tests, Linux/macOS release builds and Nix build passed. The upstream-only PPA and FlakeHub steps do not run in the fork. macOS packaging remains unsigned.
+The new SDK emits a binary asset manifest, so the original JSON icon loader fails. A real bundled-asset regression test reproduced that failure before switching to `AssetManifest.loadFromAssetBundle` and awaiting icon loading during startup. The resolved Darwin file picker checks filesystem entitlements before opening dialogs, so the two plist changes from `c59d53b` are included in this first PR. The macOS deployment target is now 12.0; the compatibility change is explicit in the title/body.
+
+Local submitted-tree validation: enforced lockfile, formatting, analysis, both tests, macOS Release build (47.2 MB), deep signature verification and signed file-picker entitlement passed. Runner/App.framework contain x86_64 and arm64 slices. The bundle is ad-hoc signed, not notarized. Submitted-head [fork CI](https://github.com/kimdongup/quickgui/actions/runs/34558437055) and the remaining acceptance scope are tracked in [the first PR record](UPSTREAM_DESKTOP_PR.ko.md). Installed-guest GUI acceptance and release-format packaging/publishing are not complete on this branch.
+
+`pr/desktop-build` / `1970416` remains an implementation reference. Its dependent topics must be rebuilt against the accepted result of #325, including the manifest and entitlement corrections. Related open work: #303 for startup/manifest handling, #322 for the packaging dependency replaced by fastforge, and #317 for other flake.lock updates. The related PRs were rechecked on 2026-09-10; no foreign branch was merged or automatically closed.
 
 ## B — recoverable startup and workspace
 
-A missing saved directory or failure to read the legacy asset manifest could prevent the app from starting. Load the current binary asset manifest, separate package metadata from executable discovery, show retry/folder recovery, and keep the user's saved path until a valid replacement is selected. Commands receive an explicit working directory and preserve PATH precedence.
+A missing saved directory or a startup discovery failure could prevent the app from starting. Build on the binary asset manifest fix in #325, separate package metadata from executable discovery, show retry/folder recovery, and keep the user's saved path until a valid replacement is selected. Commands receive an explicit working directory and preserve PATH precedence.
 
 Validation: executable permissions/PATH ordering, unavailable saved folders, preferences, icons and legacy/current quoted CSV fixtures. Related idea: [#303](https://github.com/quickemu-project/quickgui/pull/303) by **s-b-repo**; the manifest and lifecycle implementation is rewritten around the shared services.
 
@@ -51,7 +55,7 @@ Validation: scrolling to the last entry, filtering to an empty list, retry after
 
 The PATH fix on `pr/macos-homebrew-path` (`dc51dd0`) and the file-picker entitlement fix on `pr/macos-file-picker-entitlements` (`c59d53b`) each branch from `ae57d7d`. Their [PATH CI](https://github.com/kimdongup/quickgui/actions/runs/34506027934) and [file-picker CI](https://github.com/kimdongup/quickgui/actions/runs/34506028056) pass analysis/tests and Linux/Nix/macOS builds; the fork-only PPA exclusion is skipped as expected.
 
-These are independent follow-ups against the common integration base, not yet isolated upstream PRs. Against upstream `74949e0`, they include 14 commits and 62/63 files respectively. Fold PATH precedence into topic B after its Toolchain service lands. Submit the two entitlement changes against the accepted macOS project base as a small separate patch. Recheck the final submitted diff and run validation on that exact base; do not include ARM VM services, drivers, installation media, or personal validation documents.
+These original branches are independent follow-ups against the common integration base. Against upstream `74949e0`, they include 14 commits and 62/63 files respectively. Fold PATH precedence into topic B after its Toolchain service lands. The two entitlement changes have now been extracted into #325 because its updated file picker requires them; they no longer need a separate PR. Recheck each final submitted diff and validate its exact base. ARM VM services, drivers, installation media and personal validation documents remain in the personal branch.
 
 ## Personal follow-up ideas
 
