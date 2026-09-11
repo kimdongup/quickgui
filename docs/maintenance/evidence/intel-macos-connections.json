@@ -1,0 +1,180 @@
+{
+  "schema": 1,
+  "sourceCommit": "381b59f38c1cd66a18cab97f6ec6ae4d7f01a425",
+  "appCodeCommit": "f48009b4805cac747a3b8d5aa10952b50b954382",
+  "timeZone": "Pacific/Honolulu",
+  "observedDateLocal": "2026-09-10",
+  "recordedAtUtc": "2026-09-11T01:02:15.363994+00:00",
+  "host": {
+    "architecture": "x86_64",
+    "osVersion": "15.7.9"
+  },
+  "guest": {
+    "os": "macOS",
+    "version": "15.7.9",
+    "build": "24G830",
+    "architecture": "x86_64"
+  },
+  "backend": {
+    "qemuVersion": "11.1.1",
+    "spiceServerVersion": "0.16.0",
+    "spiceGtkVersion": "0.42",
+    "acceleration": "HVF",
+    "spiceEndpoint": "Unix socket in a mode-0700 validation directory",
+    "sshListenAddress": "127.0.0.1",
+    "sshPort": 22220,
+    "recoveryImageAttached": false,
+    "launchPath": "separate installed-boot QEMU script; not Quickgui Run"
+  },
+  "ssh": {
+    "status": "pass",
+    "authentication": "temporary restricted public key; password not recorded",
+    "cocoaReconnect": {
+      "timeUtc": "2026-09-11T00:35:07Z",
+      "exitCode": 0
+    },
+    "spiceBootLogin": {
+      "timeUtc": "2026-09-11T00:48:56.086139+00:00",
+      "exitCode": 0
+    },
+    "spiceBootReconnect": {
+      "timeUtc": "2026-09-11T00:56:33.090145+00:00",
+      "exitCode": 0
+    },
+    "newBootAfterNormalShutdown": true,
+    "sameBootAcrossSpiceSshReconnect": true
+  },
+  "spice": {
+    "display": {
+      "status": "pass",
+      "client": "tool/spice/capture.c",
+      "width": 1920,
+      "height": 1080,
+      "observed": "installed desktop and Terminal"
+    },
+    "keyboard": {
+      "status": "pass",
+      "client": "tool/spice/capture.c --send-k",
+      "observedMarker": "QUICKGUI_SPICE_KEY=k",
+      "setupInputPath": "QMP; the tested K was sent through SPICE"
+    },
+    "pointer": {
+      "status": "pass",
+      "client": "local mouse_capture linked against spice-client-glib",
+      "api": "spice_inputs_channel_position/button_press/button_release",
+      "observed": "Terminal brought in front of Settings after absolute movement and left click",
+      "wheelAndTrackpad": "not validated"
+    },
+    "protocolReconnect": {
+      "status": "pass",
+      "observed": "separate capture clients received the same running desktop; mouse input worked after reconnect"
+    },
+    "spicyViewerReconnect": {
+      "status": "pass",
+      "scope": "viewer process replacement, channel reconnection and primary surface reception",
+      "firstViewerPid": 63052,
+      "secondViewerPid": 64131,
+      "sameQemuPid": 60671,
+      "vmRunningWithNoClient": true,
+      "newConnectionId": true,
+      "channelTypes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "debugObservations": [
+        "Create primary canvas",
+        "monitor id: 0, surface id: 0, +0+0-1920x1080",
+        "display_handle_mark"
+      ]
+    },
+    "spicyWindowInput": {
+      "status": "blocked",
+      "reason": "Intel host GUI session is locked. Targeted host input did not produce a guest key; it is not counted as pass.",
+      "screenIsLocked": true,
+      "accessibilityPreflight": true,
+      "screenCapturePreflight": true
+    }
+  },
+  "appServices": {
+    "status": "pass",
+    "testsPassed": 1,
+    "sourceMethods": [
+      "VmRepository.inspect",
+      "VmRepository.list",
+      "detectSsh",
+      "spiceArguments"
+    ],
+    "realVmRunning": true,
+    "sshBannerDetected": true,
+    "unixSpiceRecognized": true,
+    "configBytesUnchanged": true,
+    "guiRunAndConnectionButtons": "not validated in this execution"
+  },
+  "preservation": {
+    "config": {
+      "sameInode": true,
+      "sameSha256": true
+    },
+    "generatedInstalledBootScript": {
+      "sameInode": true,
+      "sameSha256": true
+    },
+    "nvram": {
+      "sameInode": true,
+      "sameSha256": true
+    },
+    "openCore": {
+      "sameInode": true,
+      "sameSha256": true
+    },
+    "systemDisk": {
+      "sameInode": true
+    },
+    "cocoaNormalShutdownQemuExitCode": 0,
+    "offlineQcow2CheckAfterShutdown": "pass; no errors",
+    "sameDiskOpenedByTwoQemuProcesses": false,
+    "runtimePortsMetadataUpdated": true
+  },
+  "cleanup": {
+    "timeUtc": "2026-09-11T01:00:53.053211+00:00",
+    "guestTemporaryAuthorizedKeyRemoved": true,
+    "otherAuthorizedKeyLinesPreserved": true,
+    "hostTemporaryPrivateKeyRemoved": true,
+    "guestRemoteLoginRemainsEnabled": true
+  },
+  "finalState": {
+    "vmRunning": true,
+    "spicyViewerConnected": true,
+    "configDisplayRemainsCocoa": true,
+    "spiceLaunchScriptAndSocketAreTemporaryLocalFiles": true
+  },
+  "warningsAndLimits": [
+    "Quickemu Darwin display guard still allows cocoa/none only; display=spice is not integrated with normal Run.",
+    "Original config still names RecoveryImage; this validation used the installed-boot script without attaching it.",
+    "Host Dark Wake Thermal Emergency sleep lasted 1803 seconds; elapsed session time is not a VM boot benchmark.",
+    "QEMU virtio-sound input warning and Unix-socket TCP_NODELAY warnings were observed.",
+    "Actual spicy emitted a CVDisplayLink warning; direct window input remains unverified while host is locked.",
+    "Audio, clipboard, file transfer, USB, wheel/trackpad and full GUI relaunch are not validated.",
+    "Windows ARM64 is handed off to the existing M1 Codex session; no M1 execution was performed here."
+  ],
+  "localEvidenceDirectory": "/private/tmp/quickgui-intel-connections-yghh3lvw",
+  "localScreenshots": [
+    {
+      "file": "spice-installed-key.png",
+      "sha256": "be16c016024dfae3e2a77599096b292e20e9794a32eed35edd6735398ed58750",
+      "published": false
+    },
+    {
+      "file": "spice-mouse-before.png",
+      "sha256": "779c75fbaa793842ab7c82c7f1e362b7ecc5f11ed2fa7ee3b80d99f75934bb6e",
+      "published": false
+    },
+    {
+      "file": "spice-installed-mouse.png",
+      "sha256": "75648113f5e1ab4343471483fd9dbaeea6c5e29d26293031823414b20af3b613",
+      "published": false
+    }
+  ]
+}

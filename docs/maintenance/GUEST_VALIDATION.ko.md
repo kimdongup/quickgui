@@ -1,6 +1,8 @@
 # 게스트 설치 경험과 순차 검증
 
-2026-09-10 SSH/SPICE 기록 대조: 사용자는 Intel·Windows ARM64의 기존 검증에 실제 게스트 SSH 로그인과 spicy/remote-viewer 화면 연결이 포함됐는지 묻는 질문에 **“아니요”**라고 답했다. 아래의 **기존 연결 검증 대조**를 현재 상태로 우선한다. Intel SPICE 검사 VM과 M1 macOS ARM SSH의 기존 완료 기록은 유지한다.
+2026-09-10 HST / 2026-09-11 UTC 실제 연결 검증: Intel에 설치된 macOS의 SSH 인증·명령 실행·재접속을 Cocoa와 SPICE 부팅에서 확인했다. 같은 설치 디스크의 SPICE 바탕화면 수신·키 입력·포인터 클릭과 앱 서비스의 실행 상태·접속 인자 검사도 통과했다. 실제 spicy 창의 세부 결과와 앱 연동 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. 다음 Windows ARM64 작업은 사용자 요청에 따라 [맥미니의 기존 Codex 세션으로 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다.
+
+앞선 `381b59f`의 SSH/SPICE 기록 대조에서 사용자는 Intel·Windows ARM64의 기존 검사에 실제 게스트 SSH 로그인과 spicy/remote-viewer 화면 연결이 포함되지 않았다고 확인했다. 이를 근거로 위 Intel 실접속을 새로 수행했다. 기존 폐기용 SPICE 검사와 M1 macOS ARM SSH의 완료 기록도 유지한다.
 
 2026-09-10 추가 사용자 확인: M1 macOS ARM의 바탕화면·재부팅·SSH 검증을 사용자가 완료했다. Windows ARM64의 설치 후 검증과 함께 아래 표를 갱신한다. 다음 작업은 [Intel/M1 통합 후보 검증](PLATFORM_INTEGRATION.ko.md)이다.
 
@@ -38,27 +40,24 @@ M1 Windows ARM64의 초기 설정·바탕화면·입력·HTTPS 및 설치 완료
 | 순서 | 대상 | 진행 조건 및 통과 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | 기준 사례 | Intel macOS → Windows 11 x64 | 사용자 설치 경험을 보존하고 설정·설치 모드 처리에 반영 | 설치 진행 성공: 사용자 보고. 바탕화면/재부팅/SSH/SPICE는 별도 확인 |
-| 1 | Intel macOS → macOS Intel x64 | 설치·구동 후 재부팅·SSH·SPICE·앱 재접속을 각각 검증 | 설치·구동 완료: 2026-09-10 사용자 확인, `personal/preview`의 `64cfd59`. Intel의 별도 SPICE 검사 VM은 통과. 설치된 게스트의 연결 검증은 아래 기록 대조 참조 |
+| 1 | Intel macOS → macOS Intel x64 | 설치·구동 후 재부팅·SSH·SPICE·앱 재접속을 각각 검증 | 설치·구동은 사용자 확인 `64cfd59`. 후속 실접속에서 SSH 인증·재접속, 정상 종료 후 같은 디스크의 SPICE 부팅·바탕화면·키 입력·포인터 클릭, 앱의 조회·연결 인자 서비스 검사 통과. 실제 spicy 창과 GUI 전체 연동 범위는 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md) 참조 |
 | 2 | M1 맥미니 → Windows ARM64 | 기존 VM의 초기 설정·바탕화면·입력·HTTPS → 정상 종료·설치 완료 표시·ISO 없이 부팅 → Quickgui 재실행 | 사용자 요청의 1~3단계 정상 확인. 앱 재실행과 저장 상태·네트워크 검사는 M1 검증 기록 참조. SSH/SPICE는 아래 기록 대조 참조. 오디오는 별도 항목 |
 | 3 | Apple Silicon 호스트 → macOS ARM | 기존 Apple Virtualization/IPSW VM의 최초 설정·바탕화면·재부팅·네트워크·SSH 검증 | backend 구현·설치·최초 설정 화면·새 프로세스 재실행 확인. 바탕화면·재부팅·SSH는 2026-09-10 사용자 확인 완료. HTTPS·오디오 등 다른 기능으로 확대하지 않음 |
 
-### 기존 연결 검증 대조 (2026-09-10)
+### 연결 검증 대조와 후속 실접속 (2026-09-10 HST)
 
 | 대상·범위 | 대조 결과 |
 | --- | --- |
 | Intel SPICE backend 및 폐기용 검사 VM | **완료**. 화면 수신·키 입력·연결 해제 후 재접속, 실제 spicy의 main/display/inputs/cursor 채널과 앱의 VM 조회·접속 인자 검사를 통과했다. [SPICE 실행 기록](MACOS_SPICE_BACKEND.ko.md)을 재사용한다 |
-| Intel 설치 게스트의 SSH/SPICE | **미검증**. 사용자는 기존 검증에 실제 SSH 로그인과 SPICE 클라이언트 연결이 포함되지 않았다고 확인했다. 아래의 macOS SSH 전달 포트 인식·loopback 변경과 위 SPICE 검사 VM의 성공은 각각 완료 기록으로 유지한다 |
+| Intel 설치 게스트의 SSH | **실제 검증 완료**. Remote Login을 활성화하고 제한된 임시 키로 인증·게스트 명령·재접속 exit 0. Cocoa 정상 종료 후 같은 디스크의 SPICE 부팅에서도 재확인. macOS 15.7.9 / 24G830 / x86_64 |
+| Intel 설치 게스트의 SPICE | **프로토콜 화면·입력 검증 완료**. 설치된 OS의 1920×1080 바탕화면, 실제 SPICE 키 입력과 포인터 클릭을 확인했다. 실제 spicy 창의 결과·재접속·앱 서비스 검사 및 남은 GUI 연동은 [상세 기록](MACOS_SPICE_BACKEND.ko.md)으로 구분한다 |
 | M1 Windows ARM64의 화면·입력·네트워크·앱 재실행 | **완료**. [M1 실행 기록](M1_VALIDATION.ko.md)과 사용자 확인을 유지한다 |
 | M1 Windows ARM64의 SSH/SPICE | **미검증・접속 구성 필요**. 사용자는 기존 검증에 두 접속이 포함되지 않았다고 확인했다. 검토 기준 `f48009b`의 [실행 인자](../../macos/Runner/WindowsVMTools.swift)는 Cocoa 화면과 user NAT를 사용하며 SPICE 서버·SSH 포트 전달을 설정하지 않는다. 현재 화면·외부 통신 검사는 완료로 유지한다 |
 | M1 macOS ARM의 SSH | **사용자 확인 완료**. 바탕화면·재부팅·SSH를 직접 검증했다는 사용자 보고를 유지한다 |
 
-이번 작업은 저장소 기록·코드와 사용자 확인의 대조이며 VM 재시험은 수행하지 않았다. 과거 날짜의 미검증 표현은 당시 관찰 범위로 읽는다.
+`381b59f`는 저장소 기록·코드와 사용자 확인을 대조한 문서 커밋이며 당시 VM 재시험은 수행하지 않았다. 이번 후속에서 위 Intel VM을 실제로 시험했다. 과거 날짜의 미검증 표현은 당시 관찰 범위로 읽는다.
 
-다음 연결 검증은 기존 순서를 유지한다.
-
-1. Intel macOS 설치 게스트: 현재 실행 상태와 SSH 서비스·접속 경로를 확인한 뒤 실제 로그인과 간단한 게스트 명령 실행을 검증한다. 포트가 열렸다는 사실만으로 완료 판정하지 않는다.
-2. 같은 Intel macOS 게스트: 정상 종료 후 검증된 SPICE backend로 실행하여 설치된 OS의 화면·입력·클라이언트 재접속을 확인한다. 완료된 폐기용 SPICE 검사는 반복하지 않는다.
-3. M1 Windows ARM64: SSH 서비스와 접속 경로를 구성해 로그인한 뒤, ARM용 QEMU의 SPICE 지원을 확인하고 앱의 연결 구성을 구현·검증한다. Cocoa 화면 검증과 구분한다.
+Intel SSH → 같은 설치 VM의 SPICE 순서로 수행한 결과는 위 기록을 따른다. 다음은 맥미니에서 기존 Windows ARM64의 SSH 서비스·loopback 전달과 실제 로그인 → ARM용 SPICE backend의 화면·입력·재접속 → 앱 연동을 구현·검증한다. 기존 Cocoa 화면 검증과 구분한다. 별도 worktree, 보존할 VM·lockfile, 검사 기준과 붙여넣을 프롬프트를 [M1 연결 인계 문서](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)에 정리했다.
 
 M1 macOS ARM의 바탕화면·재부팅·SSH는 완료 상태로 유지한다. 접속 설정을 마련하는 작업은 설치된 VM의 재설치를 요구하지 않는다.
 

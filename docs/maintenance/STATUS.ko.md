@@ -1,6 +1,6 @@
 # Fork 구현·검증 기록
 
-2026-09-10 연결 검증 대조: Intel의 SPICE 검사 VM 화면·키 입력·재접속은 이미 완료됐다. 사용자는 Intel·Windows ARM64의 기존 검증에 실제 SSH 로그인과 SPICE 클라이언트 연결은 포함되지 않았다고 확인했다. 해당 설치 게스트의 두 접속은 미검증이며 Windows ARM64는 앱의 접속 구성도 필요하다. 최신 구분과 순서는 [게스트 검증의 기존 연결 검증 대조](GUEST_VALIDATION.ko.md)를 따른다. M1 macOS ARM SSH의 사용자 확인 완료는 유지한다.
+2026-09-10 HST / 2026-09-11 UTC 연결 검증 후속: 설치된 Intel macOS의 실제 SSH 인증·명령·재접속, 정상 종료 후 같은 디스크의 SPICE 부팅·바탕화면·키 입력·포인터 클릭을 확인했다. 앱 서비스의 실제 VM 조회·SSH 감지·SPICE 인자 검사 1개도 통과했다. 실제 spicy 창의 결과와 일반 Run 연동의 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. Windows ARM64는 접속 구성·실사용 검증이 남아 있으며 [맥미니의 기존 Codex 세션으로 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다. M1 macOS ARM SSH의 사용자 확인 완료는 유지한다.
 
 2026-09-10 통합 후속: 사용자가 M1 macOS ARM의 **바탕화면·재부팅·SSH 검증 완료**를 확인했다. Windows ARM64의 설치 후 실사용과 함께 [M1 검증 기록](M1_VALIDATION.ko.md)에 반영했다. `personal/preview`의 `64cfd59`와 `personal/apple-silicon`의 `f3f5c2b`를 별도 `personal/platform-integration` 후보에서 merge했다. 추가로 발견한 선언형 ISO 경로의 삭제 보호 오류를 수정했다. Intel 분석·82개 Flutter 테스트·12개 실제 도구/catalog 검사·57개 네이티브 검사·release 빌드가 통과했다. 상세 결과와 남은 범위는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
 
@@ -74,8 +74,8 @@ Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 
 - 개인 VM 기능: `personal/vm-workflow` / `eaba8b8`.
 - 개인 고급 설정: `personal/backend-settings` / `d6a3369`.
 - 개인 패키지 후보: `personal/release-ops` / `2f0d9fd` (이후 문서만 추가될 수 있다).
-- 개인 통합 후보: `personal/platform-integration`. Intel 기준 `personal/preview` / `64cfd59`와 M1 기준 `personal/apple-silicon` / `f3f5c2b`의 이력을 함께 보존한다. M1의 마지막 앱 코드 변경은 `0517cf2`이며 이후 두 호스트의 커밋은 검증 문서다. 이 후보의 Intel 검사·승격 결과는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
-- Intel macOS x64 설치·구동은 2026-09-10 사용자 확인 완료(`personal/preview` / `64cfd59`)이며, 별도 SPICE 검사 VM도 통과했다. 설치 게스트의 SSH/SPICE는 기존 검증에 포함되지 않았다는 사용자 확인에 따라 다음 순서로 남긴다. 세부 상태는 [게스트 검증](GUEST_VALIDATION.ko.md)을 따른다.
+- 개인 통합 후보: `personal/platform-integration`을 `personal/preview`에 반영했다. Intel 기준 `64cfd59`와 M1 기준 `personal/apple-silicon` / `f3f5c2b`의 이력을 함께 보존한다. M1 원래 브랜치의 마지막 앱 코드 변경은 `0517cf2`이고 그 브랜치의 후속은 검증 문서였다. 통합 후 `f48009b`에서 Swift 삭제 보호 코드와 CI를 수정했다. Intel 검사·승격 결과는 [통합 검토](PLATFORM_INTEGRATION.ko.md)를 따른다.
+- Intel macOS x64 설치·구동은 사용자 확인 완료(`64cfd59`)이며, 후속에서 설치 게스트의 SSH 인증·재접속과 실제 SPICE 화면·키 입력·포인터 클릭을 확인했다. 별도 SPICE 검사 VM의 과거 성공과 구분한다. 세부 접속 결과와 앱 연동 범위는 [게스트 검증](GUEST_VALIDATION.ko.md)을 따른다.
 - M1의 Windows ARM64는 초기 설정·바탕화면·입력·HTTPS·정상 종료/부팅의 사용자 확인과 앱 재실행·설치 ISO 없는 실행·외부 TCP 검사를 완료했다. macOS ARM의 바탕화면·재부팅·SSH도 2026-09-10 사용자 확인 완료다. Windows SSH/SPICE는 접속 구성·검증이 필요하며, 오디오·전체 게스트 도구와 Intel ARM64 TCG 추가 실험은 별도로 관리한다.
 - `main`은 아직 upstream 기준이다. 아래 실사용 수용 검증을 마친 뒤 개인 안정판으로 승격한다. 공개 태그·릴리스와 upstream PR은 아직 제출하지 않았다.
 
@@ -105,6 +105,7 @@ Windows ARM ISO 전체 다운로드 및 ARM VM 생성·설치·부팅은 남아 
 | 개인 `09fce12` | macOS release 빌드와 `lipo -archs` | PASS: 46.8 MB, runner/App.framework의 x86_64/arm64 slice |
 | Intel Mac 별도 SPICE backend | [구성·실접속 기록](MACOS_SPICE_BACKEND.ko.md), [재현 도구](../../tool/spice/README.md) | PASS: 서버 25 tests, QEMU 11.1.1/SPICE 0.16.0, 화면 수신·K 입력·재접속·실제 spicy 4개 채널. 기본 GStreamer 환경에서도 확인. 설치된 게스트 검증과 구분 |
 | 실행 중 Unix SPICE VM 읽기 | 실제 `VmRepository.inspect/list`, `spiceArguments` | PASS: 1개 별도 검사. 실행 상태/소켓 경로/재접속 인자 인식, config bytes 보존 |
+| 설치된 Intel macOS 15.7.9 | [실접속 기록](MACOS_SPICE_BACKEND.ko.md) | SSH 인증·재접속(Cocoa 및 SPICE 부팅), SPICE 1920×1080 화면·키 입력·포인터 클릭 PASS. 앱 소스의 live 조회·접속 준비 1 test PASS. 실제 spicy 창·GUI 전체 연동의 확인 범위는 상세 기록 참조 |
 | 공통 `ab1ff85` | `flutter analyze --no-pub`, `flutter test --no-pub` | PASS: 분석 0, 26 tests / 외부 실행 opt-in 2 skipped. 새 공유 경로 검사 3개 포함 |
 | 개인 `bbd021f` | `flutter analyze --no-pub`, `flutter test --no-pub` | PASS: 분석 0, 39 tests / 외부 실행 opt-in 3 skipped. Windows 설치 처리와 공통 삭제 보호 통합 |
 | 개인 `bbd021f` | `flutter build macos --release --no-pub`, `lipo -archs` | PASS: 46.8 MB 앱. runner와 App.framework의 x86_64/arm64 slice 확인 |

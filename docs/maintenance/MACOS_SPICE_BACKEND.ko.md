@@ -97,6 +97,87 @@ Python GI/GTK 플러그인 경고도 있으므로 모든 멀티미디어 플러�
 읽는 검사도 PASS. config bytes는 변하지 않았다. 이는 설치된 macOS/Windows의
 바탕화면·SSH·클립보드·파일 전송·오디오·USB 실사용 검증을 대신하지 않는다.
 
-macOS 설치가 끝나고 게스트를 정상 종료한 뒤 전용 backend와 `display="spice"`로
-재부팅하여 게스트 검증을 이어간다. 설치 중인 Cocoa VM의 디스크를 다른 QEMU로
-동시에 열지 않는다. Windows ARM64 검증은 macOS Intel 단계의 결과 확정 후 진행한다.
+2026-09-10 실제 게스트 준비에서 위 backend의 Quickemu도 Darwin에서는 `cocoa`와
+`none`만 허용하는 것을 확인했다(`libexec/quickemu`의 `display_param_check`). 따라서
+전용 QEMU가 SPICE를 지원해도 config의 `display="spice"`만 바꾸는 절차는 작동하지 않는다.
+
+설치된 게스트의 검증은 정상 종료 후, 설치 완료 부팅에 사용한 QEMU 인자를 보존한 별도
+실행 스크립트에서 전용 QEMU·`-display none`·권한 700 폴더의 Unix SPICE 소켓을 지정한다.
+기존 CPU·화면 장치·OpenCore·NVRAM·시스템 디스크를 유지하며 SSH 전달은 loopback으로
+제한한다. 원본 config에 남아 있는 RecoveryImage를 다시 연결하지 않는지 확인한다.
+실행 중인 Cocoa VM의 디스크를 다른 QEMU에서 동시에 열지 않는다.
+
+이 직접 QEMU 실행은 호스트 검증 절차다. Quickgui의 일반 Run이 SPICE backend까지
+자동 설정한다는 의미는 아니다. 기존 `tool/spice/capture.c`는 실제 게스트의 화면·입력·
+재접속 관찰에 재사용하며, 폐기용 검사 VM을 만드는 `smoke.py`는 반복 실행하지 않는다.
+Windows ARM64 검증은 macOS Intel 단계의 결과 확정 후 진행한다.
+
+## 설치된 Intel macOS 게스트 검증 — 2026-09-10 HST / 2026-09-11 UTC
+
+앞의 폐기용 검사 VM 결과에 이어, 사용자가 설치·구동을 확인한 macOS 게스트에서
+SSH와 SPICE를 실제 검증했다. 아래는 현재까지 확인한 결과다. 실제 spicy 창의 직접
+입력은 호스트 화면 잠금으로 미확인이며, 프로토콜 입력·viewer 재접속·임시 키 정리와 구분한다.
+
+### 기존 설치 상태 보존과 SPICE 부팅
+
+Cocoa 게스트를 정상 종료했고 기존 QEMU 프로세스의 exit 0을 확인했다. 종료된 시스템
+디스크의 `qemu-img check`도 통과했다. 같은 설치 디스크·OpenCore·NVRAM을 사용하며
+RecoveryImage는 부착하지 않았다. 전용 SPICE QEMU는 위의 별도 실행 스크립트로 시작했다.
+기존 VM을 재설치하거나 동시에 두 QEMU에서 디스크를 열지 않았다.
+
+SPICE로 부팅한 뒤 SSH 명령은 exit 0이었으며 게스트의 macOS `15.7.9`, build `24G830`,
+`x86_64`를 확인했다. 게스트 boot UUID가 이전 Cocoa 실행과 달라져 새 부팅임을 확인했다.
+UUID 원문은 공개 기록에 포함하지 않는다.
+
+이 과정에서 호스트에 약 30분의 `DarkWake`/`ThermalEmergency` 구간이 있었다. 이 호스트
+기록이 포함된 전체 경과 시간을 VM의 부팅 시간이나 SPICE backend의 성능 측정값으로
+해석하지 않는다.
+
+### 확인 결과
+
+| 항목 | 결과와 근거 |
+| --- | --- |
+| Cocoa 부팅의 SSH | **PASS**. Remote Login UI를 활성화한 뒤 제한된 임시 키로 실제 인증·게스트 명령 실행. 연결 종료 후 새 세션의 재인증·명령 exit 0 |
+| SPICE 부팅 후 SSH | **PASS**. 설치된 게스트에 인증 후 OS·build·아키텍처 명령 exit 0. 이전 Cocoa 부팅과 다른 boot UUID 확인 |
+| 설치 게스트 화면 수신 | **PASS**. 기존 `tool/spice/capture.c`의 실제 SPICE 연결로 1920×1080 바탕화면과 Terminal 화면 수신 |
+| SPICE 키보드 입력 | **PASS**. capture 도구의 `--send-k` 입력 후 수신 화면에서 `QUICKGUI_SPICE_KEY=k` 확인 |
+| SPICE 포인터·클릭 | **PASS**. 로컬 `mouse_capture`로 SPICE 절대 좌표 이동·왼쪽 클릭을 전송하여 Settings 뒤의 Terminal을 다시 활성화한 화면 확인 |
+| 앱의 실제 실행 상태 조회 | **PASS**. 최신 앱 소스의 live 검사 1개 통과. 실제 `VmRepository.inspect/list`가 실행 중 QEMU PID `60671`, SSH 포트 `22220`, Unix SPICE 소켓을 인식 |
+| 앱의 연결 준비 | **PASS**. 같은 live 검사에서 `detectSsh` 성공과 `spiceArguments`의 Unix 소켓 인자를 확인. 검사 전후 원본 config bytes 동일 |
+| SPICE 프로토콜 재접속 | **PASS**. capture 클라이언트가 끊어진 뒤 별도 클라이언트가 같은 바탕화면을 수신하고 포인터 입력에 반응. 연결이 없는 동안에도 QEMU는 running |
+| 실제 spicy 프로세스 종료·재접속 | **PASS: 연결·화면 데이터 수신 범위**. viewer PID `63052`만 종료한 뒤 QEMU `60671` 유지와 빈 채널을 확인했다. 새 viewer `64131`의 다른 connection ID로 main/display/inputs/cursor가 복구됐다. debug 로그에서 primary canvas 생성·1920×1080 monitor·display mark 수신 확인 |
+| 실제 spicy 창의 직접 입력 | **BLOCKED: 호스트 화면 잠금**. `CGSSessionScreenIsLocked=true`, 디스플레이 전원 상태 0을 확인했다. 해당 viewer에 보낸 호스트 키 이벤트는 게스트 입력으로 이어지지 않았다. 실제 창의 키·마우스 수동 조작을 PASS로 처리하지 않는다 |
+| 임시 인증 자료 정리 | **PASS**. 검증용 authorized_keys 한 줄만 제거하는 SSH 명령 exit 0. 다른 키 줄을 보존하고 호스트 임시 개인 키도 삭제했다. 게스트 Remote Login은 활성 상태로 유지 |
+
+`mouse_capture`는 이번 로컬 관찰 도구이며 배포된 앱 기능이 아니다. capture 도구가 받은
+실제 SPICE 프레임과 입력 반응은 설치 게스트의 프로토콜 검증 근거다. 실제 spicy 창의
+사용자 입력·재접속 검증은 위의 별도 항목으로 완료 여부를 관리한다.
+
+실제 spicy의 스택은 정상 GTK/AppKit 이벤트 대기였고, 접근성·이벤트 전송·화면 캡처
+권한 조회는 허용 상태였다. 창 목록에 표시된다는 사실이나 채널 연결만으로 직접 창
+입력을 통과 처리하지 않았다. 호스트 잠금 해제를 요청했으며, 잠금·보안 설정을 변경하지
+않았다. QEMU의 virtio-sound 입력 경고, Unix 소켓의 `TCP_NODELAY` 경고와 spicy의
+`CVDisplayLink` 초기화 경고도 관찰했다. 오디오가 정상이라는 의미는 아니다.
+
+확인 시각과 범위를 [정리한 JSON](evidence/intel-macos-connections.json)에 기록했다.
+원본 로그·게스트 화면은 Intel의 `/private/tmp/quickgui-intel-connections-yghh3lvw`에
+있으며 공개 JSON에는 암호·키·실제 boot UUID를 포함하지 않았다. 화면 파일도 공개하지 않았다.
+
+### 앱 연동 범위와 남은 제한
+
+이번 실행은 CLI에서 검증용 스크립트로 전용 QEMU를 시작한 뒤, Quickgui 소스의 실제
+조회·SSH 감지·SPICE 인자 생성 서비스를 그 VM에 적용한 검사다. 앱의 일반 Run 버튼이
+전용 SPICE backend를 선택해 부팅하거나 원본 config의 `display="spice"`를 처리하도록
+연동한 것은 아니다. 앞서 확인한 Darwin Quickemu의 display 제한도 그대로 남아 있다.
+
+따라서 이번 서비스 검사 성공을 앱 GUI의 전체 실행·접속 흐름 검증으로 확대하지 않는다.
+VM과 재접속한 spicy viewer는 실행 상태로 유지했다. 현재 `.ports`는 SSH `22220`과
+실행 중 Unix SPICE 소켓을 가리킨다. 원본 config·생성된 설치 부팅 스크립트·OpenCore·
+NVRAM의 bytes와 inode, 시스템 디스크의 inode는 보존됐다. 시스템 디스크 내용은 정상적인
+게스트 실행과 SSH 설정에 따라 변경됐다. 검증용 실행기·소켓은 위 임시 폴더에 있으며
+일반 Run의 영속 SPICE 설정으로 저장한 것은 아니다. 이후 다시 부팅할 때 원본 config의
+Recovery 항목을 그대로 실행하지 말고 설치 부팅 인자를 확인해야 한다.
+
+남은 Intel 항목은 호스트 잠금 해제 후 실제 spicy 창 입력과 앱 GUI의 전체 접속 흐름이다.
+Windows ARM64는 사용자 요청에 따라 [맥미니 기존 Codex로 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다.
+오디오·클립보드·파일 전송·USB 및 Windows ARM64의 SPICE 성공 여부는 이번 결과에 포함하지 않는다.
