@@ -178,7 +178,7 @@ final class WindowsArmVirtualMachine {
     }
     if let port = metadata.sshPort { result["savedSshPort"] = port }
     if let active = session, active.bundle.path == target.path, active.phase == "running", active.qemu.isRunning,
-       let port = active.sshPort { result["sshHost"] = "127.0.0.1"; result["sshPort"] = port }
+       let port = active.sshPort { result["sshHost"] = "127.0.0.1"; result["sshPort"] = port; result["connectionSession"] = active.runtime.path }
     if let message = message { result["error"] = message }
     return result
   }

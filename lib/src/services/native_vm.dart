@@ -22,8 +22,27 @@ class NativeVmRecord {
       error = data['error'] as String?,
       version = data['version'] as String? ?? '',
       installationPending = data['installationPending'] as bool? ?? false,
+      sshPort = data['sshPort'] as int?,
+      savedSshPort = data['savedSshPort'] as int?,
+      sshHost = data['sshHost'] as String?,
+      spiceSocket = data['spiceSocket'] as String?,
+      connectionSession = data['connectionSession'] as String?,
+      connectionWarning = data['connectionWarning'] as String?,
+      spiceRequested = data['spiceRequested'] as bool? ?? false,
+      spiceAvailable = data['spiceAvailable'] as bool? ?? false,
       progress = (data['progress'] as num?)?.toDouble().clamp(0, 1);
   final String path, name, state, version;
+  final int? sshPort, savedSshPort;
+  final String? sshHost, spiceSocket, connectionSession, connectionWarning;
+  final bool spiceRequested, spiceAvailable;
+  bool get hasSsh =>
+      state == 'running' &&
+      sshHost == '127.0.0.1' &&
+      sshPort != null &&
+      sshPort! >= 1024 &&
+      sshPort! <= 65535 &&
+      connectionSession != null;
+  bool get hasSpice => hasSsh && spiceSocket != null;
   final String? error;
   final double? progress;
   final bool installationPending;
@@ -114,6 +133,15 @@ class NativeVmService {
       channel.invokeMethod<void>('cancelInstall', {'path': path});
   Future<void> stop(String path, {bool force = false}) =>
       channel.invokeMethod<void>('stop', {'path': path, 'force': force});
+  Future<void> configureConnections(
+    String path, {
+    required int port,
+    required bool spiceEnabled,
+  }) => channel.invokeMethod<void>('configureConnections', {
+    'path': path,
+    'port': port,
+    'spiceEnabled': spiceEnabled,
+  });
   Future<void> completeInstallation(String path) =>
       channel.invokeMethod<void>('completeInstallation', {'path': path});
 }

@@ -52,6 +52,9 @@ final class WindowsVMChannel {
         case "list":
           try NativeStorageStore.shared.rememberWorkspace(string("directory"))
           reply(try backend.list(string("directory")))
+        case "configureConnections":
+          try backend.configureConnections(string("path"), port: number("port"), spiceEnabled: args["spiceEnabled"] as? Bool)
+          reply(nil)
         case "status": reply(try backend.status(string("path")))
         case "start": backend.start(try string("path"), completion: done)
         case "show": try backend.show(string("path")); reply(nil)

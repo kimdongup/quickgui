@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import '../services/native_vm.dart';
 import '../services/native_storage.dart';
 import 'storage_delete_dialog.dart';
+import 'native_vm_connections.dart';
 
 class NativeVmControls extends StatefulWidget {
   const NativeVmControls({
@@ -90,6 +91,12 @@ class _NativeVmControlsState extends State<NativeVmControls> {
             Text('${(vm.progress! * 100).toStringAsFixed(1)}%'),
         ],
         if (vm.error != null) SelectableText(vm.error!),
+        if (service.windows)
+          NativeVmConnections(
+            vm: vm,
+            service: service,
+            onChanged: widget.onChanged,
+          ),
         Wrap(
           spacing: 8,
           children: [
