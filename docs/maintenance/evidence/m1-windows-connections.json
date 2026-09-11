@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "sourceCommit": "ac6c3a1",
-  "checkedAt": "2026-09-11T08:13:47Z",
+  "sourceCommit": "1877d60982f6dfa605d04039d84d92bb6b8f1dae",
+  "checkedAt": "2026-09-11T08:35:25.237182+00:00",
   "hostArchitecture": "arm64",
   "hostOS": "macOS 26.6.2 (25G83)",
   "guest": "Windows ARM64",
@@ -27,7 +27,7 @@
   },
   "sshLogin": {
     "name": "sshLogin",
-    "checkedAt": "2026-09-11T08:13:08Z",
+    "checkedAt": "2026-09-11T08:29:03Z",
     "exitCode": 0,
     "guest": {
       "os": "Microsoft Windows 10.0.26200 ",
@@ -39,7 +39,7 @@
   },
   "sshReconnect": {
     "name": "sshReconnect",
-    "checkedAt": "2026-09-11T08:13:47Z",
+    "checkedAt": "2026-09-11T08:30:04Z",
     "exitCode": 0,
     "guest": {
       "os": "Microsoft Windows 10.0.26200 ",
@@ -51,20 +51,26 @@
   },
   "spiceDisplay": {
     "status": "pass",
-    "evidence": "800x600 Windows lock/PIN screen captured through spice-gtk display channel 0; local PNG retained privately."
+    "method": "spice-gtk protocol client against the real installed Windows VM",
+    "evidence": "800x600 installed Windows desktop and Notepad received from native harness and Flutter app VM sessions."
   },
   "spiceInput": {
-    "status": "partial",
-    "pointer": "SPICE absolute click 400,200 changed lock screen to PIN sign-in.",
-    "keyboard": "Wake key sent; visible text entry remains pending guest login."
+    "status": "pass",
+    "method": "spice-gtk protocol client against the real installed Windows VM",
+    "evidence": "Absolute SPICE clicks opened Start and Notepad. A fresh test tab changed from empty to k using SPICE scancode 0x25."
   },
   "spiceReconnect": {
-    "status": "partial",
-    "evidence": "Separate capture clients received display after disconnect/reconnect; post-login text entry remains pending."
+    "status": "pass",
+    "method": "spice-gtk protocol client against the real installed Windows VM",
+    "evidence": "After the client exited, a new client changed k to kk on the same VM. Repeated against the app-started VM: kk to kkk to kkkk."
   },
   "appReconnect": {
-    "status": "blocked",
-    "evidence": "Native backend status implemented; Flutter channel configuration and connection UI remain outstanding."
+    "status": "pass",
+    "settings": "50827 and SPICE enabled saved, app quit/relaunch preserved them. Out-of-range port rejected.",
+    "startup": "Flutter release app started the existing VM with a new runtime socket and live connect buttons.",
+    "spice": "App button launched spicy; terminating that viewer and clicking again produced a new four-channel connection without stopping QEMU.",
+    "ssh": "User confirmed Windows command prompt after retry from the app SSH button. Independent verifier also authenticated twice against the app-started VM.",
+    "firstSshAttempt": "Host-key fingerprint matched the previously verified guest key. Initial prompt ended with connection closed before password; retry succeeded. LoginGraceTime expiration is a possible explanation, not proven."
   },
   "checks": {
     "swift": {
@@ -78,20 +84,21 @@
     },
     "flutterTest": {
       "status": "pass",
-      "passed": 82,
+      "passed": 87,
       "skipped": 4,
       "exitCode": 0
     },
     "macosRelease": {
       "status": "pass",
       "exitCode": 0,
-      "sizeMB": 48.1,
+      "sizeMB": 48.2,
       "architectures": [
         "arm64",
         "x86_64"
       ],
       "signature": "ad-hoc; codesign --verify --deep --strict exit 0",
-      "launched": false
+      "launched": true,
+      "launchIsolation": "Copied release build to a private validation app with a separate bundle identifier and ad-hoc signature; installed app untouched."
     }
   },
   "preservation": {
@@ -105,17 +112,17 @@
     "installationPending": false,
     "installedApplicationReplaced": false
   },
-  "finalVMState": "running; guest login pending",
-  "runtimeProbeCaveat": "Native Swift harness from source, dedicated ARM SPICE QEMU. Built Flutter app integration not yet validated.",
+  "finalVMState": "running; installed Windows desktop; app and SPICE viewer open",
+  "runtimeProbeCaveat": "Early protocol tests used a native Swift harness. Final VM start, saved settings, live endpoints and viewer launch were exercised in the Flutter release app. SSH app authentication was user-confirmed; independent CLI evidence is recorded separately.",
   "ci": {
-    "headSha": "4e9b8de9f91f0bfe8b6e6f7c4207d1b6fa146a6c",
+    "headSha": "1877d60982f6dfa605d04039d84d92bb6b8f1dae",
     "build": {
       "status": "pass",
-      "url": "https://github.com/kimdongup/quickgui/actions/runs/34564212677"
+      "url": "https://github.com/kimdongup/quickgui/actions/runs/34579501893"
     },
     "quickemuSmoke": {
       "status": "pass",
-      "url": "https://github.com/kimdongup/quickgui/actions/runs/34564212440"
+      "url": "https://github.com/kimdongup/quickgui/actions/runs/34579501905"
     }
   },
   "sshServer": {
@@ -136,5 +143,6 @@
     "spiceSupport": false,
     "spiceHelpExitCode": 1,
     "spiceHelpOutput": "qemu-system-aarch64: -spice: invalid option"
-  }
+  },
+  "viewerLimitations": "GTK spicy accessibility requests timed out. Real screen/input was checked with the SPICE C protocol client; ordinary viewer launch/reconnect was checked by process and QMP channels. No claim of full GTK menu, clipboard, audio or USB redirection testing."
 }

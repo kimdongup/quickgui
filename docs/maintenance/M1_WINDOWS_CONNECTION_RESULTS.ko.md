@@ -1,5 +1,48 @@
 # M1 Windows ARM64 연결 작업 기록
 
+## 최종 검증 — 앱 코드 `1877d60`
+
+요청 순서대로 SSH 인증·재접속 → SPICE 화면·입력·재접속 → 앱 연동을 수행했다.
+
+| 항목 | 실제 결과 |
+| --- | --- |
+| SSH | 별도 인증 두 번, 게스트 명령 exit 0. Windows build 26200, OS·프로세스 Arm64. 앱이 시작한 VM에서도 08:29:03/08:30:04 UTC 재검증 PASS |
+| SPICE 화면 | 800×600 Windows 바탕화면과 메모장을 실제 SPICE display 채널로 수신 |
+| SPICE 포인터·키보드 | SPICE 절대 좌표 클릭으로 시작 메뉴·메모장·새 탭을 열고 `k` 입력 확인 |
+| SPICE 재접속 | 클라이언트 프로세스 종료 후 새 접속에서 `k` → `kk`. 앱 VM에서도 `kk` → `kkk` → `kkkk` 확인 |
+| 앱 설정 | 잘못된 포트 거부, 50827/SPICE 저장, 앱 정상 종료·재실행 후 같은 값 확인 |
+| 앱 시작·SPICE | 기존 VM을 앱 Run으로 시작. 새 소켓과 연결 버튼 확인. 앱 버튼으로 viewer 연결, viewer만 종료 후 버튼 재접속 시 새 연결 ID와 4개 채널 확인 |
+| 앱 SSH | 버튼으로 Terminal에 올바른 SSH 명령 실행. 최초 호스트 키 등록 후 인증 전에 종료됐지만 재시도에서 사용자가 Windows 명령 프롬프트 진입 성공 확인 |
+| 로컬 검사 | Swift 35, Flutter 87 PASS / 4 opt-in skip, analyze no issues, macOS release 48.2 MB 빌드 PASS |
+
+SPICE 입력의 화면 변화는 `tool/spice/capture.c`와 실제 게스트로 확인했다.
+일반 Homebrew spicy GTK 창은 macOS 접근성 도구에서 timeout이 발생했다.
+일반 viewer의 프로세스·QMP 채널 연결/재접속은 확인했지만, 해당 창의 메뉴·클립보드·
+오디오·USB 리디렉션까지 검증했다고 주장하지 않는다. 개인 파일이 보이는 원본
+스크린샷과 상세 로그는 로컬 비공개 폴더에만 보관했다.
+
+앱 SSH 최초 시도에서 사용자가 제공한 지문은 앞서 확인한 게스트 키와 일치했다.
+암호 입력 전에 연결이 닫힌 원인은 입증하지 못했으며, 키 확인 중 로그인 제한 시간
+만료 가능성으로 설명했다. 다시 앱 버튼을 누른 뒤 사용자가 암호 인증 성공을 확인했다.
+서버 인증 설정이나 Hello 옵션을 추가 변경하지 않았다.
+
+최종 앱은 릴리스 빌드 사본에 별도 bundle identifier와 ad-hoc 서명을 적용한
+`Quickgui Connections.app`이다. 기존 `/Applications/quickgui.app`을 교체하지 않았다.
+앱 재시작 후 실제 VM 실행까지 확인했고, 실행 중인 QEMU를 남겨 앱만 재시작하는
+비정상 소유권 인계는 지원한다고 주장하지 않는다. 이전 owner 보호를 유지한다.
+
+기존 VM UUID/MAC·CPU/메모리·이미지 참조·설치 완료 상태와 firmware code 해시를
+최초 APFS clone과 대조해 일치했다. 쓰기 가능한 디스크·TPM·NVRAM은 정상 게스트
+사용에 따라 갱신됐고 원래 경로와 백업을 유지한다. 원래 작업 트리에는 기존
+`M pubspec.lock`만 있으며 SHA256은
+`c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a` 그대로다.
+최종 VM은 바탕화면에서 실행 중이며 검증 앱과 SPICE viewer를 열어 두었다.
+
+코드 `1877d60`의 Build Quickgui 및 Public Quickemu smoke CI는 모두 성공했다.
+현재 구조화된 결과와 CI 링크는 [JSON](evidence/m1-windows-connections.json)을 따른다.
+아래는 이전 단계별 이력이다.
+
+
 ## 최신 상태 — 2026-09-11 08:17 UTC
 
 전용 ARM64 QEMU/SPICE backend를 구성했고, `ac6c3a1`의 단일 화면 선택 수정으로

@@ -1,10 +1,12 @@
 # 게스트 설치 경험과 순차 검증
 
-2026-09-11 UTC 후속: 별도 `personal/windows-arm-connections`에서 Windows ARM64의
-loopback SSH 전달·포트 저장을 구현했다. **독립 SSH 인증 두 번과 게스트 명령 exit 0,
-Windows build 26200 / OS·프로세스 Arm64 확인 PASS**. SPICE·앱 연동은 진행 중이다.
-[이번 직접 실행 기록](M1_WINDOWS_CONNECTION_RESULTS.ko.md)과
-[JSON](evidence/m1-windows-connections.json)을 참고한다.
+2026-09-11 UTC 후속: `personal/windows-arm-connections`에서 Windows ARM64의
+**실제 SSH 로그인·재접속, SPICE 화면·클릭·키보드·재접속, Flutter 앱 연결을 확인했다.**
+앱 SSH 인증은 사용자 확인, SPICE 입력은 실제 게스트에 연결한 C 검증기 결과다.
+일반 GTK viewer의 접근성 제어 제한 등 정확한 범위는
+[직접 실행 기록](M1_WINDOWS_CONNECTION_RESULTS.ko.md)과
+[JSON](evidence/m1-windows-connections.json)을 따른다.
+
 
 2026-09-10 HST / 2026-09-11 UTC 실제 연결 검증: Intel에 설치된 macOS의 SSH 인증·명령 실행·재접속을 Cocoa와 SPICE 부팅에서 확인했다. 같은 설치 디스크의 SPICE 바탕화면 수신·키 입력·포인터 클릭과 앱 서비스의 실행 상태·접속 인자 검사도 통과했다. 실제 spicy 창의 세부 결과와 앱 연동 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. 다음 Windows ARM64 작업은 사용자 요청에 따라 [맥미니의 기존 Codex 세션으로 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다.
 

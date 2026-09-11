@@ -1,10 +1,12 @@
 # M1 Quickgui PATH·Bash 수정 검증
 
-2026-09-11 UTC 후속: 별도 `personal/windows-arm-connections`에서 Windows ARM64의
-loopback SSH 전달·포트 저장을 구현했다. **독립 SSH 인증 두 번과 게스트 명령 exit 0,
-Windows build 26200 / OS·프로세스 Arm64 확인 PASS**. SPICE·앱 연동은 진행 중이다.
-[이번 직접 실행 기록](M1_WINDOWS_CONNECTION_RESULTS.ko.md)과
-[JSON](evidence/m1-windows-connections.json)을 참고한다.
+2026-09-11 UTC 후속: `personal/windows-arm-connections`에서 Windows ARM64의
+**실제 SSH 로그인·재접속, SPICE 화면·클릭·키보드·재접속, Flutter 앱 연결을 확인했다.**
+앱 SSH 인증은 사용자 확인, SPICE 입력은 실제 게스트에 연결한 C 검증기 결과다.
+일반 GTK viewer의 접근성 제어 제한 등 정확한 범위는
+[직접 실행 기록](M1_WINDOWS_CONNECTION_RESULTS.ko.md)과
+[JSON](evidence/m1-windows-connections.json)을 따른다.
+
 
 2026-09-09 (Pacific/Honolulu). 사용자 M1 맥미니에서 실제 실행한 결과다.
 이번 범위는 Quickemu/Quickget의 Bash 선택 오류 수정, 회귀 검사와 macOS 빌드다.
