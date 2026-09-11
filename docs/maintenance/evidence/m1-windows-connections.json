@@ -24,7 +24,7 @@
   },
   "sshLogin": {
     "status": "blocked",
-    "evidence": "User completed Windows PIN login. get-service sshd returned NoServiceFoundForGivenName. User chose to configure OpenSSH themselves; awaiting completion."
+    "evidence": "User installed and started OpenSSH. Corrected confirmed firewall Private/Public mismatch with user approval; listener now returns OpenSSH_for_Windows_9.5. ED25519 fingerprint compared between guest and host. Awaiting user password entry in the prepared local authentication runner."
   },
   "sshReconnect": {
     "status": "blocked",
@@ -85,17 +85,28 @@
     "installationPending": false,
     "installedApplicationReplaced": false
   },
-  "finalVMState": "running; Windows desktop and PowerShell, user configuring OpenSSH",
+  "finalVMState": "running; installed Windows desktop, waiting for interactive SSH authentication",
   "runtimeProbeCaveat": "Native forwarding was compiled from the working tree before configureSSH was added. UI probe uses a byte-copy of ARM Homebrew QEMU in a local app wrapper plus explicit -L /opt/homebrew/share/qemu. It is not the built Flutter app.",
   "ci": {
-    "headSha": "b40ea3cac09abbba56f11c423552858875e3b916",
+    "headSha": "4e9b8de9f91f0bfe8b6e6f7c4207d1b6fa146a6c",
     "build": {
       "status": "pass",
-      "url": "https://github.com/kimdongup/quickgui/actions/runs/34563590157"
+      "url": "https://github.com/kimdongup/quickgui/actions/runs/34564212677"
     },
     "quickemuSmoke": {
       "status": "pass",
-      "url": "https://github.com/kimdongup/quickgui/actions/runs/34563590153"
+      "url": "https://github.com/kimdongup/quickgui/actions/runs/34564212440"
     }
+  },
+  "sshServer": {
+    "version": "OpenSSH_for_Windows_9.5",
+    "service": "Running (guest PowerShell observed)",
+    "firewall": {
+      "enabled": true,
+      "profile": "Any",
+      "remoteAddress": "10.0.2.2",
+      "reason": "Guest network is Public; installed rule originally applied only to Private."
+    },
+    "hostKeyVerified": true
   }
 }

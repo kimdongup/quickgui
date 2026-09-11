@@ -83,3 +83,28 @@ QEMU의 실제 bind 실패를 오류로 처리하며 무관한 프로세스를 �
 인증·게스트 명령을 실행한다. PowerShell에서 Windows OS와 Win32_Processor의 ARM64
 코드 12를 확인하며 개인정보를 제외한 JSON을 기록한다. 현재 CLI help 실행만
 확인했으며 실제 인증 검증은 사용자 OpenSSH 설정 이후에 수행해야 한다.
+
+## OpenSSH 설정 후 확인 (2026-09-11 UTC)
+
+사용자가 OpenSSH 설치·자동 시작을 완료했다. 도구로 Windows PowerShell의
+`Installed`와 `sshd Running`을 직접 확인했다. 최초에는 SSH 배너가 오지 않았다.
+조회 결과 게스트 네트워크는 `Public`, OpenSSH 방화벽 규칙은 `Private`였다.
+사용자의 실행 직전 승인을 받은 뒤 다음 명령을 실행했다.
+
+```powershell
+Set-NetFirewallRule -Name OpenSSH-Server-In-TCP -Profile Any -RemoteAddress 10.0.2.2
+```
+
+그 직후 기존 loopback 전달 주소에서 `SSH-2.0-OpenSSH_for_Windows_9.5` 배너를
+수신했다. 게스트의 ED25519 공개키 지문과 맥의 해당 포트에서 받은 키 지문이
+일치함을 직접 대조했다. 기존 암호·인증 키는 변경하지 않았다.
+
+컴퓨터 사용 도구가 `com.apple.Terminal` 접근을 안전 제한으로 거부했다.
+사용자가 로컬 `windows-connections-private-20260910/verify-ssh.command`를 직접
+실행하고 두 번 암호를 입력하도록 요청했다. 이 시점에는 인증 결과 JSON이 아직
+생성되지 않았으므로 SSH 로그인·재접속은 여전히 BLOCKED다. SPICE 구축·게스트
+입력·앱 연동은 SSH 실인증 이후에 진행한다. VM은 Windows 바탕화면 상태로 실행 중이다.
+
+소스 `4e9b8de9f91f0bfe8b6e6f7c4207d1b6fa146a6c`의
+[빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34564212677)와
+[smoke CI](https://github.com/kimdongup/quickgui/actions/runs/34564212440)는 모두 success다.
