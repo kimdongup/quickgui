@@ -12,19 +12,43 @@ const windowsArmPage =
     'https://www.microsoft.com/en-us/software-download/windows11arm64';
 
 class MediaSource {
-  MediaSource({required this.kind, required this.url, required this.label}) {
-    validateUrl(url, kind);
+  MediaSource({
+    required this.kind,
+    required this.url,
+    required this.label,
+    this.windowsX64 = false,
+    this.virtio = false,
+  }) {
+    validateUrl(url, kind, windowsX64: windowsX64, virtio: virtio);
   }
+  final bool windowsX64, virtio;
   final ArmMedia kind;
   final Uri url;
   final String label;
-  String get fileName => kind == ArmMedia.windows
+  String get fileName => virtio
+      ? 'virtio-win.iso'
+      : windowsX64
+      ? 'Windows-11-x64.iso'
+      : kind == ArmMedia.windows
       ? 'Windows-11-ARM64.iso'
       : 'macOS-Apple-Silicon.ipsw';
 
-  static void validateUrl(Uri url, ArmMedia kind, {bool checkName = true}) {
+  static void validateUrl(
+    Uri url,
+    ArmMedia kind, {
+    bool checkName = true,
+    bool windowsX64 = false,
+    bool virtio = false,
+  }) {
+    if ((windowsX64 || virtio) && kind != ArmMedia.windows ||
+        (windowsX64 && virtio)) {
+      throw const FormatException('Invalid media selection.');
+    }
     final host = url.host.toLowerCase();
-    final official = kind == ArmMedia.windows
+    final official = virtio
+        ? host == 'fedorapeople.org' &&
+              url.path.startsWith('/groups/virt/virtio-win/direct-downloads/')
+        : kind == ArmMedia.windows
         ? const [
             'software.download.prss.microsoft.com',
             'software.download.microsoft.com',
@@ -43,9 +67,15 @@ class MediaSource {
     if (!checkName) return;
     final name = url.pathSegments.lastOrNull?.toLowerCase() ?? '';
     if (kind == ArmMedia.windows &&
-        (!name.endsWith('.iso') || !name.contains('arm64'))) {
-      throw const FormatException(
-        'Paste the Windows 11 ARM64 ISO download link, not the web page or an x64 ISO.',
+        (!name.endsWith('.iso') ||
+            (!virtio &&
+                (windowsX64
+                    ? !name.contains('x64') || name.contains('arm64')
+                    : !name.contains('arm64'))))) {
+      throw FormatException(
+        windowsX64 || virtio
+            ? 'Paste the official ISO download link for the selected architecture, not a web page.'
+            : 'Paste the Windows 11 ARM64 ISO download link, not the web page or an x64 ISO.',
       );
     }
     if (kind == ArmMedia.macos && !name.endsWith('.ipsw')) {
@@ -107,7 +137,13 @@ class MediaDownloadSession extends ChangeNotifier {
     var url = source.url;
     for (var redirects = 0; redirects <= 5; redirects++) {
       if (_cancelled) throw const HttpException('Cancelled');
-      MediaSource.validateUrl(url, source.kind, checkName: false);
+      MediaSource.validateUrl(
+        url,
+        source.kind,
+        checkName: false,
+        windowsX64: source.windowsX64,
+        virtio: source.virtio,
+      );
       final request = await _client!
           .getUrl(url)
           .timeout(const Duration(seconds: 30));
@@ -162,7 +198,13 @@ class MediaDownloadSession extends ChangeNotifier {
       final root = Directory(p.join(directory, 'Install Media'));
       await root.create(recursive: true);
       target = await root.createTemp(
-        source.kind == ArmMedia.windows ? 'windows-arm64-' : 'macos-arm64-',
+        source.virtio
+            ? 'virtio-'
+            : source.windowsX64
+            ? 'windows-x64-'
+            : source.kind == ArmMedia.windows
+            ? 'windows-arm64-'
+            : 'macos-arm64-',
       );
       partial = File(p.join(target.path, '${source.fileName}.part'));
       writer = await partial.open(mode: FileMode.writeOnly);
@@ -198,6 +240,12 @@ class MediaDownloadSession extends ChangeNotifier {
                   'NSR02',
                   'NSR03',
                 ].contains(String.fromCharCodes(header.sublist(32769, 32774)));
+      if ((source.windowsX64 && received < 1024 * 1024 * 1024) ||
+          (source.virtio && received < 32 * 1024 * 1024)) {
+        throw const FormatException(
+          'The ISO is too small or incomplete. Use a complete official image.',
+        );
+      }
       if (!isImage) {
         throw const FormatException(
           'The downloaded file is not an ISO/IPSW image.',

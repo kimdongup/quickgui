@@ -1,5 +1,7 @@
 # Fork 구현·검증 기록
 
+2026-09-11 Windows x64 후속: 기존 다운로드 버튼이 외부 Quickget의 Windows 자동 미디어 생성 경로를 유지하던 문제를 수정했다. Windows 11 x64의 공식 ISO 링크·로컬 파일 선택, HTML/불완전 ISO 거부, 선택형 VirtIO와 Intel 프로필, 기존 VM을 덮어쓰지 않는 수동 설치 준비를 추가했다. 상세 근거와 사용법은 [Windows x64 미디어 수정](WINDOWS_X64_MEDIA_FIX.ko.md)을 따른다.
+
 2026-09-11 UTC 최종 진행: 개인 통합 `32fcd67`의 Build·Public Quickemu smoke CI 모두 성공. 검증된 빌드를 `/Applications/quickgui.app`에 설치했고 기존 앱은 `/Users/mac/Applications/Quickgui-backup-32fcd67/quickgui.app`에 보존했다. 사용자 요청으로 추가 기능 검증을 종료하고 공통 [PR #325](https://github.com/quickemu-project/quickgui/pull/325)를 Ready for review로 전환했다. 실행 중인 VM과 미커밋 파일은 보존했다.
 
 2026-09-11 UTC 통합 검토: M1 연결 작업 `f81ea92`(앱 코드 `1877d60`)를 최신 `personal/preview` 기준 `13860d6`에 충돌 없이 통합했다. Intel 회귀와 보존 범위는 [통합 검토 결과](M1_CONNECTION_INTEGRATION.ko.md)를 따른다. 아래 날짜별 기록의 미완료 표시는 당시 상태다.

@@ -9,6 +9,7 @@ import '../../model/operating_system.dart';
 import '../../model/option.dart';
 import '../../model/version.dart';
 import '../../pages/downloader.dart';
+import '../../pages/windows_x64_download.dart';
 import '../../pages/arm_media_download.dart';
 import '../../pages/operating_system_selection.dart';
 import '../../pages/version_selection.dart';
@@ -115,6 +116,8 @@ class _HomePageButtonGroupState extends State<HomePageButtonGroup>
                                 kind: os.armMedia!,
                                 directory: target,
                               )
+                            : os.code == 'windows' && version.version == '11'
+                            ? WindowsX64Download(directory: target)
                             : Downloader(
                                 operatingSystem: os,
                                 version: version,
