@@ -18,10 +18,10 @@
 | SSH 전달 | native backend가 loopback의 사용 가능한 포트 50827을 선택하고 `vm.json`에 저장. QEMU 인자 `hostfwd=tcp:127.0.0.1:50827-:22`. 새 native 프로세스 실행 후 동일 포트 복원 |
 | 포트 충돌 | VM 디스크를 열지 않는 `-machine none` QEMU의 같은 포트 bind 시 exit 1. 기존 VM은 계속 실행됨 |
 | 기존 화면 회귀 | 설치 ISO 없는 첫 부팅에서 QMP 화면으로 Windows 바탕화면 직접 확인. 이후 `system_powerdown` 정상 종료 요청과 프로세스 종료 확인 후 재실행 |
-| SSH 인증 | **BLOCKED**. TCP listener 이후 SSH 배너 수신 5초 timeout. 게스트 OpenSSH 설치·서비스·방화벽 상태는 아직 모름. 재실행한 Windows의 PIN 화면에서 사용자 직접 로그인을 요청함 |
+| SSH 인증 | **BLOCKED**. 사용자가 PIN 로그인을 완료했고 `get-service sshd`는 서비스 없음으로 반환. 사용자가 OpenSSH 설정을 직접 하기로 선택했으며 완료 응답 대기 중. SSH 배너도 아직 수신하지 못함 |
 | ARM SPICE | 설치 QEMU 11.1.1 ARM64의 `-spice help`는 exit 1과 `-spice: invalid option`. 옵션 목록이 나오는 exit 1과 구분. SSH 인증 선행 조건 때문에 별도 backend 구축·화면·입력·재접속은 아직 수행하지 않음 |
 | 앱 연동 | native 상태는 저장 포트와 현재 세션의 live 포트를 구분함. Flutter 설정 채널·버튼·앱 재접속은 **미구현/미검증** |
-| 최종 VM | 검증용 native 실행기가 소유한 Cocoa VM 실행 중, Windows PIN 로그인 대기. 앱/VM 강제 종료하지 않음 |
+| 최종 VM | 검증용 native 실행기가 소유한 Cocoa VM 실행 중, Windows 바탕화면/PowerShell에서 사용자 OpenSSH 설정 대기. 앱/VM 강제 종료하지 않음 |
 
 원본 설치 ISO는 연결하거나 수정하지 않았다. ISO 수정 시각은 작업 이전이며 최초 전체
 ISO 해시는 수집하지 않았다. TPM/NVRAM과 디스크는 부팅에 따라 정상적으로 변경될 수
@@ -59,10 +59,27 @@ QEMU의 실제 bind 실패를 오류로 처리하며 무관한 프로세스를 �
 
 ## 이어서 할 일
 
-Windows 창에서 사용자가 직접 PIN 로그인한 후 게스트 OpenSSH 상태를 읽는다.
+사용자 PIN 로그인은 완료됐다. 게스트의 `sshd` 서비스가 없는 것을 직접 확인했다.
+사용자가 OpenSSH 설치·자동 시작·NAT 호스트로 제한한 방화벽 설정을 직접 진행하기로
+선택했으므로 그 완료를 기다린다.
 [Microsoft OpenSSH 설치 안내](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)와
 [키 인증 안내](https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement)를
 따라 기존 인증 설정을 보존하면서 준비한다. 실제 SSH 인증·OS/ARM64 명령·재인증을
 먼저 통과시킨 다음 ARM SPICE backend의 화면·입력·viewer 재접속, 마지막으로
 플랫폼 채널·Flutter 접속 버튼·앱 재실행을 구현하고 검증한다.
 현재 커밋을 `personal/preview`의 연결 기능 완료로 통합하지 않는다.
+
+
+## 원격 CI와 다음 인증 도구
+
+원격 `b40ea3cac09abbba56f11c423552858875e3b916`의
+[Build Quickgui](https://github.com/kimdongup/quickgui/actions/runs/34563590157)와
+[Public Quickemu smoke tests](https://github.com/kimdongup/quickgui/actions/runs/34563590153)는 모두 success다.
+
+`tool/check_windows_ssh.py`를 추가했다. 사전에 검증한 host key가 들어 있는
+`--known-hosts`, 저장된 `--port`, 결과 저장 `--output`을 지정한다.
+`--user`를 생략하면 로컬 터미널에서 로그인 이름을 묻는다. 암호는 SSH의 터미널
+프롬프트에서만 입력한다. 각 SSH 프로세스의 connection multiplexing을 끄고 별도로
+인증·게스트 명령을 실행한다. PowerShell에서 Windows OS와 Win32_Processor의 ARM64
+코드 12를 확인하며 개인정보를 제외한 JSON을 기록한다. 현재 CLI help 실행만
+확인했으며 실제 인증 검증은 사용자 OpenSSH 설정 이후에 수행해야 한다.

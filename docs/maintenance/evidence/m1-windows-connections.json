@@ -24,7 +24,7 @@
   },
   "sshLogin": {
     "status": "blocked",
-    "evidence": "Windows PIN login requires user input; SSH banner read timed out after 5 seconds. OpenSSH guest state is not yet known."
+    "evidence": "User completed Windows PIN login. get-service sshd returned NoServiceFoundForGivenName. User chose to configure OpenSSH themselves; awaiting completion."
   },
   "sshReconnect": {
     "status": "blocked",
@@ -85,6 +85,17 @@
     "installationPending": false,
     "installedApplicationReplaced": false
   },
-  "finalVMState": "running; Cocoa Windows PIN login screen",
-  "runtimeProbeCaveat": "Native forwarding was compiled from the working tree before configureSSH was added. UI probe uses a byte-copy of ARM Homebrew QEMU in a local app wrapper plus explicit -L /opt/homebrew/share/qemu. It is not the built Flutter app."
+  "finalVMState": "running; Windows desktop and PowerShell, user configuring OpenSSH",
+  "runtimeProbeCaveat": "Native forwarding was compiled from the working tree before configureSSH was added. UI probe uses a byte-copy of ARM Homebrew QEMU in a local app wrapper plus explicit -L /opt/homebrew/share/qemu. It is not the built Flutter app.",
+  "ci": {
+    "headSha": "b40ea3cac09abbba56f11c423552858875e3b916",
+    "build": {
+      "status": "pass",
+      "url": "https://github.com/kimdongup/quickgui/actions/runs/34563590157"
+    },
+    "quickemuSmoke": {
+      "status": "pass",
+      "url": "https://github.com/kimdongup/quickgui/actions/runs/34563590153"
+    }
+  }
 }
