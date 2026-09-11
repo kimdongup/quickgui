@@ -1,5 +1,11 @@
 # 게스트 설치 경험과 순차 검증
 
+2026-09-10 HST 후속: 별도 `personal/windows-arm-connections`에서 Windows ARM64의
+loopback SSH 전달·포트 저장 및 native 회귀 검사를 구현했다. **게스트 PIN 로그인 대기로
+실제 SSH 인증은 BLOCKED이며 SPICE·앱 연동도 미완료**다. 기존 완료 항목은 유지한다.
+[이번 직접 실행 기록](M1_WINDOWS_CONNECTION_RESULTS.ko.md)과
+[JSON](evidence/m1-windows-connections.json)을 참고한다.
+
 2026-09-10 HST / 2026-09-11 UTC 실제 연결 검증: Intel에 설치된 macOS의 SSH 인증·명령 실행·재접속을 Cocoa와 SPICE 부팅에서 확인했다. 같은 설치 디스크의 SPICE 바탕화면 수신·키 입력·포인터 클릭과 앱 서비스의 실행 상태·접속 인자 검사도 통과했다. 실제 spicy 창의 세부 결과와 앱 연동 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. 다음 Windows ARM64 작업은 사용자 요청에 따라 [맥미니의 기존 Codex 세션으로 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다.
 
 앞선 `381b59f`의 SSH/SPICE 기록 대조에서 사용자는 Intel·Windows ARM64의 기존 검사에 실제 게스트 SSH 로그인과 spicy/remote-viewer 화면 연결이 포함되지 않았다고 확인했다. 이를 근거로 위 Intel 실접속을 새로 수행했다. 기존 폐기용 SPICE 검사와 M1 macOS ARM SSH의 완료 기록도 유지한다.

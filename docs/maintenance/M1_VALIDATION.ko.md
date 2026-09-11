@@ -1,5 +1,11 @@
 # M1 Quickgui PATH·Bash 수정 검증
 
+2026-09-10 HST 후속: 별도 `personal/windows-arm-connections`에서 Windows ARM64의
+loopback SSH 전달·포트 저장 및 native 회귀 검사를 구현했다. **게스트 PIN 로그인 대기로
+실제 SSH 인증은 BLOCKED이며 SPICE·앱 연동도 미완료**다. 기존 완료 항목은 유지한다.
+[이번 직접 실행 기록](M1_WINDOWS_CONNECTION_RESULTS.ko.md)과
+[JSON](evidence/m1-windows-connections.json)을 참고한다.
+
 2026-09-09 (Pacific/Honolulu). 사용자 M1 맥미니에서 실제 실행한 결과다.
 이번 범위는 Quickemu/Quickget의 Bash 선택 오류 수정, 회귀 검사와 macOS 빌드다.
 게스트 OS 설치·실행 완료를 의미하지 않는다.

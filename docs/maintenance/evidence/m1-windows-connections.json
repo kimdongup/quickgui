@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "sourceCommit": "f2ef0ec5ee43d125e20384c38841c7d3674329fe",
+  "checkedAt": "2026-09-11T04:48:34.775457+00:00",
+  "hostArchitecture": "arm64",
+  "hostOS": "macOS 26.6.2 (25G83)",
+  "guest": "Windows ARM64",
+  "backend": {
+    "version": "QEMU 11.1.1",
+    "architecture": "arm64",
+    "acceleration": "hvf",
+    "spiceSupport": false,
+    "spiceHelpExitCode": 1,
+    "spiceHelpOutput": "qemu-system-aarch64: -spice: invalid option"
+  },
+  "sshForward": {
+    "status": "pass",
+    "address": "127.0.0.1",
+    "port": 50827,
+    "guestPort": 22,
+    "persistedAcrossNativeProcessRestart": true,
+    "collisionExitCode": 1,
+    "evidence": "M1_WINDOWS_CONNECTION_RESULTS.ko.md"
+  },
+  "sshLogin": {
+    "status": "blocked",
+    "evidence": "Windows PIN login requires user input; SSH banner read timed out after 5 seconds. OpenSSH guest state is not yet known."
+  },
+  "sshReconnect": {
+    "status": "blocked",
+    "evidence": "Actual SSH authentication has not occurred."
+  },
+  "spiceDisplay": {
+    "status": "blocked",
+    "evidence": "Awaiting SSH acceptance first; installed Homebrew QEMU lacks SPICE."
+  },
+  "spiceInput": {
+    "status": "blocked",
+    "evidence": "No ARM SPICE guest session yet."
+  },
+  "spiceReconnect": {
+    "status": "blocked",
+    "evidence": "No ARM SPICE guest session yet."
+  },
+  "appReconnect": {
+    "status": "blocked",
+    "evidence": "Native backend status implemented; Flutter channel configuration and connection UI remain outstanding."
+  },
+  "checks": {
+    "swift": {
+      "status": "pass",
+      "count": 30,
+      "exitCode": 0
+    },
+    "flutterAnalyze": {
+      "status": "pass",
+      "exitCode": 0
+    },
+    "flutterTest": {
+      "status": "pass",
+      "passed": 82,
+      "skipped": 4,
+      "exitCode": 0
+    },
+    "macosRelease": {
+      "status": "pass",
+      "exitCode": 0,
+      "sizeMB": 48.1,
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "signature": "ad-hoc; codesign --verify --deep --strict exit 0",
+      "launched": false
+    }
+  },
+  "preservation": {
+    "vmIdentityUnchanged": true,
+    "existingLockfileUnchanged": true,
+    "existingLockfileSHA256": "c62192090c5902173f7919fc303041eb037019d52763bee97eb5292cae36187a",
+    "originalInstallationMediaUnchanged": true,
+    "originalMediaEvidence": "Not attached or written during this work; original ISO modification time predates this session. No initial full ISO hash was taken.",
+    "firmwareCodeBytesUnchanged": true,
+    "diskTPMNVRAM": "Existing paths reused; cold APFS clone backup retained locally. Writable guest state legitimately changes during boot.",
+    "installationPending": false,
+    "installedApplicationReplaced": false
+  },
+  "finalVMState": "running; Cocoa Windows PIN login screen",
+  "runtimeProbeCaveat": "Native forwarding was compiled from the working tree before configureSSH was added. UI probe uses a byte-copy of ARM Homebrew QEMU in a local app wrapper plus explicit -L /opt/homebrew/share/qemu. It is not the built Flutter app."
+}
