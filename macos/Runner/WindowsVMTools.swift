@@ -174,7 +174,7 @@ enum WindowsVMTools {
     // This firmware needs a PCI display for discovery and a linear RAM
     // framebuffer for Windows boot. RAMFB stays console 0 for the Cocoa window.
     var args = ["-name", "Windows ARM64", "-uuid", uuid, "-machine", "virt-9.2,highmem=on,gic-version=3", "-accel", "hvf", "-cpu", "host",
-                "-smp", "\(cpus)", "-m", "\(memoryGiB * 1024)", "-nodefaults", "-serial", "stdio", "-display", showWindow ? "cocoa" : "none", "-device", "ramfb", "-device", "virtio-gpu-pci",
+                "-smp", "\(cpus)", "-m", "\(memoryGiB * 1024)", "-nodefaults", "-serial", "stdio", "-display", showWindow ? "cocoa" : "none", "-device", "ramfb,id=windows-display", "-device", "virtio-gpu-pci",
                 "-device", "qemu-xhci,id=usb,p2=8,p3=8", "-device", "usb-kbd,bus=usb.0", "-device", "usb-tablet,bus=usb.0",
                 "-blockdev", try block("code", bundle.appendingPathComponent("uefi-code.fd").path, format: "raw", readOnly: true),
                 "-blockdev", try block("vars", bundle.appendingPathComponent("uefi-vars.fd").path, format: "raw"),
@@ -191,7 +191,7 @@ enum WindowsVMTools {
         throw MacVMError("Invalid SPICE socket path.")
       }
       let escaped = path.replacingOccurrences(of: ",", with: ",,")
-      args += ["-L", "/opt/homebrew/share/qemu", "-spice", "unix=on,addr=\(escaped),disable-ticketing=on"]
+      args += ["-L", "/opt/homebrew/share/qemu", "-spice", "unix=on,addr=\(escaped),disable-ticketing=on,display=windows-display"]
     }
     if let iso = iso {
       // Windows Setup must see optical media, not an unpartitioned USB disk.

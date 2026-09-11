@@ -66,9 +66,9 @@ enum TestWindowsVM {
               "stopped VM never exposes a stale SPICE endpoint")
     let spiceArgs = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid,
       mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, sshPort: 50223, spiceSocket: URL(fileURLWithPath: "/tmp/private space,한글/spice.sock"))
-    try check(spiceArgs.contains("unix=on,addr=/tmp/private space,,한글/spice.sock,disable-ticketing=on") && spiceArgs.contains("cocoa"),
+    try check(spiceArgs.contains("unix=on,addr=/tmp/private space,,한글/spice.sock,disable-ticketing=on,display=windows-display") && spiceArgs.contains("cocoa"),
               "SPICE preserves literal paths and Cocoa while using a local Unix socket")
-    try check(spiceArgs.contains("ramfb") && spiceArgs.contains("virtio-gpu-pci") && spiceArgs.contains("tpm-tis-device,tpmdev=tpm0"),
+    try check(spiceArgs.contains("ramfb,id=windows-display") && spiceArgs.contains("virtio-gpu-pci") && spiceArgs.contains("tpm-tis-device,tpmdev=tpm0"),
               "SPICE leaves existing framebuffer, PCI GPU and TPM unchanged")
     try rejects("overlong SPICE socket refused before launch") {
       _ = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid,
@@ -78,7 +78,7 @@ enum TestWindowsVM {
     let boot = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil)
     try check(install.contains("hvf") && install.contains("host") && install.contains("virt-9.2,highmem=on,gic-version=3"), "native ARM hardware acceleration selected")
     try check(!install.joined(separator: " ").contains("invtsc") && !install.joined(separator: " ").contains("qxl") && !install.joined(separator: " ").contains("ICH9"), "x64-only CPU and device options excluded")
-    try check(install.contains("tpm-tis-device,tpmdev=tpm0") && install.contains("ramfb") && install.contains("virtio-gpu-pci") && install.firstIndex(of: "ramfb")! < install.firstIndex(of: "virtio-gpu-pci")! && install.contains(where: { $0.hasPrefix("nvme,") }), "TPM2, primary linear framebuffer plus PCI display, and inbox storage configured")
+    try check(install.contains("tpm-tis-device,tpmdev=tpm0") && install.contains("ramfb,id=windows-display") && install.contains("virtio-gpu-pci") && install.firstIndex(of: "ramfb,id=windows-display")! < install.firstIndex(of: "virtio-gpu-pci")! && install.contains(where: { $0.hasPrefix("nvme,") }), "TPM2, primary linear framebuffer plus PCI display, and inbox storage configured")
     let blocks = try install.enumerated().filter { $0.element == "-blockdev" }.map { index, _ -> [String: Any] in
       try JSONSerialization.jsonObject(with: Data(install[index+1].utf8)) as! [String: Any]
     }
