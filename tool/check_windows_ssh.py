@@ -14,16 +14,17 @@ import time
 
 COMMAND = r"""
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 try {
-  $os = Get-CimInstance Win32_OperatingSystem
-  $cpu = @(Get-CimInstance Win32_Processor | Select-Object -ExpandProperty Architecture -Unique)
-  if ($os.Caption -notlike '*Windows*' -or $cpu.Count -ne 1 -or $cpu[0] -ne 12) {
-    throw 'Expected Windows on ARM64'
-  }
-  [ordered]@{os=$os.Caption; version=$os.Version; build=$os.BuildNumber;
-    architecture='ARM64'; processorArchitectureCode=[int]$cpu[0]} | ConvertTo-Json -Compress
+  $runtime = [System.Runtime.InteropServices.RuntimeInformation]
+  [ordered]@{os=$runtime::OSDescription; version=[Environment]::OSVersion.Version.ToString();
+    architecture=$runtime::OSArchitecture.ToString();
+    processArchitecture=$runtime::ProcessArchitecture.ToString()} | ConvertTo-Json -Compress
   exit 0
-} catch { exit 1 }
+} catch {
+  [ordered]@{diagnostic='guest_query_failed'; errorType=$_.Exception.GetType().Name} | ConvertTo-Json -Compress
+  exit 1
+}
 """
 
 
@@ -60,12 +61,14 @@ def main():
         try:
             result = subprocess.run(command, stdout=subprocess.PIPE, timeout=180)
             record['exitCode'] = result.returncode
+            guest = json.loads(result.stdout.decode('utf-8-sig').strip())
+            # Preserve the actual OS/CPU observations even when validation fails.
+            record['guest'] = guest
             if result.returncode != 0:
                 raise ValueError('SSH or guest command failed')
-            guest = json.loads(result.stdout.decode('utf-8-sig').strip())
-            if guest.get('architecture') != 'ARM64' or guest.get('processorArchitectureCode') != 12:
-                raise ValueError('Guest architecture was not verified')
-            record.update(status='pass', guest=guest)
+            if 'Windows' not in guest.get('os', '') or guest.get('architecture', '').upper() != 'ARM64':
+                raise ValueError('Windows ARM64 OS architecture was not verified')
+            record.update(status='pass')
         except (ValueError, UnicodeError, subprocess.TimeoutExpired):
             record['status'] = 'fail'
         evidence['sessions'].append(record)
