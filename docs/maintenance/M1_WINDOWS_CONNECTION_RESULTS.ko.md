@@ -122,7 +122,9 @@ QEMU의 실제 bind 실패를 오류로 처리하며 무관한 프로세스를 �
 백업 폴더 `vm-backup`은 실행하거나 재설치용으로 사용하지 않는다.
 새 release 앱은 작업 worktree의 `build/macos/Build/Products/Release/quickgui.app`이다.
 
-## 이어서 할 일
+## 초기 단계의 이어서 할 일 (완료 전 역사 기록)
+
+이 절의 대기·통합 보류는 초기 단계에만 해당한다. 현재 결과는 문서 첫머리의 최종 검증과 [Intel 통합 검토](M1_CONNECTION_INTEGRATION.ko.md)를 따른다.
 
 사용자 PIN 로그인은 완료됐다. 게스트의 `sshd` 서비스가 없는 것을 직접 확인했다.
 사용자가 OpenSSH 설치·자동 시작·NAT 호스트로 제한한 방화벽 설정을 직접 진행하기로

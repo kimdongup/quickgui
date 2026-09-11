@@ -1,5 +1,7 @@
 # Intel/M1 개인 후보 통합 검토
 
+2026-09-11 UTC 통합 검토: M1 연결 작업 `f81ea92`(앱 코드 `1877d60`)를 최신 `personal/preview` 기준 `13860d6`에 충돌 없이 통합했다. Intel 회귀와 보존 범위는 [통합 검토 결과](M1_CONNECTION_INTEGRATION.ko.md)를 따른다. 아래 날짜별 기록의 미완료 표시는 당시 상태다.
+
 2026-09-10, Intel Mac에서 `personal/platform-integration`을 검토한다.
 
 ## 기준과 완료된 게스트 검증
@@ -52,4 +54,4 @@ Flutter 검사는 두 후보의 앱을 합친 `f3b1900`에 대해 실행했고, 
 - M1 `f3f5c2b`의 [Build](https://github.com/kimdongup/quickgui/actions/runs/34519762183)와 [실제 Quickemu smoke](https://github.com/kimdongup/quickgui/actions/runs/34519762199)도 성공했다. 통합 후보의 새 CI 결과와 구분한다.
 - 두 공통 브랜치는 `integration/stabilization` / `ae57d7d`에서 각각 분기했다. upstream `74949e0`에 그대로 제출하면 PATH는 14커밋·62파일, 파일 선택은 14커밋·63파일이다. [기존 제출 순서](UPSTREAM_PRS.md)에 맞춰 선행 변경이 수용된 뒤 범위를 다시 정리하거나 upstream 기준으로 개별 수정을 이식해야 한다.
 - Intel 통합 검사를 통과한 개인 후보는 `personal/preview`로 반영한다. `main` 안정판 승격·공개 릴리스·upstream PR 제출은 별도 단계다.
-- 통합 후속에서 Intel macOS 설치 게스트의 SSH 인증·명령·재접속, 같은 디스크의 SPICE 부팅·화면·키 입력·포인터 클릭 및 앱의 조회·접속 준비 서비스를 확인했다. 실제 spicy 창의 결과와 GUI 일반 Run 연동의 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. 다음 Windows ARM64 SSH → SPICE → 앱 연동은 [맥미니 기존 Codex 세션에 인계](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)한다. Windows의 기존 화면은 Cocoa이며 접속 구성이 추가로 필요하다. M1 macOS ARM SSH는 사용자 확인 완료를 유지한다. 오디오·전체 게스트 도구·추가 공유 기능은 별도 범위다.
+- 통합 후속에서 Intel macOS 설치 게스트의 SSH 인증·명령·재접속, 같은 디스크의 SPICE 부팅·화면·키 입력·포인터 클릭 및 앱의 조회·접속 준비 서비스를 확인했다. 실제 spicy 창의 결과와 GUI 일반 Run 연동의 제한은 [Intel 연결 기록](MACOS_SPICE_BACKEND.ko.md)을 따른다. 후속 Windows ARM64 SSH → SPICE → 앱 연동은 [M1에서 완료](M1_WINDOWS_CONNECTION_RESULTS.ko.md)했고, [Intel 통합 회귀](M1_CONNECTION_INTEGRATION.ko.md)를 추가했다. M1 macOS ARM SSH는 사용자 확인 완료를 유지한다. 오디오·전체 게스트 도구·추가 공유 기능은 별도 범위다.

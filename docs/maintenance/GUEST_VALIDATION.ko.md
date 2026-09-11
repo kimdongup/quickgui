@@ -1,5 +1,7 @@
 # 게스트 설치 경험과 순차 검증
 
+2026-09-11 UTC 통합 검토: M1 연결 작업 `f81ea92`(앱 코드 `1877d60`)를 최신 `personal/preview` 기준 `13860d6`에 충돌 없이 통합했다. Intel 회귀와 보존 범위는 [통합 검토 결과](M1_CONNECTION_INTEGRATION.ko.md)를 따른다. 아래 날짜별 기록의 미완료 표시는 당시 상태다.
+
 2026-09-11 UTC 후속: `personal/windows-arm-connections`에서 Windows ARM64의
 **실제 SSH 로그인·재접속, SPICE 화면·클릭·키보드·재접속, Flutter 앱 연결을 확인했다.**
 앱 SSH 인증은 사용자 확인, SPICE 입력은 실제 게스트에 연결한 C 검증기 결과다.
@@ -60,12 +62,12 @@ M1 Windows ARM64의 초기 설정·바탕화면·입력·HTTPS 및 설치 완료
 | Intel 설치 게스트의 SSH | **실제 검증 완료**. Remote Login을 활성화하고 제한된 임시 키로 인증·게스트 명령·재접속 exit 0. Cocoa 정상 종료 후 같은 디스크의 SPICE 부팅에서도 재확인. macOS 15.7.9 / 24G830 / x86_64 |
 | Intel 설치 게스트의 SPICE | **프로토콜 화면·입력 검증 완료**. 설치된 OS의 1920×1080 바탕화면, 실제 SPICE 키 입력과 포인터 클릭을 확인했다. 실제 spicy 창의 결과·재접속·앱 서비스 검사 및 남은 GUI 연동은 [상세 기록](MACOS_SPICE_BACKEND.ko.md)으로 구분한다 |
 | M1 Windows ARM64의 화면·입력·네트워크·앱 재실행 | **완료**. [M1 실행 기록](M1_VALIDATION.ko.md)과 사용자 확인을 유지한다 |
-| M1 Windows ARM64의 SSH/SPICE | **미검증・접속 구성 필요**. 사용자는 기존 검증에 두 접속이 포함되지 않았다고 확인했다. 검토 기준 `f48009b`의 [실행 인자](../../macos/Runner/WindowsVMTools.swift)는 Cocoa 화면과 user NAT를 사용하며 SPICE 서버·SSH 포트 전달을 설정하지 않는다. 현재 화면·외부 통신 검사는 완료로 유지한다 |
+| M1 Windows ARM64의 SSH/SPICE | **검증 완료 (`1877d60`)**. 실제 SSH 인증·재접속, SPICE 프로토콜 화면·포인터·키 입력·재접속, 앱 설정 저장·재실행·SSH/SPICE 연결. 일반 GTK viewer 자동 제어 제한은 [M1 결과](M1_WINDOWS_CONNECTION_RESULTS.ko.md)와 [JSON](evidence/m1-windows-connections.json) 참조 |
 | M1 macOS ARM의 SSH | **사용자 확인 완료**. 바탕화면·재부팅·SSH를 직접 검증했다는 사용자 보고를 유지한다 |
 
 `381b59f`는 저장소 기록·코드와 사용자 확인을 대조한 문서 커밋이며 당시 VM 재시험은 수행하지 않았다. 이번 후속에서 위 Intel VM을 실제로 시험했다. 과거 날짜의 미검증 표현은 당시 관찰 범위로 읽는다.
 
-Intel SSH → 같은 설치 VM의 SPICE 순서로 수행한 결과는 위 기록을 따른다. 다음은 맥미니에서 기존 Windows ARM64의 SSH 서비스·loopback 전달과 실제 로그인 → ARM용 SPICE backend의 화면·입력·재접속 → 앱 연동을 구현·검증한다. 기존 Cocoa 화면 검증과 구분한다. 별도 worktree, 보존할 VM·lockfile, 검사 기준과 붙여넣을 프롬프트를 [M1 연결 인계 문서](M1_WINDOWS_CONNECTION_HANDOFF.ko.md)에 정리했다.
+Intel 설치 VM의 연결 검증에 이어 M1 Windows ARM64의 SSH → SPICE → 앱 연동도 완료했다. 해당 M1 증거를 검토하고 Intel 회귀를 실행한 [통합 결과](M1_CONNECTION_INTEGRATION.ko.md)를 따른다. 일반 GTK 창의 전체 조작·오디오·클립보드 등은 별도 검증 범위다.
 
 M1 macOS ARM의 바탕화면·재부팅·SSH는 완료 상태로 유지한다. 접속 설정을 마련하는 작업은 설치된 VM의 재설치를 요구하지 않는다.
 

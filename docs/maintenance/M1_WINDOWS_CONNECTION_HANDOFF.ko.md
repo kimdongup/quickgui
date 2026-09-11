@@ -1,5 +1,7 @@
 # M1 Windows ARM64 SSH/SPICE 검증 인계
 
+2026-09-11 UTC 통합 검토: M1 연결 작업 `f81ea92`(앱 코드 `1877d60`)를 최신 `personal/preview` 기준 `13860d6`에 충돌 없이 통합했다. Intel 회귀와 보존 범위는 [통합 검토 결과](M1_CONNECTION_INTEGRATION.ko.md)를 따른다. 아래 날짜별 기록의 미완료 표시는 당시 상태다.
+
 2026-09-10. 사용자는 Windows ARM64의 후속 작업을 **맥미니의 기존 Codex 세션에서 이어서 검증**하기로 했다. 이 문서는 이미 설치된 Windows VM의 연결 기능 구현·검증을 위한 인계이며, 새 VM 설치 절차가 아니다.
 
 ## 시작 기준과 완료 기록
