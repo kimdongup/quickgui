@@ -12,6 +12,7 @@ struct WindowsVMMetadata: Codable {
   let iso: String
   var installationPending = true
   var sshPort: Int?
+  var spiceEnabled: Bool?
   var error: String?
 }
 
@@ -24,6 +25,8 @@ final class WindowsArmVirtualMachine {
     let lock: MacVMLock
     let log: FileHandle
     var sshPort: Int?
+    var spiceSocket: URL?
+    var connectionWarning: String?
     let qemu = Process()
     let tpm = Process()
     var phase = "starting"
@@ -162,6 +165,17 @@ final class WindowsArmVirtualMachine {
     }
     var result: [String: Any] = ["path": target.path, "name": metadata.name, "state": state, "version": "11 ARM64",
                                  "installationPending": metadata.installationPending]
+    result["spiceRequested"] = metadata.spiceEnabled ?? false
+    result["spiceAvailable"] = WindowsVMTools.spiceAvailable()
+    result["displayMode"] = "cocoa"
+    if let active = session, active.bundle.path == target.path {
+      if let warning = active.connectionWarning { result["connectionWarning"] = warning }
+      if active.phase == "running", active.qemu.isRunning, let socket = active.spiceSocket,
+         (try? FileManager.default.attributesOfItem(atPath: socket.path)[.type] as? FileAttributeType) == .typeSocket {
+        result["spiceSocket"] = socket.path
+        result["displayMode"] = "cocoa+spice"
+      }
+    }
     if let port = metadata.sshPort { result["savedSshPort"] = port }
     if let active = session, active.bundle.path == target.path, active.phase == "running", active.qemu.isRunning,
        let port = active.sshPort { result["sshHost"] = "127.0.0.1"; result["sshPort"] = port }
@@ -205,11 +219,16 @@ final class WindowsArmVirtualMachine {
       active.tpm.currentDirectoryURL = target
       active.tpm.arguments = ["socket", "--tpm2", "--tpmstate", "dir=tpm", "--ctrl", "type=unixio,path=\(runtime.appendingPathComponent("tpm.sock").path)", "--terminate"]
       active.tpm.standardOutput = log; active.tpm.standardError = log
-      active.qemu.executableURL = URL(fileURLWithPath: WindowsVMTools.qemu)
+      let useSpice = metadata.spiceEnabled == true && WindowsVMTools.spiceAvailable()
+      if useSpice { active.spiceSocket = runtime.appendingPathComponent("spice.sock") }
+      else if metadata.spiceEnabled == true {
+        active.connectionWarning = "SPICE backend unavailable; running with the Cocoa display. Prepare the ARM SPICE backend and restart to enable SPICE."
+      }
+      active.qemu.executableURL = URL(fileURLWithPath: useSpice ? WindowsVMTools.spiceQemu : WindowsVMTools.qemu)
       active.qemu.currentDirectoryURL = target
       active.qemu.arguments = try WindowsVMTools.arguments(bundle: target, runtime: runtime, uuid: metadata.uuid, mac: metadata.mac,
                                                           cpus: metadata.cpus, memoryGiB: metadata.memoryGiB, iso: metadata.installationPending ? metadata.iso : nil,
-                                                          networkISO: networkISO?.path, showWindow: showWindow, sshPort: active.sshPort)
+                                                          networkISO: networkISO?.path, showWindow: showWindow, sshPort: active.sshPort, spiceSocket: active.spiceSocket)
       active.qemu.standardInput = FileHandle.nullDevice
       active.qemu.standardOutput = log; active.qemu.standardError = log
       active.qemu.terminationHandler = { process in
@@ -257,8 +276,12 @@ final class WindowsArmVirtualMachine {
     }
     DispatchQueue.global().async {
       let status = try? WindowsQMP.command(socket: active.runtime.appendingPathComponent("qmp.sock").path, execute: "query-status")
+      let spiceReady: Bool
+      if active.spiceSocket != nil {
+        spiceReady = (try? WindowsQMP.command(socket: active.runtime.appendingPathComponent("qmp.sock").path, execute: "query-spice")["enabled"] as? Bool) == true
+      } else { spiceReady = true }
       DispatchQueue.main.async {
-        if status?["running"] as? Bool == true, self.session === active {
+        if status?["running"] as? Bool == true, spiceReady, self.session === active {
           active.phase = "running"; completion(.success(()))
         } else {
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { self.waitForQEMU(active, until: deadline, completion: completion) }
@@ -298,14 +321,19 @@ final class WindowsArmVirtualMachine {
   }
   /// Connections are configured only while stopped, under the same VM lock as start.
   func configureSSH(_ path: String, port: Int) throws {
+    try configureConnections(path, port: port, spiceEnabled: nil)
+  }
+
+  func configureConnections(_ path: String, port: Int, spiceEnabled: Bool?) throws {
     guard (1024...65535).contains(port) else { throw MacVMError("SSH port must be between 1024 and 65535.") }
     let target = try bundle(path)
-    guard session?.bundle.path != target.path else { throw MacVMError("Shut down the guest before changing its SSH port.") }
+    guard session?.bundle.path != target.path else { throw MacVMError("Shut down the guest before changing its connections.") }
     let lock = try MacVMLock(bundle: target)
     defer { lock.release() }
     guard try !hasOtherOwner(target) else { throw MacVMError("The VM is still running.") }
     var metadata = try read(target)
     metadata.sshPort = port
+    if let enabled = spiceEnabled { metadata.spiceEnabled = enabled }
     try write(metadata, target)
   }
 

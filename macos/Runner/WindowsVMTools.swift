@@ -4,6 +4,31 @@ import CryptoKit
 
 enum WindowsVMTools {
   static let qemu = "/opt/homebrew/bin/qemu-system-aarch64"
+  static let spiceQemu = FileManager.default.homeDirectoryForCurrentUser
+    .appendingPathComponent("Library/Application Support/Quickgui/Backends/windows-arm-spice/QEMU.app/Contents/MacOS/qemu-system-aarch64").path
+  private static var spiceCache: (Date, Int, Bool)?
+
+  /// A local ARM backend is optional. Never substitute an Intel executable.
+  static func spiceAvailable() -> Bool {
+    guard let attributes = try? FileManager.default.attributesOfItem(atPath: spiceQemu),
+          attributes[.type] as? FileAttributeType == .typeRegular,
+          let modified = attributes[.modificationDate] as? Date,
+          let size = attributes[.size] as? Int else { return false }
+    if let cached = spiceCache, cached.0 == modified, cached.1 == size { return cached.2 }
+    let available: Bool
+    do {
+      _ = try run("/usr/bin/lipo", [spiceQemu, "-verify_arch", "arm64"], timeout: 5)
+      let help = try run(spiceQemu, ["-help"], timeout: 5)
+      let accelerators = try run(spiceQemu, ["-accel", "help"], timeout: 5)
+      let displays = try run(spiceQemu, ["-display", "help"], timeout: 5)
+      available = String(decoding: help, as: UTF8.self).contains("-spice [")
+        && String(decoding: accelerators, as: UTF8.self).split(whereSeparator: \.isWhitespace).contains("hvf")
+        && String(decoding: displays, as: UTF8.self).split(whereSeparator: \.isWhitespace).contains("cocoa")
+    } catch { available = false }
+    spiceCache = (modified, size, available)
+    return available
+  }
+
   static let imageTool = "/opt/homebrew/bin/qemu-img"
   static let tpm = "/opt/homebrew/bin/swtpm"
   static let firmwareDirectory = FileManager.default.homeDirectoryForCurrentUser
@@ -144,7 +169,7 @@ enum WindowsVMTools {
     return String(data: try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]), encoding: .utf8)!
   }
 
-  static func arguments(bundle: URL, runtime: URL, uuid: String, mac: String, cpus: Int, memoryGiB: Int, iso: String?, networkISO: String? = nil, showWindow: Bool = true, sshPort: Int? = nil) throws -> [String] {
+  static func arguments(bundle: URL, runtime: URL, uuid: String, mac: String, cpus: Int, memoryGiB: Int, iso: String?, networkISO: String? = nil, showWindow: Bool = true, sshPort: Int? = nil, spiceSocket: URL? = nil) throws -> [String] {
     if let port = sshPort, !(1024...65535).contains(port) { throw MacVMError("SSH port must be between 1024 and 65535.") }
     // This firmware needs a PCI display for discovery and a linear RAM
     // framebuffer for Windows boot. RAMFB stays console 0 for the Cocoa window.
@@ -160,6 +185,14 @@ enum WindowsVMTools {
                 "-chardev", "socket,id=chrtpm,path=\(runtime.appendingPathComponent("tpm.sock").path)",
                 "-tpmdev", "emulator,id=tpm0,chardev=chrtpm", "-device", "tpm-tis-device,tpmdev=tpm0",
                 "-qmp", "unix:\(runtime.appendingPathComponent("qmp.sock").path),server=on,wait=off"]
+    if let socket = spiceSocket {
+      let path = socket.path
+      guard path.hasPrefix("/"), !path.contains("\u{0}"), path.utf8.count < 104 else {
+        throw MacVMError("Invalid SPICE socket path.")
+      }
+      let escaped = path.replacingOccurrences(of: ",", with: ",,")
+      args += ["-L", "/opt/homebrew/share/qemu", "-spice", "unix=on,addr=\(escaped),disable-ticketing=on"]
+    }
     if let iso = iso {
       // Windows Setup must see optical media, not an unpartitioned USB disk.
       args += ["-blockdev", try block("cd", iso, format: "raw", readOnly: true),

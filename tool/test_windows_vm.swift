@@ -57,6 +57,23 @@ enum TestWindowsVM {
     try rejects("invalid direct QEMU port rejected") {
       _ = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, sshPort: -1)
     }
+    try backend.configureConnections(bundle.path, port: 50222, spiceEnabled: true)
+    try backend.configureSSH(bundle.path, port: 50223)
+    let spiceConfig = try backend.status(bundle.path)
+    try check(spiceConfig["spiceRequested"] as? Bool == true && spiceConfig["savedSshPort"] as? Int == 50223,
+              "SSH-only changes preserve the persisted SPICE choice")
+    try check(spiceConfig["spiceSocket"] == nil && spiceConfig["displayMode"] as? String == "cocoa",
+              "stopped VM never exposes a stale SPICE endpoint")
+    let spiceArgs = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid,
+      mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, sshPort: 50223, spiceSocket: URL(fileURLWithPath: "/tmp/private space,한글/spice.sock"))
+    try check(spiceArgs.contains("unix=on,addr=/tmp/private space,,한글/spice.sock,disable-ticketing=on") && spiceArgs.contains("cocoa"),
+              "SPICE preserves literal paths and Cocoa while using a local Unix socket")
+    try check(spiceArgs.contains("ramfb") && spiceArgs.contains("virtio-gpu-pci") && spiceArgs.contains("tpm-tis-device,tpmdev=tpm0"),
+              "SPICE leaves existing framebuffer, PCI GPU and TPM unchanged")
+    try rejects("overlong SPICE socket refused before launch") {
+      _ = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid,
+        mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, spiceSocket: URL(fileURLWithPath: "/tmp/" + String(repeating: "x", count: 110)))
+    }
     let install = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: metadata.iso)
     let boot = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil)
     try check(install.contains("hvf") && install.contains("host") && install.contains("virt-9.2,highmem=on,gic-version=3"), "native ARM hardware acceleration selected")
