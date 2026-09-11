@@ -1,6 +1,6 @@
 # M1 Windows ARM64 연결 작업 기록
 
-2026-09-10 HST / 2026-09-11 UTC. **부분 구현이며 SSH/SPICE 실접속 완료가 아니다.**
+2026-09-10 HST / 2026-09-11 UTC. **SSH 실제 로그인·재접속 PASS. SPICE·앱 연동은 아직 진행 중이다.**
 최신 `origin/personal/preview` `13860d6`에서 별도 worktree의
 `personal/windows-arm-connections`를 만들었다. 구현·단위 검사·release 빌드 소스는
 `f2ef0ec5ee43d125e20384c38841c7d3674329fe`다.
@@ -108,3 +108,19 @@ Set-NetFirewallRule -Name OpenSSH-Server-In-TCP -Profile Any -RemoteAddress 10.0
 소스 `4e9b8de9f91f0bfe8b6e6f7c4207d1b6fa146a6c`의
 [빌드 CI](https://github.com/kimdongup/quickgui/actions/runs/34564212677)와
 [smoke CI](https://github.com/kimdongup/quickgui/actions/runs/34564212440)는 모두 success다.
+
+
+## SSH 실제 인증·재접속 PASS (2026-09-11 07:37 UTC)
+
+사용자가 지정한 별도 로컬 SSH 계정으로 인증했다. 계정 이름과 암호는 공개 증거에
+포함하지 않는다. 처음 검증기는 WMI 조회에서 `CimException`을 만나 exit 1로
+끝났으므로 인증 실패와 구분했다. WMI 실패의 세부 원인은 확정하지 않았다.
+계정 권한이나 인증 설정을 변경하지 않고 .NET `RuntimeInformation`으로 OS 및
+OS/프로세스 아키텍처를 읽도록 검증기를 수정했다.
+
+`7ab5a34`의 검증기로 07:37:09와 07:37:26 UTC에 별도 SSH 프로세스를 시작했다.
+각 세션은 새로 암호 인증했고 각각 원격 명령 exit 0을 반환했다. 양쪽 모두
+`Microsoft Windows 10.0.26200`, `10.0.26200.0`, OS `Arm64`, 프로세스 `Arm64`다.
+Windows 11의 커널 버전 문자열을 그대로 기록하며 제품명이 Windows 10이라는 뜻으로
+해석하지 않는다. connection multiplexing은 비활성화되어 기존 세션을 재사용하지 않았다.
+호스트의 검증기 전체 exit도 0이다. 이 결과가 앞선 BLOCKED/FAIL 시점 기록을 대체한다.

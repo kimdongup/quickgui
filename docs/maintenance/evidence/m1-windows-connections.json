@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceCommit": "f2ef0ec5ee43d125e20384c38841c7d3674329fe",
+  "sourceCommit": "7ab5a3490862f18a969e0b33b19147d03bfcb168",
   "checkedAt": "2026-09-11T04:48:34.775457+00:00",
   "hostArchitecture": "arm64",
   "hostOS": "macOS 26.6.2 (25G83)",
@@ -23,16 +23,32 @@
     "evidence": "M1_WINDOWS_CONNECTION_RESULTS.ko.md"
   },
   "sshLogin": {
-    "status": "blocked",
-    "evidence": "User installed and started OpenSSH. Corrected confirmed firewall Private/Public mismatch with user approval; listener now returns OpenSSH_for_Windows_9.5. ED25519 fingerprint compared between guest and host. Awaiting user password entry in the prepared local authentication runner."
+    "name": "sshLogin",
+    "checkedAt": "2026-09-11T07:37:09Z",
+    "exitCode": 0,
+    "guest": {
+      "os": "Microsoft Windows 10.0.26200 ",
+      "version": "10.0.26200.0",
+      "architecture": "Arm64",
+      "processArchitecture": "Arm64"
+    },
+    "status": "pass"
   },
   "sshReconnect": {
-    "status": "blocked",
-    "evidence": "Actual SSH authentication has not occurred."
+    "name": "sshReconnect",
+    "checkedAt": "2026-09-11T07:37:26Z",
+    "exitCode": 0,
+    "guest": {
+      "os": "Microsoft Windows 10.0.26200 ",
+      "version": "10.0.26200.0",
+      "architecture": "Arm64",
+      "processArchitecture": "Arm64"
+    },
+    "status": "pass"
   },
   "spiceDisplay": {
     "status": "blocked",
-    "evidence": "Awaiting SSH acceptance first; installed Homebrew QEMU lacks SPICE."
+    "evidence": "SSH authentication passed; building dedicated ARM backend from verified official sources."
   },
   "spiceInput": {
     "status": "blocked",
@@ -85,7 +101,7 @@
     "installationPending": false,
     "installedApplicationReplaced": false
   },
-  "finalVMState": "running; installed Windows desktop, waiting for interactive SSH authentication",
+  "finalVMState": "running; installed Windows desktop",
   "runtimeProbeCaveat": "Native forwarding was compiled from the working tree before configureSSH was added. UI probe uses a byte-copy of ARM Homebrew QEMU in a local app wrapper plus explicit -L /opt/homebrew/share/qemu. It is not the built Flutter app.",
   "ci": {
     "headSha": "4e9b8de9f91f0bfe8b6e6f7c4207d1b6fa146a6c",
