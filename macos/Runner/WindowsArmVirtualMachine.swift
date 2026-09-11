@@ -11,6 +11,7 @@ struct WindowsVMMetadata: Codable {
   let diskGiB: Int
   let iso: String
   var installationPending = true
+  var sshPort: Int?
   var error: String?
 }
 
@@ -22,6 +23,7 @@ final class WindowsArmVirtualMachine {
     let runtime: URL
     let lock: MacVMLock
     let log: FileHandle
+    var sshPort: Int?
     let qemu = Process()
     let tpm = Process()
     var phase = "starting"
@@ -65,6 +67,7 @@ final class WindowsArmVirtualMachine {
           (2...8).contains(value.cpus), (4...512).contains(value.memoryGiB), (64...1024).contains(value.diskGiB) else {
       throw MacVMError("Unsupported Windows ARM VM metadata.")
     }
+    if let port = value.sshPort, !(1024...65535).contains(port) { throw MacVMError("Invalid SSH port.") }
     return value
   }
   private func write(_ metadata: WindowsVMMetadata, _ bundle: URL) throws {
@@ -159,6 +162,9 @@ final class WindowsArmVirtualMachine {
     }
     var result: [String: Any] = ["path": target.path, "name": metadata.name, "state": state, "version": "11 ARM64",
                                  "installationPending": metadata.installationPending]
+    if let port = metadata.sshPort { result["savedSshPort"] = port }
+    if let active = session, active.bundle.path == target.path, active.phase == "running", active.qemu.isRunning,
+       let port = active.sshPort { result["sshHost"] = "127.0.0.1"; result["sshPort"] = port }
     if let message = message { result["error"] = message }
     return result
   }
@@ -192,6 +198,8 @@ final class WindowsArmVirtualMachine {
       if metadata.installationPending { active.imageLease = try MacVMFileLease(URL(fileURLWithPath: metadata.iso)) }
       if let networkISO = networkISO { active.networkImageLease = try MacVMFileLease(networkISO) }
       session = active
+      if metadata.sshPort == nil { metadata.sshPort = try WindowsVMTools.availableSSHPort() }
+      active.sshPort = metadata.sshPort
       metadata.error = nil; try write(metadata, target)
       active.tpm.executableURL = URL(fileURLWithPath: WindowsVMTools.tpm)
       active.tpm.currentDirectoryURL = target
@@ -201,7 +209,7 @@ final class WindowsArmVirtualMachine {
       active.qemu.currentDirectoryURL = target
       active.qemu.arguments = try WindowsVMTools.arguments(bundle: target, runtime: runtime, uuid: metadata.uuid, mac: metadata.mac,
                                                           cpus: metadata.cpus, memoryGiB: metadata.memoryGiB, iso: metadata.installationPending ? metadata.iso : nil,
-                                                          networkISO: networkISO?.path, showWindow: showWindow)
+                                                          networkISO: networkISO?.path, showWindow: showWindow, sshPort: active.sshPort)
       active.qemu.standardInput = FileHandle.nullDevice
       active.qemu.standardOutput = log; active.qemu.standardError = log
       active.qemu.terminationHandler = { process in
@@ -288,6 +296,19 @@ final class WindowsArmVirtualMachine {
       }
     } catch { completion(.failure(error)) }
   }
+  /// Connections are configured only while stopped, under the same VM lock as start.
+  func configureSSH(_ path: String, port: Int) throws {
+    guard (1024...65535).contains(port) else { throw MacVMError("SSH port must be between 1024 and 65535.") }
+    let target = try bundle(path)
+    guard session?.bundle.path != target.path else { throw MacVMError("Shut down the guest before changing its SSH port.") }
+    let lock = try MacVMLock(bundle: target)
+    defer { lock.release() }
+    guard try !hasOtherOwner(target) else { throw MacVMError("The VM is still running.") }
+    var metadata = try read(target)
+    metadata.sshPort = port
+    try write(metadata, target)
+  }
+
   func completeInstallation(_ path: String) throws {
     let target = try bundle(path)
     guard session?.bundle.path != target.path else { throw MacVMError("Shut down the guest before confirming installation.") }

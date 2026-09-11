@@ -39,6 +39,24 @@ enum TestWindowsVM {
     let completed = try JSONDecoder().decode(WindowsVMMetadata.self, from: Data(contentsOf: file))
     try check(!completed.installationPending && completed.uuid == metadata.uuid && completed.mac == metadata.mac && completed.iso == metadata.iso, "completion keeps identities and image reference")
     try rejects("completion is not silently repeated") { try backend.completeInstallation(bundle.path) }
+    try check(completed.sshPort == nil, "legacy metadata needs no migration")
+    try backend.configureSSH(bundle.path, port: 50222)
+    let configured = try backend.status(bundle.path)
+    try check(configured["savedSshPort"] as? Int == 50222 && configured["sshPort"] == nil,
+              "saved port survives metadata reload but stopped VM exposes no live endpoint")
+    try rejects("privileged port rejected") { try backend.configureSSH(bundle.path, port: 22) }
+    try rejects("overflow port rejected") { try backend.configureSSH(bundle.path, port: 65536) }
+    let portLock = try MacVMLock(bundle: bundle)
+    try rejects("port change refused under another writer") { try backend.configureSSH(bundle.path, port: 50223) }
+    portLock.release()
+    try JSONEncoder().encode([ProcessInfo.processInfo.processIdentifier]).write(to: owner)
+    try rejects("port change refused for orphaned running VM") { try backend.configureSSH(bundle.path, port: 50223) }
+    try FileManager.default.removeItem(at: owner)
+    let forwarded = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, sshPort: 50222)
+    try check(forwarded.contains("user,id=net0,hostfwd=tcp:127.0.0.1:50222-:22"), "SSH binds loopback only and targets guest 22")
+    try rejects("invalid direct QEMU port rejected") {
+      _ = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil, sshPort: -1)
+    }
     let install = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: metadata.iso)
     let boot = try WindowsVMTools.arguments(bundle: bundle, runtime: URL(fileURLWithPath: "/tmp/qg-test"), uuid: metadata.uuid, mac: metadata.mac, cpus: 2, memoryGiB: 4, iso: nil)
     try check(install.contains("hvf") && install.contains("host") && install.contains("virt-9.2,highmem=on,gic-version=3"), "native ARM hardware acceleration selected")

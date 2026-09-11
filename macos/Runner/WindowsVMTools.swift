@@ -117,13 +117,35 @@ enum WindowsVMTools {
     }
   }
 
+  /// Choose a loopback port; QEMU owns the final bind and reports any race/conflict.
+  static func availableSSHPort() throws -> Int {
+    let fd = socket(AF_INET, SOCK_STREAM, 0)
+    guard fd >= 0 else { throw MacVMError("Cannot allocate SSH port.") }
+    defer { close(fd) }
+    var address = sockaddr_in()
+    address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+    address.sin_family = sa_family_t(AF_INET)
+    address.sin_addr.s_addr = inet_addr("127.0.0.1")
+    let result = withUnsafePointer(to: &address) {
+      $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }
+    }
+    guard result == 0 else { throw MacVMError("Cannot bind a local SSH port.") }
+    var size = socklen_t(MemoryLayout<sockaddr_in>.size)
+    let queried = withUnsafeMutablePointer(to: &address) {
+      $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &size) }
+    }
+    guard queried == 0 else { throw MacVMError("Cannot read SSH port.") }
+    return Int(UInt16(bigEndian: address.sin_port))
+  }
+
   static func block(_ name: String, _ filename: String, format: String, readOnly: Bool = false) throws -> String {
     let object: [String: Any] = ["node-name": name, "driver": format, "read-only": readOnly,
                                 "file": ["driver": "file", "filename": filename]]
     return String(data: try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]), encoding: .utf8)!
   }
 
-  static func arguments(bundle: URL, runtime: URL, uuid: String, mac: String, cpus: Int, memoryGiB: Int, iso: String?, networkISO: String? = nil, showWindow: Bool = true) throws -> [String] {
+  static func arguments(bundle: URL, runtime: URL, uuid: String, mac: String, cpus: Int, memoryGiB: Int, iso: String?, networkISO: String? = nil, showWindow: Bool = true, sshPort: Int? = nil) throws -> [String] {
+    if let port = sshPort, !(1024...65535).contains(port) { throw MacVMError("SSH port must be between 1024 and 65535.") }
     // This firmware needs a PCI display for discovery and a linear RAM
     // framebuffer for Windows boot. RAMFB stays console 0 for the Cocoa window.
     var args = ["-name", "Windows ARM64", "-uuid", uuid, "-machine", "virt-9.2,highmem=on,gic-version=3", "-accel", "hvf", "-cpu", "host",
@@ -134,7 +156,7 @@ enum WindowsVMTools {
                 "-machine", "pflash0=code,pflash1=vars",
                 "-blockdev", try block("disk", bundle.appendingPathComponent("disk.qcow2").path, format: "qcow2"),
                 "-device", "nvme,drive=disk,serial=\(uuid.replacingOccurrences(of: "-", with: "").prefix(20)),bootindex=2",
-                "-netdev", "user,id=net0", "-device", "virtio-net-pci,netdev=net0,mac=\(mac)",
+                "-netdev", "user,id=net0" + (sshPort.map { ",hostfwd=tcp:127.0.0.1:\($0)-:22" } ?? ""), "-device", "virtio-net-pci,netdev=net0,mac=\(mac)",
                 "-chardev", "socket,id=chrtpm,path=\(runtime.appendingPathComponent("tpm.sock").path)",
                 "-tpmdev", "emulator,id=tpm0,chardev=chrtpm", "-device", "tpm-tis-device,tpmdev=tpm0",
                 "-qmp", "unix:\(runtime.appendingPathComponent("qmp.sock").path),server=on,wait=off"]
