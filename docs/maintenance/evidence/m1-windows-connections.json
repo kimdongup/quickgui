@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "sourceCommit": "7ab5a3490862f18a969e0b33b19147d03bfcb168",
-  "checkedAt": "2026-09-11T04:48:34.775457+00:00",
+  "sourceCommit": "ac6c3a1",
+  "checkedAt": "2026-09-11T08:13:47Z",
   "hostArchitecture": "arm64",
   "hostOS": "macOS 26.6.2 (25G83)",
   "guest": "Windows ARM64",
@@ -9,9 +9,12 @@
     "version": "QEMU 11.1.1",
     "architecture": "arm64",
     "acceleration": "hvf",
-    "spiceSupport": false,
-    "spiceHelpExitCode": 1,
-    "spiceHelpOutput": "qemu-system-aarch64: -spice: invalid option"
+    "spiceSupport": true,
+    "spiceVersion": "0.16.0",
+    "display": "ramfb,id=windows-display",
+    "transport": "private Unix socket",
+    "mouseMode": "client",
+    "homebrewDependencies": true
   },
   "sshForward": {
     "status": "pass",
@@ -24,7 +27,7 @@
   },
   "sshLogin": {
     "name": "sshLogin",
-    "checkedAt": "2026-09-11T07:37:09Z",
+    "checkedAt": "2026-09-11T08:13:08Z",
     "exitCode": 0,
     "guest": {
       "os": "Microsoft Windows 10.0.26200 ",
@@ -36,7 +39,7 @@
   },
   "sshReconnect": {
     "name": "sshReconnect",
-    "checkedAt": "2026-09-11T07:37:26Z",
+    "checkedAt": "2026-09-11T08:13:47Z",
     "exitCode": 0,
     "guest": {
       "os": "Microsoft Windows 10.0.26200 ",
@@ -47,16 +50,17 @@
     "status": "pass"
   },
   "spiceDisplay": {
-    "status": "blocked",
-    "evidence": "SSH authentication passed; building dedicated ARM backend from verified official sources."
+    "status": "pass",
+    "evidence": "800x600 Windows lock/PIN screen captured through spice-gtk display channel 0; local PNG retained privately."
   },
   "spiceInput": {
-    "status": "blocked",
-    "evidence": "No ARM SPICE guest session yet."
+    "status": "partial",
+    "pointer": "SPICE absolute click 400,200 changed lock screen to PIN sign-in.",
+    "keyboard": "Wake key sent; visible text entry remains pending guest login."
   },
   "spiceReconnect": {
-    "status": "blocked",
-    "evidence": "No ARM SPICE guest session yet."
+    "status": "partial",
+    "evidence": "Separate capture clients received display after disconnect/reconnect; post-login text entry remains pending."
   },
   "appReconnect": {
     "status": "blocked",
@@ -65,7 +69,7 @@
   "checks": {
     "swift": {
       "status": "pass",
-      "count": 30,
+      "count": 35,
       "exitCode": 0
     },
     "flutterAnalyze": {
@@ -101,8 +105,8 @@
     "installationPending": false,
     "installedApplicationReplaced": false
   },
-  "finalVMState": "running; installed Windows desktop",
-  "runtimeProbeCaveat": "Native forwarding was compiled from the working tree before configureSSH was added. UI probe uses a byte-copy of ARM Homebrew QEMU in a local app wrapper plus explicit -L /opt/homebrew/share/qemu. It is not the built Flutter app.",
+  "finalVMState": "running; guest login pending",
+  "runtimeProbeCaveat": "Native Swift harness from source, dedicated ARM SPICE QEMU. Built Flutter app integration not yet validated.",
   "ci": {
     "headSha": "4e9b8de9f91f0bfe8b6e6f7c4207d1b6fa146a6c",
     "build": {
@@ -124,5 +128,13 @@
       "reason": "Guest network is Public; installed rule originally applied only to Private."
     },
     "hostKeyVerified": true
+  },
+  "originalBackend": {
+    "version": "QEMU 11.1.1",
+    "architecture": "arm64",
+    "acceleration": "hvf",
+    "spiceSupport": false,
+    "spiceHelpExitCode": 1,
+    "spiceHelpOutput": "qemu-system-aarch64: -spice: invalid option"
   }
 }

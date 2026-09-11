@@ -1,5 +1,27 @@
 # M1 Windows ARM64 연결 작업 기록
 
+## 최신 상태 — 2026-09-11 08:17 UTC
+
+전용 ARM64 QEMU/SPICE backend를 구성했고, `ac6c3a1`의 단일 화면 선택 수정으로
+SPICE client mouse가 동작한다. 기존 GPU 두 개는 유지하면서 ramfb만 SPICE로
+노출했다. 800×600 Windows 잠금 화면을 실제 SPICE로 수신했고, 절대 좌표 클릭으로
+PIN 로그인 화면으로 전환했다. 일반 spicy 프로세스의 main/display/inputs/cursor
+연결도 확인했다. macOS 접근성 도구는 이 GTK viewer 창에서 timeout을 반환했으므로
+일반 viewer GUI 조작은 아직 확인하지 못했다. 전용 SPICE C 검증기로 화면·클릭을
+확인한 결과와 구분한다.
+
+같은 VM의 새 backend에서 08:13:08/08:13:47 UTC에 별도 SSH 인증 두 번과
+Windows ARM64 명령 실행이 모두 exit 0이었다. 계정·암호는 공개 증거에 포함하지
+않았다. 기존 Microsoft 계정이나 Windows Hello 설정은 변경하지 않았다.
+
+현재 VM은 정상 종료 후 재시작하여 PIN 로그인을 기다린다. 로그인 후 메모장 입력,
+viewer 종료·재접속 후 입력, 그 다음 Flutter 앱 연동이 남았다. 이 항목들은 PASS로
+기록하지 않는다. Swift 검증 35개 통과. 이전 Flutter/CI 결과는 이전 커밋의 결과다.
+빌드 절차와 두 화면 문제는 [ARM SPICE backend 기록](M1_WINDOWS_SPICE_BACKEND.ko.md),
+구조화된 현재 결과는 [JSON](evidence/m1-windows-connections.json)에 있다.
+
+아래는 이전 단계의 이력이다.
+
 2026-09-10 HST / 2026-09-11 UTC. **SSH 실제 로그인·재접속 PASS. SPICE·앱 연동은 아직 진행 중이다.**
 최신 `origin/personal/preview` `13860d6`에서 별도 worktree의
 `personal/windows-arm-connections`를 만들었다. 구현·단위 검사·release 빌드 소스는
