@@ -1,5 +1,7 @@
 # Fork 구현·검증 기록
 
+2026-09-11 UTC 최종 진행: 개인 통합 `32fcd67`의 Build·Public Quickemu smoke CI 모두 성공. 검증된 빌드를 `/Applications/quickgui.app`에 설치했고 기존 앱은 `/Users/mac/Applications/Quickgui-backup-32fcd67/quickgui.app`에 보존했다. 사용자 요청으로 추가 기능 검증을 종료하고 공통 [PR #325](https://github.com/quickemu-project/quickgui/pull/325)를 Ready for review로 전환했다. 실행 중인 VM과 미커밋 파일은 보존했다.
+
 2026-09-11 UTC 통합 검토: M1 연결 작업 `f81ea92`(앱 코드 `1877d60`)를 최신 `personal/preview` 기준 `13860d6`에 충돌 없이 통합했다. Intel 회귀와 보존 범위는 [통합 검토 결과](M1_CONNECTION_INTEGRATION.ko.md)를 따른다. 아래 날짜별 기록의 미완료 표시는 당시 상태다.
 
 2026-09-10 PR 제출: 첫 공통 수정 [Draft PR #325](https://github.com/quickemu-project/quickgui/pull/325)를 `pr/upstream-desktop-compatibility` / `448e7e4`에서 제출했다. upstream 기준 단일 커밋이며 Flutter 빌드·자산 목록 API·macOS 파일 선택 권한을 포함한다. macOS 최소 버전 12.0 상향을 명시했다. 개인 ARM·VM 서비스와 운영 문서는 포함하지 않았다. 로컬 분석·2개 공통 테스트·Release 빌드·서명 검사는 통과했고, 제출 커밋의 CI 및 다음 순서는 [첫 PR 기록](UPSTREAM_DESKTOP_PR.ko.md)을 따른다.

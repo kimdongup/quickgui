@@ -1,5 +1,7 @@
 # 첫 공통 PR: Flutter desktop 호환성
 
+2026-09-11 UTC 최종 진행: 사용자 요청에 따라 PR #325의 Draft를 해제했다. 현재 **Open / Ready for review**, head `448e7e4`이며 코드 변경이나 merge는 하지 않았다. 아래 최초 제출 시점의 Draft·검증 기록은 이력으로 보존한다. 후속 공통 PR은 이 PR의 리뷰·수용 결과를 반영해 기존 순서대로 분리한다.
+
 2026-09-10 HST / 2026-09-11 UTC. 사용자의 다음 PR 단계 요청에 따라 [upstream Draft PR #325](https://github.com/quickemu-project/quickgui/pull/325)를 제출했다.
 
 | 항목 | 결과 |
@@ -10,7 +12,7 @@
 | fork 브랜치 | `kimdongup/quickgui:pr/upstream-desktop-compatibility` |
 | 제출 커밋 | `448e7e4922ec804578908f41ef07778deacf4dd2` |
 | 변경 범위 | upstream 기준 단일 커밋, 40개 파일, +1279 / -925 |
-| 상태 | Open / Draft. 병합하거나 Ready for review로 전환하지 않음 |
+| 상태 | Open / Ready for review. 사용자 요청으로 Draft 해제, merge하지 않음 |
 | 작업 폴더 | `/private/tmp/quickgui-upstream-desktop-compatibility` |
 
 기존 `pr/desktop-build`에는 SDK·의존성·네이티브 프로젝트·CI 기반이 있지만, 새 Flutter가 생성하지 않는 `AssetManifest.json`을 계속 읽고 새 file picker가 요구하는 권한도 빠져 있었다. 이 브랜치를 그대로 제출하지 않고 필요한 호환성 수정을 함께 포함했다. 기존 브랜치는 보존하고 새 PR 브랜치만 단일 커밋으로 정리했다.

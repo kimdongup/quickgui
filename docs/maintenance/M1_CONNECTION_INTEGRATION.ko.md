@@ -88,3 +88,13 @@ GitHub 조회에서도 같은 SHA의 성공 상태를 확인했다.
 검증된 후보는 원래 작업 폴더에서 fast-forward하고 `origin/personal/preview`로
 push한다. M1 소스 브랜치와 공통 PR 브랜치는 그대로 유지한다. 최신 통합 커밋은
 이 문서의 Git 이력으로 확인한다.
+
+## 최종 반영 후속
+
+`32fcd67`의 [Build](https://github.com/kimdongup/quickgui/actions/runs/34581922224)와
+[Public Quickemu smoke](https://github.com/kimdongup/quickgui/actions/runs/34581922279)는
+모두 success로 완료됐다. 사용자 요청으로 추가 기능 검증은 종료했다.
+검증된 통합 빌드를 `/Applications/quickgui.app`에 설치했으며, 기존 앱은
+`/Users/mac/Applications/Quickgui-backup-32fcd67/quickgui.app`에 보존했다.
+실행 중인 VM은 종료하거나 재시작하지 않았다. 공통 PR #325는 Ready for review로
+전환했으며 개인 기능을 PR에 추가하지 않았다. 이 후속 커밋은 운영 문서만 갱신한다.
