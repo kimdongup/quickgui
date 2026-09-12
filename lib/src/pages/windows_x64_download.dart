@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../model/operating_system.dart';
+import '../globals.dart' show findExecutable, gQuickemuExecutable;
+import '../services/windows_x64_firmware.dart';
 import '../services/arm_media.dart';
 import '../services/windows_installation.dart';
 import '../services/windows_x64_media.dart';
@@ -21,7 +23,7 @@ class _WindowsX64DownloadState extends State<WindowsX64Download> {
   MediaDownloadSession? _session;
   String? _iso, _driver, _error, _config;
   bool _busy = false;
-  late bool _intelProfile = isIntelMac;
+  final bool _intelProfile = isIntelMac;
 
   void _changed() {
     if (mounted) setState(() {});
@@ -108,11 +110,21 @@ class _WindowsX64DownloadState extends State<WindowsX64Download> {
       _error = null;
     });
     try {
+      if (findExecutable('swtpm') == null) {
+        throw const FormatException(
+          'Windows 11 requires TPM 2.0. Install swtpm before creating the VM.',
+        );
+      }
+      if (isIntelMac) await validateWindowsFirmwareBackend(gQuickemuExecutable);
+      final firmware = isIntelMac && _intelProfile
+          ? await WindowsX64Firmware.locate()
+          : null;
       final config = await createWindowsX64Vm(
         directory: widget.directory,
         iso: _iso!,
         driverIso: _driver,
         intelProfile: _intelProfile,
+        firmware: firmware,
       );
       if (mounted) setState(() => _config = config);
     } catch (e) {
@@ -213,14 +225,10 @@ class _WindowsX64DownloadState extends State<WindowsX64Download> {
         ),
         if (_driver != null) SelectableText(_driver!),
         if (isIntelMac)
-          CheckboxListTile(
-            value: _intelProfile,
-            onChanged: _busy || _config != null
-                ? null
-                : (value) => setState(() => _intelProfile = value!),
+          ListTile(
             title: const Text('Use Windows x64 on Intel Mac profile'),
             subtitle: const Text(
-              'Experimental installation profile: Nehalem/HVF, SATA, Intel network. TPM and Secure Boot are disabled; Windows 11 setup may require a separate requirements workaround.',
+              'Windows 11 profile: TPM 2.0, Secure Boot and SMM using TCG emulation. Slower than HVF, which cannot provide the required SMM protection.',
             ),
           ),
         const Text(

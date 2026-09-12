@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'windows_installation.dart';
+import 'windows_x64_firmware.dart';
 
 const windowsX64Page = 'https://www.microsoft.com/software-download/windows11';
 const virtioIsoUrl =
@@ -55,7 +56,14 @@ Future<String> createWindowsX64Vm({
   required String iso,
   String? driverIso,
   required bool intelProfile,
+  WindowsX64Firmware? firmware,
 }) async {
+  if (intelProfile && firmware == null) {
+    throw const FormatException(
+      'The Intel profile requires Secure Boot-capable UEFI firmware.',
+    );
+  }
+  await firmware?.validate();
   await validateWindowsIso(iso);
   if (driverIso != null) await validateWindowsIso(driverIso, driver: true);
   final image = _literal(p.absolute(iso));
@@ -69,7 +77,11 @@ Future<String> createWindowsX64Vm({
   final config = File('${vm.path}.conf');
   try {
     var content =
-        'guest_os="windows"\narch="x86_64"\nboot="efi"\nram="4G"\ncpu_cores="2"\ndisk_size="64G"\ndisk_img=${_literal(p.join(vm.path, 'disk.qcow2'))}\niso=$image\n';
+        'guest_os="windows"\narch="x86_64"\nboot="efi"\ntpm="on"\nram="4G"\ncpu_cores="2"\ndisk_size="64G"\ndisk_img=${_literal(p.join(vm.path, 'disk.qcow2'))}\niso=$image\n';
+    if (firmware != null) {
+      content +=
+          'EFI_CODE=${_literal(firmware.code)}\nEFI_EXTRA_VARS=${_literal(firmware.variables)}\n';
+    }
     if (driver != null) content += 'fixed_iso=$driver\n';
     if (intelProfile) content = windowsIntelProfile(content, intelMac: true);
     await config.create(exclusive: true);

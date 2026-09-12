@@ -1,5 +1,7 @@
 # Windows 11 x64 미디어 준비 경로 수정
 
+2026-09-11 HST TPM/UEFI 후속: 이전 Nehalem/HVF 프로필의 TPM·Secure Boot 비활성화 문제를 수정했다. Intel의 Windows 11 새 VM은 TPM 2.0과 SMM 보호 Secure Boot를 사용하는 TCG 프로필로 생성한다. 실제 설치 VM 보존·backend 수정·성능 영향은 [TPM/UEFI 수정 기록](WINDOWS_X64_TPM_UEFI.ko.md)을 따른다. 아래 최초 구현 기록보다 이 후속을 우선한다.
+
 2026-09-11. 기준 `personal/preview` / `ceaf70c`.
 
 ## 원인

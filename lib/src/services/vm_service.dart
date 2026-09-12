@@ -1,3 +1,5 @@
+import 'windows_x64_firmware.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -386,6 +388,14 @@ class VmOperations extends ChangeNotifier {
             throw StateError('Another VM uses this disk or directory');
           }
         }
+      }
+      if (action == VmAction.start &&
+          configLiteral(current.content, 'EFI_CODE') != null &&
+          [
+            'windows',
+            'windows-server',
+          ].contains(configLiteral(current.content, 'guest_os'))) {
+        await validateWindowsFirmwareBackend(executable);
       }
       final arguments = [
         '--vm',

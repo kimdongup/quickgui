@@ -13,12 +13,12 @@ bool isWindowsX64(String content) =>
         ['x86_64', 'amd64'].contains(configLiteral(content, 'arch')));
 
 const windowsIntelNotice =
-    'Experimental profile from a Windows 11 x64 installation on an Intel Mac: '
-    'Nehalem CPU, HVF with HPET, 2 cores, 4 GB RAM, SATA disk, Intel network, '
+    'Windows 11 profile with TPM 2.0 and SMM-protected Secure Boot on Intel Mac: '
+    'TCG emulation with SMM, max CPU, 2 cores, 4 GB RAM, SATA disk, Intel network, '
     'Cocoa display and no audio. The windows-server setting selects hardware; '
     'it does not change the installed Windows edition. '
-    'TPM and Secure Boot are disabled, so this profile does not meet standard '
-    'Windows 11 requirements. Setup may require a separate requirements workaround. '
+    'TPM 2.0 and Secure Boot are enabled; swtpm and prepared OVMF firmware are required. '
+    'TCG is slower than HVF, which cannot provide SMM for this firmware. '
     'Only config text is changed. No answer file, installer or disk is created. '
     'Do not reattach unattended installation media to an installed disk.';
 
@@ -42,9 +42,12 @@ String windowsIntelProfile(String content, {required bool intelMac}) {
     }
     fields[key] = configLiteral(line, key)!;
   }
-  const extra =
+  const legacyExtra =
       '-machine accel=hvf,hpet=on -cpu Nehalem -smp 2,sockets=1,cores=2,threads=1';
+  const extra =
+      '-machine accel=tcg,smm=on,hpet=on -cpu max -smp 2,sockets=1,cores=2,threads=1';
   if ((fields['extra_args'] ?? '').isNotEmpty &&
+      fields['extra_args'] != legacyExtra &&
       fields['extra_args'] != extra) {
     throw StateError(
       'Custom extra_args are present. Review and edit them manually.',
@@ -56,8 +59,8 @@ String windowsIntelProfile(String content, {required bool intelMac}) {
     'boot': 'efi',
     'ram': '4G',
     'cpu_cores': '2',
-    'tpm': 'off',
-    'secureboot': 'off',
+    'tpm': 'on',
+    'secureboot': 'on',
     'display': 'cocoa',
     'gl': 'off',
     'sound_card': 'none',

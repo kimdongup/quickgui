@@ -31,9 +31,19 @@ void main() {
     for (final key in ['disk_img', 'iso', 'fixed_iso']) {
       expect(configLiteral(profile, key), configLiteral(original, key));
     }
-    expect(configLiteral(profile, 'extra_args'), contains('-cpu Nehalem'));
+    expect(configLiteral(profile, 'extra_args'), contains('-cpu max'));
     expect(configLiteral(profile, 'extra_args'), contains('hpet=on'));
-    expect(configLiteral(profile, 'tpm'), 'off');
+    expect(configLiteral(profile, 'tpm'), 'on');
+    expect(
+      configLiteral(
+        windowsIntelProfile(
+          'guest_os="windows"\nsecureboot="on"\n',
+          intelMac: true,
+        ),
+        'secureboot',
+      ),
+      'on',
+    );
     expect(windowsIntelProfile(profile, intelMac: true), profile);
     expect(
       () => windowsIntelProfile(original, intelMac: false),

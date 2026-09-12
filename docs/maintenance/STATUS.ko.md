@@ -1,5 +1,7 @@
 # Fork 구현·검증 기록
 
+2026-09-11 HST TPM/UEFI 후속: 이전 Nehalem/HVF 프로필의 TPM·Secure Boot 비활성화 문제를 수정했다. Intel의 Windows 11 새 VM은 TPM 2.0과 SMM 보호 Secure Boot를 사용하는 TCG 프로필로 생성한다. 실제 설치 VM 보존·backend 수정·성능 영향은 [TPM/UEFI 수정 기록](WINDOWS_X64_TPM_UEFI.ko.md)을 따른다. 아래 최초 구현 기록보다 이 후속을 우선한다.
+
 2026-09-11 Windows x64 후속: 기존 다운로드 버튼이 외부 Quickget의 Windows 자동 미디어 생성 경로를 유지하던 문제를 수정했다. Windows 11 x64의 공식 ISO 링크·로컬 파일 선택, HTML/불완전 ISO 거부, 선택형 VirtIO와 Intel 프로필, 기존 VM을 덮어쓰지 않는 수동 설치 준비를 추가했다. 상세 근거와 사용법은 [Windows x64 미디어 수정](WINDOWS_X64_MEDIA_FIX.ko.md)을 따른다.
 
 2026-09-11 UTC 최종 진행: 개인 통합 `32fcd67`의 Build·Public Quickemu smoke CI 모두 성공. 검증된 빌드를 `/Applications/quickgui.app`에 설치했고 기존 앱은 `/Users/mac/Applications/Quickgui-backup-32fcd67/quickgui.app`에 보존했다. 사용자 요청으로 추가 기능 검증을 종료하고 공통 [PR #325](https://github.com/quickemu-project/quickgui/pull/325)를 Ready for review로 전환했다. 실행 중인 VM과 미커밋 파일은 보존했다.

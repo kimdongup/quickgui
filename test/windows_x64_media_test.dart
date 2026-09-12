@@ -6,6 +6,7 @@ import 'package:quickgui/src/services/arm_media.dart';
 import 'package:quickgui/src/services/download_session.dart';
 import 'package:quickgui/src/services/vm_service.dart';
 import 'package:quickgui/src/services/windows_x64_media.dart';
+import 'package:quickgui/src/services/windows_x64_firmware.dart';
 
 import 'arm_media_test.dart' show LocalClient;
 
@@ -21,11 +22,56 @@ Future<File> image(Directory root, String name, int size) async {
 
 void main() {
   late Directory root;
-  setUp(
-    () async =>
-        root = await Directory.systemTemp.createTemp('windows-x64-test-'),
+  late WindowsX64Firmware firmware;
+  late Directory firmwareRoot;
+  setUp(() async {
+    root = await Directory.systemTemp.createTemp('windows-x64-test-');
+    firmwareRoot = await Directory.systemTemp.createTemp(
+      'windows-firmware-test-',
+    );
+    firmware = WindowsX64Firmware(
+      (await image(firmwareRoot, 'CODE.fd', 3653632)).path,
+      (await image(firmwareRoot, 'VARS.fd', 540672)).path,
+    );
+  });
+  tearDown(() async {
+    await root.delete(recursive: true);
+    await firmwareRoot.delete(recursive: true);
+  });
+
+  test('rejects the known Quickemu EFI reset before installation', () async {
+    final backend = File('${root.path}/quickemu');
+    await backend.writeAsString(
+      '    DISPLAY_RENDER=""\n    EFI_CODE=""\n    EFI_VARS=""',
+    );
+    await expectLater(
+      validateWindowsFirmwareBackend(backend.path),
+      throwsFormatException,
+    );
+    await backend.writeAsString(
+      '    DISPLAY_RENDER=""\n    EFI_CODE="\u0024{EFI_CODE:-}"\n    EFI_VARS=""',
+    );
+    await validateWindowsFirmwareBackend(backend.path);
+  });
+
+  test(
+    'Intel VM creation rejects absent firmware before creating files',
+    () async {
+      await expectLater(
+        createWindowsX64Vm(
+          directory: root.path,
+          iso: 'missing.iso',
+          intelProfile: true,
+        ),
+        throwsFormatException,
+      );
+      expect(await root.list().length, 0);
+      await expectLater(
+        const WindowsX64Firmware('/missing/code', '/missing/vars').validate(),
+        throwsFormatException,
+      );
+    },
   );
-  tearDown(() async => root.delete(recursive: true));
 
   test(
     'rejects downloaded HTML and partial driver images without changing them',
@@ -55,12 +101,16 @@ void main() {
       iso: iso.path,
       driverIso: driver.path,
       intelProfile: true,
+      firmware: firmware,
     );
     final content = await File(config).readAsString();
     expect(configLiteral(content, 'guest_os'), 'windows-server');
+    expect(configLiteral(content, 'tpm'), 'on');
+    expect(configLiteral(content, 'EFI_CODE'), firmware.code);
+    expect(configLiteral(content, 'EFI_EXTRA_VARS'), firmware.variables);
     expect(configLiteral(content, 'iso'), iso.path);
     expect(configLiteral(content, 'fixed_iso'), driver.path);
-    expect(configLiteral(content, 'extra_args'), contains('Nehalem'));
+    expect(configLiteral(content, 'extra_args'), contains('-cpu max'));
     expect(await File(configLiteral(content, 'disk_img')!).exists(), isFalse);
     expect(content, isNot(contains('unattended')));
     expect(await previous.readAsString(), 'original config');
@@ -90,6 +140,7 @@ void main() {
         directory: root.path,
         iso: iso.path,
         intelProfile: true,
+        firmware: firmware,
       ),
       throwsFormatException,
     );
@@ -99,6 +150,7 @@ void main() {
         directory: root.path,
         iso: bad.path,
         intelProfile: true,
+        firmware: firmware,
       ),
       throwsFormatException,
     );
