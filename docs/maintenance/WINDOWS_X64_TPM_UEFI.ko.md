@@ -76,3 +76,20 @@ NVRAM, 초기 384 KiB qcow2를 VM 폴더의 `before-tpm-20260912T065633Z`에 복
 - 최종 macOS release 빌드 48.4 MB 및 deep/strict 서명 검사 통과.
 - 실제 VM에서 swtpm 프로세스·tpm-tis 장치·지정한 Secure Boot 코드/변수 파일·TCG/SMM 실행 인자를 확인했다. Windows 설치 ISO의 로딩 화면까지 진입했다.
 - 설치 요구사항 화면의 통과 여부는 아래 후속 실사용 결과로 구분한다.
+
+## 최종 반영 기록
+
+앱 코드 `c1f56ba`의 빌드를 `/Applications/quickgui.app`에 교체했다. 이전 앱은
+`/Users/mac/Applications/Quickgui-backup-c1f56ba/quickgui.app`에 보존했고 실행 파일과
+Flutter App.framework의 SHA-256이 빌드 산출물과 일치함을 확인했다.
+
+현재 VM은 TPM 장치와 Secure Boot 펌웨어를 사용해 Windows 설치의 한국어 언어
+선택 화면까지 부팅했다. `info jit`의 실제 번역 블록 통계로 TCG 실행도 확인했다.
+원격 입력으로 다음 설치 단계까지 진행하는 것은 확인하지 못했으므로,
+**Windows 설치 프로그램의 요구사항 검사 통과는 아직 미확인**으로 남긴다.
+사용자가 현재 창에서 다음을 눌러 설치를 이어갈 수 있도록 VM은 실행 상태로 둔다.
+설치 완료나 TPM 오류 화면 통과를 이 기록으로 대체하지 않는다.
+
+원래 작업 폴더의 미커밋 파일 5개는 기존 보존 기록의 SHA-256과 모두 일치했다.
+원래 VM을 재생성하거나 디스크·ISO를 교체하지 않았다. 기존 일반 VM의 무인 설치
+이미지를 생성·재연결하지 않았으며 새로운 파티션을 만들지 않았다.

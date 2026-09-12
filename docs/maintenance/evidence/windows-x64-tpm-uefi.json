@@ -1,0 +1,34 @@
+{
+  "source_commit": "c1f56ba",
+  "host": "Intel macOS 15.7.9",
+  "vm": "windows-11-x64-HiIuJ5",
+  "tpm": {
+    "backend": "swtpm 0.10.2 --tpm2",
+    "qemu_model": "tpm-tis",
+    "monitor_device_present": true
+  },
+  "uefi": {
+    "code": "OVMF_CODE_4M.secboot.fd",
+    "vars_template": "OVMF_VARS_4M.ms.fd",
+    "secureboot_config": "on",
+    "smm": "on",
+    "flash_protection_disabled": false
+  },
+  "accelerator": "tcg",
+  "tcg_jit_observed": true,
+  "installer_language_screen_observed": true,
+  "installer_requirement_gate_passed": null,
+  "disk_repartitioned": false,
+  "disk_sha256_unchanged_before_firmware_retries": true,
+  "old_config_nvram_and_initial_disk_backed_up": true,
+  "flutter_tests_passed": 94,
+  "flutter_optional_tests_skipped": 4,
+  "firmware_tool_tests_passed": 3,
+  "macos_release_build_and_signature": "passed",
+  "installed_app": "c1f56ba",
+  "limitations": [
+    "TCG is slower than HVF",
+    "Installer TPM/Secure Boot requirement gate has not yet been observed passing",
+    "ShellCheck unavailable; Bash syntax checks passed"
+  ]
+}
